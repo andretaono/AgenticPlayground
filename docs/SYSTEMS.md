@@ -18,11 +18,10 @@ Provide commonly used math types and operations through engine-agnostic abstract
 Summary: Engine-agnostic runtime orchestrator that ticks registered systems each frame.
 
 API:
-- Register(ITickable)
-- Unregister(ITickable)
+- ITickSchedule.Entries (ordered TickEntry list)
 - Tick(float deltaTime)
 
-##CharacterMovement
+##AgentMovement
 Summary: ARPG-style top-down movement used for agent movement and interaction with the world.
 
 The actual input system is abstracted away, so this system focuses on movement logic and state management.

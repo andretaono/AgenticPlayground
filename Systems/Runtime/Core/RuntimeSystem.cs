@@ -1,33 +1,38 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Game.Runtime.Interfaces;
 
 namespace Game.Runtime.Core;
 
 /// <summary>
-/// Engine-agnostic runtime orchestrator. Owns update order and advances registered tickables.
+/// Engine-agnostic runtime orchestrator. Advances an injected, ordered schedule of tickables.
 /// </summary>
 public sealed class RuntimeSystem
 {
-    private readonly List<ITickable> _tickables = new();
+    private readonly ITickSchedule _schedule;
+    private readonly ITickable[] _orderedTickables;
 
-    public IReadOnlyList<ITickable> Tickables => _tickables.AsReadOnly();
+    public IReadOnlyList<ITickable> Tickables => _orderedTickables;
 
-    public void Register(ITickable tickable)
+    public RuntimeSystem(ITickSchedule schedule)
     {
-        if (tickable == null) throw new ArgumentNullException(nameof(tickable));
-        _tickables.Add(tickable);
-    }
+        _schedule = schedule ?? throw new ArgumentNullException(nameof(schedule));
+        if (_schedule.Entries == null) throw new ArgumentException("Schedule entries cannot be null.", nameof(schedule));
 
-    public bool Unregister(ITickable tickable) => _tickables.Remove(tickable);
+        _orderedTickables = _schedule.Entries
+            .OrderBy(e => e.Order)
+            .Select(e => e.Tickable ?? throw new ArgumentException("Tickable cannot be null.", nameof(schedule)))
+            .ToArray();
+    }
 
     public void Tick(float deltaTime)
     {
         if (float.IsNaN(deltaTime) || float.IsInfinity(deltaTime) || deltaTime < 0f)
             throw new ArgumentOutOfRangeException(nameof(deltaTime), "deltaTime must be finite and non-negative.");
 
-        for (var i = 0; i < _tickables.Count; i++)
-            _tickables[i].Tick(deltaTime);
+        for (var i = 0; i < _orderedTickables.Length; i++)
+            _orderedTickables[i].Tick(deltaTime);
     }
 }
 

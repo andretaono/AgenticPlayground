@@ -6,6 +6,12 @@ namespace Game.Runtime.Example;
 
 public static class RuntimeDemo
 {
+    private sealed class DemoSchedule : ITickSchedule
+    {
+        public IReadOnlyList<TickEntry> Entries { get; }
+        public DemoSchedule(IReadOnlyList<TickEntry> entries) => Entries = entries;
+    }
+
     private sealed class CounterTickable : ITickable
     {
         private int _ticks;
@@ -18,8 +24,12 @@ public static class RuntimeDemo
 
     public static void Run()
     {
-        var runtime = new RuntimeSystem();
-        runtime.Register(new CounterTickable());
+        var entries = new[]
+        {
+            new TickEntry(new CounterTickable(), Order: 10)
+        };
+
+        var runtime = new RuntimeSystem(new DemoSchedule(entries));
 
         runtime.Tick(1f / 60f);
         runtime.Tick(1f / 60f);
