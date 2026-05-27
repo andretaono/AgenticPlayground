@@ -1,4 +1,6 @@
+using Game.Foundation.GameMath.Example;
 using Game.Inventory.Example;
 
-// Run the inventory console demo.
+GameMathDemo.Run();
+Console.WriteLine();
 InventoryDemo.Run();
