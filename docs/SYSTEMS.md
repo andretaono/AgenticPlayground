@@ -32,8 +32,8 @@ Use movement states to determine behavior:
 - Airborne
 
 Variables:
-- Position (Vector3)
-- Velocity (Vector3)
+- Position (IVector3)
+- Velocity (IVector3)
 - MovementState (enum)
 
 Invariants:
@@ -41,6 +41,6 @@ Invariants:
 
 API:
 - GetMovementState(): returns current movement state
-- ApplyMovement(Vector3 input): applies movement input based on current state
-- Tick(float deltaTime): updates position and velocity based on current state and input
+- ApplyMovement(IVector3 input): applies movement input based on current state
+- AdvanceSimulation(float deltaTime): advances simulation (port)
 - GetPosition(): returns current position

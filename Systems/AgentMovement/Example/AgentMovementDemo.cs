@@ -1,5 +1,4 @@
-using System;
-using Game.AgentMovement.Core;
+using Game.AgentMovement.Controller;
 using Game.Foundation.GameMath.Core;
 using Game.Foundation.Primitives;
 
@@ -13,14 +12,14 @@ public static class AgentMovementDemo
         var movement = new AgentMovementSystem(math);
 
         var player = new EntityId(1);
-        movement.CreateAgent(player, math.Create(0f, 0f, 0f));
+        movement.Registry.CreateAgent(player, math.Create(0f, 0f, 0f));
 
         // Simulate holding right for 3 frames at 60fps.
         for (var i = 0; i < 3; i++)
         {
-            movement.ApplyMovement(player, math.Create(1f, 0f, 0f));
-            movement.AdvanceSimulation(1f / 60f);
-            Console.WriteLine($"Frame {i + 1}: pos={movement.GetPosition(player)} vel={movement.GetVelocity(player)}");
+            movement.Input.ApplyMovement(player, math.Create(1f, 0f, 0f));
+            movement.Simulation.AdvanceSimulation(1f / 60f);
+            Console.WriteLine($"Frame {i + 1}: pos={movement.Input.GetPosition(player)} vel={movement.Input.GetVelocity(player)}");
         }
     }
 }

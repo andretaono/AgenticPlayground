@@ -1,6 +1,10 @@
+using System;
 using System.Collections.Generic;
-using Game.AgentMovement.Core;
+using Game.AgentMovement.Controller;
+using Game.AgentMovement.Example;
+using Game.Foundation.GameMath.Example;
 using Game.Foundation.GameMath.Core;
+using Game.Inventory.Example;
 using Game.Runtime.Core;
 using Game.Runtime.Interfaces;
 
@@ -20,14 +24,14 @@ public static class Boot
 
     private sealed class AgentMovementRuntimeAdapter : ITickable
     {
-        private readonly Game.AgentMovement.Interfaces.IAgentMovementSystem _movement;
+        private readonly Game.AgentMovement.Interfaces.IAgentMovementSimulation _movementSimulation;
 
-        public AgentMovementRuntimeAdapter(Game.AgentMovement.Interfaces.IAgentMovementSystem movement)
+        public AgentMovementRuntimeAdapter(Game.AgentMovement.Interfaces.IAgentMovementSimulation movementSimulation)
         {
-            _movement = movement ?? throw new System.ArgumentNullException(nameof(movement));
+            _movementSimulation = movementSimulation ?? throw new System.ArgumentNullException(nameof(movementSimulation));
         }
 
-        public void Tick(float deltaTime) => _movement.AdvanceSimulation(deltaTime);
+        public void Tick(float deltaTime) => _movementSimulation.AdvanceSimulation(deltaTime);
     }
 
     public static RuntimeSystem CreateRuntime()
@@ -37,7 +41,7 @@ public static class Boot
 
         // Gameplay systems
         var movement = new AgentMovementSystem(math);
-        var movementAdapter = new AgentMovementRuntimeAdapter(movement);
+        var movementAdapter = new AgentMovementRuntimeAdapter(movement.Simulation);
 
         // Ordered schedule (lower Order ticks earlier)
         var entries = new List<TickEntry>
@@ -46,6 +50,20 @@ public static class Boot
         };
 
         return new RuntimeSystem(new TickSchedule(entries));
+    }
+
+    public static void Main()
+    {
+        GameMathDemo.Run();
+        Console.WriteLine();
+        InventoryDemo.Run();
+        Console.WriteLine();
+        AgentMovementDemo.Run();
+
+        Console.WriteLine();
+        Console.WriteLine("Boot runtime tick once...");
+        var runtime = CreateRuntime();
+        runtime.Tick(1f / 60f);
     }
 }
 
