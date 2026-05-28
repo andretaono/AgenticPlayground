@@ -1,4 +1,4 @@
-namespace Game.Foundation.Primitives;
+namespace Game.Systems.Foundation.Primitives;
 
 public readonly record struct EntityId(int Value)
 {

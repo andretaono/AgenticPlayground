@@ -1,12 +1,11 @@
-using System;
-using System.Collections.Generic;
-using Game.AgentMovement.Controller;
-using Game.AgentMovement.Example;
-using Game.Foundation.GameMath.Example;
-using Game.Foundation.GameMath.Core;
-using Game.Inventory.Example;
-using Game.Runtime.Core;
-using Game.Runtime.Interfaces;
+using Game.Systems.Domain.AgentMovement.Controller;
+using Game.Systems.Domain.AgentMovement.Example;
+using Game.Systems.Domain.AgentMovement.Interfaces;
+using Game.Systems.Domain.Inventory.Example;
+using Game.Systems.Foundation.GameMath.Core;
+using Game.Systems.Foundation.GameMath.Example;
+using Game.Systems.Orchestration.Runtime.Core;
+using Game.Systems.Orchestration.Runtime.Interfaces;
 
 namespace Game;
 
@@ -24,9 +23,9 @@ public static class Boot
 
     private sealed class AgentMovementRuntimeAdapter : ITickable
     {
-        private readonly Game.AgentMovement.Interfaces.IAgentMovementSimulation _movementSimulation;
+        private readonly IAgentMovementSimulation _movementSimulation;
 
-        public AgentMovementRuntimeAdapter(Game.AgentMovement.Interfaces.IAgentMovementSimulation movementSimulation)
+        public AgentMovementRuntimeAdapter(IAgentMovementSimulation movementSimulation)
         {
             _movementSimulation = movementSimulation ?? throw new System.ArgumentNullException(nameof(movementSimulation));
         }

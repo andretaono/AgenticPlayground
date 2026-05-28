@@ -1,7 +1,6 @@
-using System;
-using Game.Foundation.GameMath.Core;
+using Game.Systems.Foundation.GameMath.Core;
 
-namespace Game.Foundation.GameMath.Example;
+namespace Game.Systems.Foundation.GameMath.Example;
 
 public static class GameMathDemo
 {

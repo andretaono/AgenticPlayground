@@ -1,6 +1,6 @@
-using Game.Foundation.GameMath.Interfaces;
+using Game.Systems.Foundation.GameMath.Interfaces;
 
-namespace Game.Foundation.GameMath.Core.Model;
+namespace Game.Systems.Foundation.GameMath.Core.Model;
 
 /// <summary>
 /// Immutable engine-agnostic 3D vector.

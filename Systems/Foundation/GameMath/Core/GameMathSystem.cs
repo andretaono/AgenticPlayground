@@ -1,8 +1,8 @@
 using System;
-using Game.Foundation.GameMath.Core.Model;
-using Game.Foundation.GameMath.Interfaces;
+using Game.Systems.Foundation.GameMath.Core.Model;
+using Game.Systems.Foundation.GameMath.Interfaces;
 
-namespace Game.Foundation.GameMath.Core;
+namespace Game.Systems.Foundation.GameMath.Core;
 
 /// <summary>
 /// Entry point for engine-agnostic math operations.

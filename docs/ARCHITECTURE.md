@@ -1,15 +1,18 @@
-You are working on a modular, engine-agnostic C# project for an ARPG.
+You are working on a modular, engine-agnostic C# project for an ARPG video game.
 
 Architecture rules:
 - Systems must be pure C# with no game-engine dependencies (no `UnityEngine`, Unreal, Godot, etc.)
+- Do not add engine glue code (no `MonoBehaviour`, no `#if UNITY` adapters, no `/Unity` folders) unless explicitly requested
+- Engine integration (rendering, input, scene objects) lives outside this repository for now
+- Systems must expose explicit APIs
 - Avoid event-driven architecture unless explicitly justified
-- Systems should be deterministic, testable, and self-contained
+- Prefer direct orchestration over publish/subscribe patterns
+- Systems should be deterministic and testable
+- Runtime coordination happens externally
 - Each system must live in its own folder under /Systems/{SystemName}
-- Use hexagonal architecture (ports and adapters)
-- Use adapters in integration layer to translate between system contracts
-- Runtime systems define execution
-- Composition root defines relationships
+- Gameplay systems must not reference other gameplay systems
 - All systems may reference Foundation primitives/contracts under `Systems/Foundation/**`
+- Communication must happen via clearly defined contracts using interfaces
 - Systems should be in separate namespaces
 - Use Model View Controller folder structure for each system
 - Follow SOLID principles
@@ -25,4 +28,5 @@ Output expectations:
   - Core logic layer
   - Interface layer
   - Example usage implementation to be run from console
-  - Unit tests that fully cover core logic
+  - Unit tests that fully cover core logic layer
+- Do not generate engine glue folders or adapter code unless explicitly requested

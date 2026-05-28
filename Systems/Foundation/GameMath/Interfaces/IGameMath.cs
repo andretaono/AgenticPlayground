@@ -1,6 +1,6 @@
-using Game.Foundation.GameMath.Core.Model;
+using Game.Systems.Foundation.GameMath.Core.Model;
 
-namespace Game.Foundation.GameMath.Interfaces;
+namespace Game.Systems.Foundation.GameMath.Interfaces;
 
 public interface IGameMath
 {

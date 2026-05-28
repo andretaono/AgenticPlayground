@@ -1,4 +1,4 @@
-namespace Game.Foundation.GameMath.Interfaces;
+namespace Game.Systems.Foundation.GameMath.Interfaces;
 
 /// <summary>
 /// Engine-agnostic 3D vector contract used by gameplay systems.
