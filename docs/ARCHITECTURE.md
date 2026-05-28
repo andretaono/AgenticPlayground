@@ -5,6 +5,7 @@ Architecture rules:
 - Avoid event-driven architecture unless explicitly justified
 - Systems should be deterministic, testable, and self-contained
 - Each system must live in its own folder under /Systems/{SystemName}
+- Systems are split into three types, depending on their responsibilities; foundation, domain, and orchestration
 - Use hexagonal architecture (ports and adapters)
 - Use adapters in integration layer to translate between system contracts
 - Runtime systems define execution
@@ -17,12 +18,12 @@ Architecture rules:
 Code style:
 - Prefer composition over inheritance
 - Keep classes small and single-purpose
-- Avoid static global state unless explicitly requested
+- Avoid anything static
 
 Output expectations:
 - When creating a system, generate:
   - One class named {SystemName}System, which is the system entry point and has dependencies injected via its constructor
-  - Core logic layer
-  - Interface layer
+  - Controller layer
+  - Model layer
   - Example usage implementation to be run from console
-  - Unit tests that fully cover core logic
+  - Unit tests that fully cover controller logic

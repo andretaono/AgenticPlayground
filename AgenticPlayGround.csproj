@@ -5,10 +5,27 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <!-- Make new files default to Game.* namespace -->
+    <RootNamespace>Game</RootNamespace>
+    <!-- Optional: set assembly name to match -->
+    <AssemblyName>Game</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="AgenticPlayGround.Tests/**" />
+    <Compile Remove="Systems\Domain\Inventory\Unity\**" />
+    <Compile Remove="Systems\Domain\Inventory\Unity\**" />
+    <Compile Remove="Systems\Domain\Inventory\Unity\**" />
+    <Compile Remove="Systems\Orchestration\Runtime\Unity\**" />
+    <EmbeddedResource Remove="Systems\Domain\Inventory\Unity\**" />
+    <EmbeddedResource Remove="Systems\Domain\Inventory\Unity\**" />
+    <EmbeddedResource Remove="Systems\Domain\Inventory\Unity\**" />
+    <EmbeddedResource Remove="Systems\Orchestration\Runtime\Unity\**" />
+    <None Remove="Systems\Domain\Inventory\Unity\**" />
+    <None Remove="Systems\Domain\Inventory\Unity\**" />
+    <None Remove="Systems\Domain\Inventory\Unity\**" />
+    <None Remove="Systems\Orchestration\Runtime\Unity\**" />
   </ItemGroup>
 
 </Project>
