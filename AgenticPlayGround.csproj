@@ -16,4 +16,13 @@
     <Compile Remove="AgenticPlayGround.Tests/**" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Tests\AgentCommand.Tests\AgentCommand.Tests.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.assert" Version="2.9.3" />
+    <PackageReference Include="xunit.extensibility.core" Version="2.9.3" />
+  </ItemGroup>
+
 </Project>

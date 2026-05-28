@@ -1,3 +1,4 @@
+using Game.Systems.Domain.AgentCommand.Example;
 using Game.Systems.Domain.AgentMovement.Controller;
 using Game.Systems.Domain.AgentMovement.Example;
 using Game.Systems.Domain.AgentMovement.Interfaces;
@@ -63,6 +64,8 @@ public static class Boot
         Console.WriteLine("Boot runtime tick once...");
         var runtime = CreateRuntime();
         runtime.Tick(1f / 60f);
-    }
+
+		new AgentCommandDemo().Run();
+	}
 }
 

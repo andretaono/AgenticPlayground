@@ -14,7 +14,7 @@ Provide commonly used math types and operations through engine-agnostic abstract
 - `IGameMath` — `Create`, `Add`, `Subtract`, `Scale`, `Dot`, `Magnitude`, `Distance`, `Normalize`, `IsFinite`
 - `GameMathSystem` — default implementation of `IGameMath`
 
-##Runtime
+## Runtime
 Summary: Engine-agnostic runtime orchestrator that ticks registered systems each frame.
 
 API:
@@ -44,3 +44,70 @@ API:
 - ApplyMovement(IVector3 input): applies movement input based on current state
 - AdvanceSimulation(float deltaTime): advances simulation (port)
 - GetPosition(): returns current position
+
+## AgentCommand
+### Summary
+The AgentCommandSystem is responsible for receiving, buffering, and exposing agent-issued simulation commands in a deterministic and source-agnostic manner. The system acts as the boundary between command producers and simulation systems. The AgentCommandSystem does not interpret gameplay intent, mutate gameplay state, or depend on device-specific input implementations.
+
+The system is designed to support:
+- player input
+- AI agents
+- replay systems
+- networking
+- automated tests
+- scripted sequences
+
+through a unified command pipeline.
+
+### Notes
+- Commands represent intent, not completed actions.
+- The system is agent-agnostic and device-agnostic.
+- Commands are immutable once submitted.
+- Simulation systems must not know command origin.
+- Command submission and command execution are separate phases.
+- Runtime orchestration controls when commands are consumed.
+- The system is deterministic under identical command sequences.
+- The system does not directly depend on Unity APIs.
+- The system does not perform gameplay simulation.
+- The system does not own entity state.
+
+### Invariants
+- Deterministic Processing
+- Identical command sequences must produce identical simulation results.
+- Immutable Commands
+- Commands must not be modified after submission.
+- Explicit Ownership
+- Every command must reference a valid AgentId
+
+### API
+#### SubmitCommand
+Submits a command for future simulation execution.
+void SubmitCommand(IAgentCommand command);
+#### ClearCommands
+Clears the active command buffer after simulation execution completes.
+void ClearCommands();
+#### RegisterAgent
+Registers a valid simulation agent capable of issuing commands.
+void RegisterAgent(AgentId agentId);
+#### UnregisterAgent
+Removes an agent from the command system.
+void UnregisterAgent(AgentId agentId);
+#### HasCommands
+Returns whether commands currently exist in the active buffer.
+bool HasCommands();
+
+### Initial command types
+public readonly struct MoveCommand : IAgentCommand
+{
+    public AgentId Agent;
+    public Vector2 Direction;
+}
+public readonly struct JumpCommand : IAgentCommand
+{
+    public AgentId Agent;
+}
+public readonly struct AttackCommand : IAgentCommand
+{
+    public AgentId Agent;
+    public EntityId Target;
+}
