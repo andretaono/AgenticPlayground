@@ -1,15 +1,18 @@
+using Game.Scenarios.Core.Interfaces;
 using Game.Systems.Domain.Inventory.Core.Controller;
 using Game.Systems.Domain.Inventory.Core.Model;
 using Game.Systems.Domain.Inventory.Interfaces;
 
-namespace Game.Systems.Domain.Inventory.Example;
+namespace Game.Scenarios;
 
 /// <summary>
 /// Console example demonstrating the core inventory system.
 /// </summary>
-public static class InventoryDemo
+public class InventoryDemo : IScenario
 {
-    public static void Run()
+	public string Name => "inventory";
+
+	public void Run()
     {
         var inventory = new InventoryController(capacity: 5);
         inventory.ItemAdded += (_, e) => Console.WriteLine($"[Event] Added: {e.Item.Name}");

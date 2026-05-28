@@ -1,12 +1,15 @@
+using Game.Scenarios.Core.Interfaces;
 using Game.Systems.Domain.AgentMovement.Controller;
 using Game.Systems.Foundation.GameMath.Core;
 using Game.Systems.Foundation.Primitives;
 
-namespace Game.Systems.Domain.AgentMovement.Example;
+namespace Game.Scenarios;
 
-public static class AgentMovementDemo
+public class AgentMovementDemo : IScenario
 {
-    public static void Run()
+	public string Name => "agent-movement";
+
+	public void Run()
     {
         var math = new GameMathSystem();
         var movement = new AgentMovementSystem(math);

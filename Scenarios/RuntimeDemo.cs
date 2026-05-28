@@ -1,11 +1,14 @@
+using Game.Scenarios.Core.Interfaces;
 using Game.Systems.Orchestration.Runtime.Core;
 using Game.Systems.Orchestration.Runtime.Interfaces;
 
-namespace Game.Systems.Orchestration.Runtime.Example;
+namespace Game.Scenarios;
 
-public static class RuntimeDemo
+public class RuntimeDemo : IScenario
 {
-    private sealed class DemoSchedule : ITickSchedule
+	public string Name => "runtime";
+
+	private sealed class DemoSchedule : ITickSchedule
     {
         public IReadOnlyList<TickEntry> Entries { get; }
         public DemoSchedule(IReadOnlyList<TickEntry> entries) => Entries = entries;
@@ -21,7 +24,7 @@ public static class RuntimeDemo
         }
     }
 
-    public static void Run()
+    public void Run()
     {
         var entries = new[]
         {

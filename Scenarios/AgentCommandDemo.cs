@@ -1,13 +1,16 @@
+using Game.Scenarios.Core.Interfaces;
 using Game.Systems.Domain.AgentCommand.Controller;
 using Game.Systems.Domain.AgentCommand.Core;
 using Game.Systems.Foundation.GameMath.Core.Model;
 using Game.Systems.Foundation.Primitives;
 
-namespace Game.Systems.Domain.AgentCommand.Example;
+namespace Game.Scenarios;
 
-public class AgentCommandDemo
+public class AgentCommandDemo : IScenario
 {
-    public void Run()
+	public string Name => "agent-command";
+
+	public void Run()
     {
         var system = new AgentCommandSystem();
 

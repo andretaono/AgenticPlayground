@@ -1,12 +1,18 @@
-using Game.Systems.Domain.AgentCommand.Example;
+// DEPRECATED
+
+/*
+
 using Game.Systems.Domain.AgentMovement.Controller;
-using Game.Systems.Domain.AgentMovement.Example;
 using Game.Systems.Domain.AgentMovement.Interfaces;
-using Game.Systems.Domain.Inventory.Example;
 using Game.Systems.Foundation.GameMath.Core;
+
 using Game.Systems.Foundation.GameMath.Example;
 using Game.Systems.Orchestration.Runtime.Core;
 using Game.Systems.Orchestration.Runtime.Interfaces;
+using Game.Systems.Domain.AgentCommand.Controller;
+using Game.Systems.Foundation.Primitives;
+using Game.Systems.Orchestration.Adapters;
+using Game.Scenarios;
 
 namespace Game;
 
@@ -43,9 +49,16 @@ public static class Boot
         var movement = new AgentMovementSystem(math);
         var movementAdapter = new AgentMovementRuntimeAdapter(movement.Simulation);
 
+        // Command system and adapters
+        var commandSystem = new AgentCommandSystem();
+        var inputAdapter = new InputToCommandAdapter(commandSystem, new AgentId(1));
+        var commandToMovement = new CommandToMovementAdapter(commandSystem, movement.Input, math);
+
         // Ordered schedule (lower Order ticks earlier)
         var entries = new List<TickEntry>
         {
+            new(inputAdapter, Order: 50),
+            new(commandToMovement, Order: 75),
             new(movementAdapter, Order: 100),
         };
 
@@ -68,4 +81,6 @@ public static class Boot
 		new AgentCommandDemo().Run();
 	}
 }
+
+*/
 
