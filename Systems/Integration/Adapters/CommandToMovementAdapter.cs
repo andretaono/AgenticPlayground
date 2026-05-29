@@ -2,12 +2,10 @@ using System;
 using Game.Systems.Domain.AgentCommand.Controller;
 using Game.Systems.Domain.AgentCommand.Core;
 using Game.Systems.Domain.AgentMovement.Interfaces;
-using Game.Systems.Foundation.GameMath.Core.Model;
 using Game.Systems.Foundation.Primitives;
-using System.Linq;
-using Game.Systems.Orchestration.Runtime.Interfaces;
+using Game.Systems.Integration.Runtime.Interfaces;
 
-namespace Game.Systems.Orchestration.Adapters;
+namespace Game.Systems.Integration.Adapters;
 
 /// <summary>
 /// Adapter that consumes commands from AgentCommandSystem and applies movement to AgentMovementController.

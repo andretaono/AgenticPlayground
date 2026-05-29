@@ -1,6 +1,6 @@
 using Game.Scenarios.Core.Interfaces;
-using Game.Systems.Orchestration.Runtime.Core;
-using Game.Systems.Orchestration.Runtime.Interfaces;
+using Game.Systems.Integration.Runtime.Core;
+using Game.Systems.Integration.Runtime.Interfaces;
 
 namespace Game.Scenarios;
 

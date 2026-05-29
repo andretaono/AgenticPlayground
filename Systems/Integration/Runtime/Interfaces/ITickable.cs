@@ -1,4 +1,4 @@
-namespace Game.Systems.Orchestration.Runtime.Interfaces;
+namespace Game.Systems.Integration.Runtime.Interfaces;
 
 public interface ITickable
 {

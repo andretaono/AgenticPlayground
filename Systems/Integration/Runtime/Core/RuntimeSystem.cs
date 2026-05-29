@@ -1,9 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Game.Systems.Orchestration.Runtime.Interfaces;
+using Game.Systems.Integration.Runtime.Interfaces;
 
-namespace Game.Systems.Orchestration.Runtime.Core;
+namespace Game.Systems.Integration.Runtime.Core;
 
 /// <summary>
 /// Engine-agnostic runtime orchestrator. Advances an injected, ordered schedule of tickables.

@@ -4,9 +4,9 @@ using Game.Systems.Domain.AgentCommand.Controller;
 using Game.Systems.Domain.AgentCommand.Core;
 using Game.Systems.Foundation.GameMath.Core.Model;
 using Game.Systems.Foundation.Primitives;
-using Game.Systems.Orchestration.Runtime.Interfaces;
+using Game.Systems.Integration.Runtime.Interfaces;
 
-namespace Game.Systems.Orchestration.Adapters;
+namespace Game.Systems.Integration.Adapters;
 
 /// <summary>
 /// Maps keyboard input (W/A/S/D) into MoveCommand submissions to the AgentCommandSystem.

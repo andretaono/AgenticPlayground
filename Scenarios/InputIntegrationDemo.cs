@@ -1,10 +1,10 @@
 ﻿using Game.Systems.Foundation.GameMath.Core;
 using Game.Systems.Foundation.Primitives;
 using Game.Systems.Domain.AgentMovement.Controller;
-using Game.Systems.Orchestration.Runtime.Core;
-using Game.Systems.Orchestration.Runtime.Interfaces;
+using Game.Systems.Integration.Runtime.Core;
+using Game.Systems.Integration.Runtime.Interfaces;
 using Game.Systems.Domain.AgentCommand.Controller;
-using Game.Systems.Orchestration.Adapters;
+using Game.Systems.Integration.Adapters;
 using Game.Scenarios.Core.Interfaces;
 
 namespace Game.Scenarios;
