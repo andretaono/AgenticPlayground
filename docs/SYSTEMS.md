@@ -111,3 +111,49 @@ public readonly struct AttackCommand : IAgentCommand
     public AgentId Agent;
     public EntityId Target;
 }
+
+## World
+
+### Summary
+Provides a simulation-oriented representation of world space independent of rendering or engine-specific concerns.
+
+### Notes
+- Presentation must be handled through adapters.
+- World data sources should be replaceable.
+- Initial implementation should prioritize simplicity and readability.
+
+### Variables
+
+#### WorldMap
+Represents world state.
+
+#### WorldTile
+Represents a single tile.
+
+#### TileType
+Semantic tile category.
+
+Examples:
+- Ground
+- Wall
+- Water
+
+#### WorldPosition
+Spatial location within the world.
+
+### Invariants
+
+- Presentation must not mutate world state.
+- World queries must be deterministic.
+- Tile access must be bounds-safe.
+
+### API
+
+#### IWorldSystem
+Provides world queries and tile access.
+
+#### IWorldDataSource
+Loads or generates world data.
+
+#### IWorldPresenter
+Visualizes world state.
