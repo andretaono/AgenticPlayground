@@ -157,3 +157,67 @@ Loads or generates world data.
 
 #### IWorldPresenter
 Visualizes world state.
+
+## EntityResource
+
+### Summary
+Manages resources associated with entities, such as Health, Mana, Stamina, Energy, Hunger, etc.
+
+### Notes
+- Resources are attached to entities
+- Supports passive regeneration and depletion through simulation ticks
+- Supports multiple resource types per entity
+- Does not communicate via events
+- Resource state is queried explicitly by other systems
+- Full and depleted states are derived from current values
+
+### Variables
+
+#### ResourceId
+Unique identifier for a resource type.
+
+#### EntityId
+Owner of the resource.
+
+#### Name
+Human-readable resource name.
+
+#### CurrentAmount
+Current resource value.
+
+#### MaximumAmount
+Maximum allowed value.
+
+#### RegenerationRate
+Amount restored per second.
+
+#### DepletionRate
+Amount consumed per second.
+
+### Invariants
+
+- CurrentAmount >= 0
+- CurrentAmount <= MaximumAmount
+- MaximumAmount > 0
+- An Entity can have no more than one resource of the same type
+
+### API
+
+#### ResourceController
+
+- IncreaseResource(EntityId, ResourceId, amount)
+- DecreaseResource(EntityId, ResourceId, amount)
+- SetResource(EntityId, ResourceId, amount)
+- GetResource(EntityId, ResourceId)
+- IsDepleted(EntityId, ResourceId)
+- IsFull(EntityId, ResourceId)
+
+#### SimulationController
+
+- AdvanceSimulation(float deltaTime)
+
+#### RegistryController
+
+- AddResource(EntityId, ResourceDefinition)
+- RemoveResource(EntityId, ResourceId)
+- HasResource(EntityId, ResourceId)
