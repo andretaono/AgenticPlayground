@@ -9,7 +9,7 @@ public enum AgentMovementState
 	Airborne
 }
 
-internal sealed class AgentMovementAgentState
+public sealed class AgentMovementAgentState
 {
     public Vector3 Position;
     public Vector3 Velocity;

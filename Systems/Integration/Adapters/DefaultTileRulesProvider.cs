@@ -20,7 +20,7 @@ public enum TileRules
 /// Example mapping from tile id to gameplay rules.
 /// Combine flags to represent composite behavior.
 /// </summary>
-public sealed class DefaultTileRulesProvider
+public sealed class DefaultTileRulesProvider : ITileRulesProvider
 {
     public TileRules GetRules(TileId id)
     {

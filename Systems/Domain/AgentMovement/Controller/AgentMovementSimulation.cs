@@ -10,13 +10,19 @@ internal class AgentMovementSimulation : IAgentMovementSimulation
     private readonly IGameMath _math;
     private readonly AgentMovementConfig _config;
     private readonly AgentMovementStateStore _store;
+	private readonly IAgentMovementPolicy _movementPolicy;
 
-    public AgentMovementSimulation(IGameMath math, AgentMovementConfig config, AgentMovementStateStore store)
+    public AgentMovementSimulation(
+		IGameMath math, 
+		AgentMovementConfig config, 
+		AgentMovementStateStore store,
+		IAgentMovementPolicy movementPolicy)
     {
         _math = math ?? throw new ArgumentNullException(nameof(math));
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _store = store ?? throw new ArgumentNullException(nameof(store));
-    }
+		_movementPolicy = movementPolicy ?? throw new ArgumentNullException(nameof(movementPolicy));
+	}
 
     public void AdvanceSimulation(float deltaTime)
     {
@@ -38,6 +44,9 @@ internal class AgentMovementSimulation : IAgentMovementSimulation
         if (agent == null) throw new ArgumentNullException(nameof(agent));
         if (math == null) throw new ArgumentNullException(nameof(math));
         if (config == null) throw new ArgumentNullException(nameof(config));
+
+		if (!_movementPolicy.CanMove(agent))
+			return;
 
         var speed = agent.MovementState switch
         {

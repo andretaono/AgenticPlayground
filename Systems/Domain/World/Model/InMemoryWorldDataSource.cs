@@ -18,8 +18,9 @@ public sealed class InMemoryWorldDataSource : IWorldDataSource
 
     public int Width { get; }
     public int Height { get; }
+	public int TileSize => 1; // for simplicity, we assume each tile is 1x1 units in size
 
-    public TileId[,] LoadMap()
+	public TileId[,] LoadMap()
     {
         var copy = new TileId[Width, Height];
         for (var x = 0; x < Width; x++)

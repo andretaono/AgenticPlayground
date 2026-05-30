@@ -13,7 +13,10 @@ public sealed class AgentMovementSystem : IAgentMovementSystem
     public IAgentMovementController Input { get; }
     public IAgentMovementSimulation Simulation { get; }
 
-	public AgentMovementSystem(IGameMath math, AgentMovementConfig? config = null)
+	public AgentMovementSystem(
+		IGameMath math, 
+		IAgentMovementPolicy movementPolicy,
+		AgentMovementConfig? config = null)
     {
         var checkedMath = math ?? throw new ArgumentNullException(nameof(math));
         var checkedConfig = config ?? AgentMovementConfig.Default;
@@ -21,7 +24,7 @@ public sealed class AgentMovementSystem : IAgentMovementSystem
 
         Registry = new AgentMovementRegistry(checkedMath, store);
         Input = new AgentMovementController(checkedMath, store);
-        Simulation = new AgentMovementSimulation(checkedMath, checkedConfig, store);
+        Simulation = new AgentMovementSimulation(checkedMath, checkedConfig, store, movementPolicy);
     }
 }
 
