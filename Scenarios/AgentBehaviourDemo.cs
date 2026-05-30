@@ -1,12 +1,12 @@
 using Game.Scenarios.Core.Interfaces;
 using Game.Systems.Domain.AgentBehaviour;
 using Game.Systems.Domain.AgentBehaviour.Model;
-using Game.Systems.Domain.AgentBehaviour.Model.Behaviours;
 using Game.Systems.Domain.AgentBehaviour.Ports;
 using Game.Systems.Domain.AgentCommand;
 using Game.Systems.Foundation.GameMath.Core.Model;
 using Game.Systems.Foundation.Primitives;
 using Game.Systems.Integration.Adapters;
+using Game.Systems.Integration.Behaviours;
 
 namespace Game.Scenarios;
 
@@ -50,7 +50,7 @@ public sealed class AgentBehaviourDemo : IScenario
 			};
 		});
 
-		var behaviourSystem = new AgentBehaviourSystem(contextProvider);
+		var behaviourSystem = new AgentBehaviourSystem(contextProvider, new IdleBehaviour());
 		behaviourSystem.Behaviour.AddBehaviour(agentId, new ChaseBehaviour(priority: 10));
 		behaviourSystem.Behaviour.AddBehaviour(agentId, new AttackBehaviour(priority: 20));
 
@@ -80,7 +80,7 @@ public sealed class AgentBehaviourDemo : IScenario
 			TargetInAttackRange = false
 		});
 
-		var behaviourSystem = new AgentBehaviourSystem(contextProvider);
+		var behaviourSystem = new AgentBehaviourSystem(contextProvider, new IdleBehaviour());
 		behaviourSystem.Behaviour.AddBehaviour(agentId, new ChaseBehaviour());
 		behaviourSystem.Behaviour.AddBehaviour(agentId, new AttackBehaviour());
 
@@ -103,7 +103,7 @@ public sealed class AgentBehaviourDemo : IScenario
 			TargetInAttackRange = false
 		});
 
-		var behaviourSystem = new AgentBehaviourSystem(contextProvider);
+		var behaviourSystem = new AgentBehaviourSystem(contextProvider, new IdleBehaviour());
 		var commandSystem = new AgentCommandSystem();
 		commandSystem.RegisterAgent(agentId);
 

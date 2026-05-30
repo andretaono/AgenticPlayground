@@ -19,9 +19,11 @@ public readonly struct MoveBehaviourIntent : Ports.IBehaviourIntent
 public readonly struct AttackBehaviourIntent : Ports.IBehaviourIntent
 {
 	public AgentId Agent { get; init; }
+	public EntityId Target { get; init; }
 
-	public AttackBehaviourIntent(AgentId agent)
+	public AttackBehaviourIntent(AgentId agent, EntityId target)
 	{
 		Agent = agent;
+		Target = target;
 	}
 }

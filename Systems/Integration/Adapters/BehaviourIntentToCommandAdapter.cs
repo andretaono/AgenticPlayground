@@ -32,7 +32,7 @@ public sealed class BehaviourIntentToCommandAdapter
 					_commandSystem.SubmitCommand(new MoveCommand(move.Agent, move.Direction));
 					break;
 				case AttackBehaviourIntent attack:
-					_commandSystem.SubmitCommand(new AttackCommand(attack.Agent));
+					_commandSystem.SubmitCommand(new AttackCommand(attack.Agent, attack.Target));
 					break;
 			}
 		}

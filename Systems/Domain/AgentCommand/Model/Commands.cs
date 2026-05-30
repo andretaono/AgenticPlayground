@@ -19,9 +19,11 @@ public readonly struct MoveCommand : IAgentCommand
 public readonly struct AttackCommand : IAgentCommand
 {
 	public AgentId Agent { get; init; }
+	public EntityId Target { get; init; }
 
-	public AttackCommand(AgentId agent)
+	public AttackCommand(AgentId agent, EntityId target)
 	{
 		Agent = agent;
+		Target = target;
 	}
 }

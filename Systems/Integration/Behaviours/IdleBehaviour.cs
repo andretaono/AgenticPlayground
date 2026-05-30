@@ -1,9 +1,9 @@
 using Game.Systems.Domain.AgentBehaviour.Model;
 using Game.Systems.Domain.AgentBehaviour.Ports;
 
-namespace Game.Systems.Domain.AgentBehaviour.Model.Behaviours;
+namespace Game.Systems.Integration.Behaviours;
 
-internal sealed class IdleBehaviour : IBehaviour
+public sealed class IdleBehaviour : IBehaviour
 {
 	public BehaviourId Id => new("idle");
 	public int Priority => int.MinValue;

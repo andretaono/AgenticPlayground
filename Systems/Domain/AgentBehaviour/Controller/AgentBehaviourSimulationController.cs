@@ -1,5 +1,4 @@
 using Game.Systems.Domain.AgentBehaviour.Model;
-using Game.Systems.Domain.AgentBehaviour.Model.Behaviours;
 using Game.Systems.Domain.AgentBehaviour.Ports;
 using Game.Systems.Foundation.Primitives;
 
@@ -9,14 +8,16 @@ internal sealed class AgentBehaviourSimulationController : IAgentBehaviourSimula
 {
 	private readonly AgentBehaviourStateStore _store;
 	private readonly IBehaviourContextProvider _contextProvider;
-	private readonly IdleBehaviour _idleBehaviour = new();
+	private readonly IBehaviour _idleFallback;
 
 	public AgentBehaviourSimulationController(
 		AgentBehaviourStateStore store,
-		IBehaviourContextProvider contextProvider)
+		IBehaviourContextProvider contextProvider,
+		IBehaviour idleFallback)
 	{
 		_store = store ?? throw new ArgumentNullException(nameof(store));
 		_contextProvider = contextProvider ?? throw new ArgumentNullException(nameof(contextProvider));
+		_idleFallback = idleFallback ?? throw new ArgumentNullException(nameof(idleFallback));
 	}
 
 	public void Tick(float deltaTime)
@@ -50,6 +51,6 @@ internal sealed class AgentBehaviourSimulationController : IAgentBehaviourSimula
 				best = entry;
 		}
 
-		return best?.Behaviour ?? _idleBehaviour;
+		return best?.Behaviour ?? _idleFallback;
 	}
 }

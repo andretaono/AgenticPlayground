@@ -54,12 +54,12 @@ public sealed class PlayerWorldMovementScenario : IScenario
 		movement.Registry.CreateAgent(entityId, math.Create(startX, startY, 0f));
 
 		var inputAdapter = new InputToCommandAdapter(commandSystem, agentId);
-		var commandToMovement = new CommandToMovementAdapter(commandSystem, movement.Input, math);
+		var commandExecution = new AgentCommandExecutionAdapter(commandSystem, movement.Input, math);
 		var movementSimulation = new AgentMovementSimulationAdapter(movement.Simulation);
 
 		var runtime = new RuntimeSystem(new SimpleSchedule(new[]
 		{
-			new TickEntry(commandToMovement, Order: 75),
+			new TickEntry(commandExecution, Order: 75),
 			new TickEntry(movementSimulation, Order: 100)
 		}));
 

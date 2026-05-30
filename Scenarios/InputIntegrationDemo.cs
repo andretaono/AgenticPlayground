@@ -36,14 +36,14 @@ public class InputIntegrationDemo : IScenario
 
         // Adapters
         var inputAdapter = new InputToCommandAdapter(commandSystem, agentId);
-        var commandToMovement = new CommandToMovementAdapter(commandSystem, movement.Input, math);
+        var commandExecution = new AgentCommandExecutionAdapter(commandSystem, movement.Input, math);
         var movementAdapter = new AgentMovementSimulationAdapter(movement.Simulation);
 
         // Build runtime schedule: input -> commands->movement -> simulate
         var entries = new List<TickEntry>
         {
             new TickEntry(inputAdapter, Order: 50),
-            new TickEntry(commandToMovement, Order: 75),
+            new TickEntry(commandExecution, Order: 75),
             new TickEntry(movementAdapter, Order: 100)
         };
 

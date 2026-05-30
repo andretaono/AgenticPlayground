@@ -13,12 +13,15 @@ public sealed class AgentBehaviourSystem : IAgentBehaviourSystem
 	public IAgentBehaviourSimulation Simulation { get; }
 	public IAgentBehaviourOutput Output { get; }
 
-	public AgentBehaviourSystem(IBehaviourContextProvider contextProvider)
+	public AgentBehaviourSystem(IBehaviourContextProvider contextProvider, IBehaviour idleFallback)
 	{
+		if (idleFallback is null)
+			throw new ArgumentNullException(nameof(idleFallback));
+
 		var store = new AgentBehaviourStateStore();
 
 		Behaviour = new BehaviourController(store);
-		Simulation = new AgentBehaviourSimulationController(store, contextProvider);
+		Simulation = new AgentBehaviourSimulationController(store, contextProvider, idleFallback);
 		Output = new AgentBehaviourOutputController(store);
 	}
 }

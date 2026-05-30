@@ -2,7 +2,7 @@ using Game.Systems.Domain.AgentBehaviour.Model;
 using Game.Systems.Domain.AgentBehaviour.Ports;
 using Game.Systems.Foundation.GameMath.Core.Model;
 
-namespace Game.Systems.Domain.AgentBehaviour.Model.Behaviours;
+namespace Game.Systems.Integration.Behaviours;
 
 public sealed class ChaseBehaviour : IBehaviour
 {

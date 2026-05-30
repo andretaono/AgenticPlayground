@@ -221,3 +221,35 @@ Amount consumed per second.
 - AddResource(EntityId, ResourceDefinition)
 - RemoveResource(EntityId, ResourceId)
 - HasResource(EntityId, ResourceId)
+
+## AgentCombat
+
+### Summary
+Ability-based combat framework. Entities carry ability triggers; when a trigger fires, the system executes targeting, conditions, modifiers, and effects in a deterministic pipeline.
+
+### Notes
+- Domain defines ports and execution framework only
+- Concrete triggers, targeting rules, conditions, and effects live in `Systems/Integration/Combat/`
+- Commands arm `PendingAttackTarget` on combat entities; simulation tick executes abilities then clears pending state
+- Damage is applied via Integration `IEffect` adapters (e.g. `ResourceDamageEffect` → EntityResource)
+
+### Ports
+- `ICombatEntity` — entity identity, pending attack target, ability triggers
+- `ICombatEntityRegistry` — register/lookup combat entities by `EntityId`
+- `IAbilityExecutor` — executes a single ability
+- `IAbilityTrigger`, `ITargetingRule`, `ICondition`, `IEffect`, `IEffectModifier` — ability pipeline contracts
+- `IAgentCombatSimulation` — `Tick(float deltaTime)`
+
+### Recommended tick order
+1. AgentBehaviour simulation
+2. Behaviour intent → command submission
+3. AgentCommand execution (move + arm attacks)
+4. AgentCombat simulation
+5. AgentMovement simulation
+6. EntityResource simulation
+
+### Integration adapters
+- `AgentCombatSimulationAdapter` — runtime tick bridge
+- `AgentCommandExecutionAdapter` — processes `MoveCommand` and arms `AttackCommand`
+- `LoggingAbilityExecutor` — wraps executor with console output
+- `MeleeAttackAbilityFactory`, `PendingTargetTrigger`, `ExplicitTargetTargetingRule`, `ResourceDamageEffect` — concrete melee attack wiring

@@ -56,7 +56,7 @@ Examples:
 - Behaviours must not directly mutate world state
 - Behaviours must only produce AgentCommands
 - Behaviour selection must not depend on frame timing or external randomness (unless seeded via Foundation RNG)
-- If no behaviour is valid, agent defaults to IdleBehaviour (no-op)
+- If no behaviour is valid, agent defaults to the injected idle fallback behaviour (typically Integration `IdleBehaviour`, no-op)
 
 ---
 
@@ -103,7 +103,8 @@ public interface IBehaviour
 - `AgentBehaviourSystem.cs`
 - `Ports/` — `IBehaviour`, `IBehaviourController`, `IAgentBehaviourSimulation`, `IAgentBehaviourOutput`, `IBehaviourContextProvider`, intents
 - `Controller/` — registry, simulation, output
-- `Model/` — `BehaviourContext`, state store, reference behaviours (`ChaseBehaviour`, `AttackBehaviour`)
+- `Model/` — `BehaviourContext`, state store
+- Concrete behaviours (`ChaseBehaviour`, `AttackBehaviour`, `IdleBehaviour`) live in `Systems/Integration/Behaviours/`
 
 ### Integration
 

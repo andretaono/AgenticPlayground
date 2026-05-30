@@ -21,7 +21,7 @@ public class AgentCommandDemo : IScenario
         system.RegisterAgent(a2);
 
         system.SubmitCommand(new MoveCommand(a1, new Vector2(1f, 0f)));
-        system.SubmitCommand(new AttackCommand(a1));
+        system.SubmitCommand(new AttackCommand(a1, new EntityId(99)));
 
         Console.WriteLine($"Has commands: {system.HasCommands()}");
 

@@ -1,7 +1,7 @@
 using Game.Systems.Domain.AgentBehaviour.Model;
 using Game.Systems.Domain.AgentBehaviour.Ports;
 
-namespace Game.Systems.Domain.AgentBehaviour.Model.Behaviours;
+namespace Game.Systems.Integration.Behaviours;
 
 public sealed class AttackBehaviour : IBehaviour
 {
@@ -14,5 +14,5 @@ public sealed class AttackBehaviour : IBehaviour
 		context.HasTarget && context.TargetInAttackRange;
 
 	public IReadOnlyList<IBehaviourIntent> Execute(BehaviourContext context) =>
-		new IBehaviourIntent[] { new AttackBehaviourIntent(context.Agent) };
+		new IBehaviourIntent[] { new AttackBehaviourIntent(context.Agent, context.TargetEntity!.Value) };
 }
