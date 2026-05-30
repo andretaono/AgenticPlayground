@@ -1,7 +1,8 @@
 using System;
 using System.Collections.Generic;
-using Game.Systems.Domain.AgentCommand.Controller;
-using Game.Systems.Domain.AgentCommand.Core;
+using Game.Systems.Domain.AgentCommand;
+using Game.Systems.Domain.AgentCommand.Model;
+using Game.Systems.Domain.AgentCommand.Ports;
 using Game.Systems.Foundation.GameMath.Core.Model;
 using Game.Systems.Foundation.Primitives;
 using Game.Systems.Integration.Runtime.Interfaces;
@@ -15,10 +16,10 @@ namespace Game.Systems.Integration.Adapters;
 /// </summary>
 public sealed class InputToCommandAdapter : ITickable
 {
-    private readonly AgentCommandSystem _commandSystem;
+    private readonly IAgentCommandSystem _commandSystem;
     private readonly AgentId _agentId;
 
-    public InputToCommandAdapter(AgentCommandSystem commandSystem, AgentId agentId)
+    public InputToCommandAdapter(IAgentCommandSystem commandSystem, AgentId agentId)
     {
         _commandSystem = commandSystem ?? throw new ArgumentNullException(nameof(commandSystem));
         _agentId = agentId;

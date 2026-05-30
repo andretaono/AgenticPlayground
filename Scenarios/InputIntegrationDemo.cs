@@ -1,9 +1,9 @@
 ﻿using Game.Systems.Foundation.GameMath.Core;
 using Game.Systems.Foundation.Primitives;
-using Game.Systems.Domain.AgentMovement.Controller;
+using Game.Systems.Domain.AgentMovement;
 using Game.Systems.Integration.Runtime.Core;
 using Game.Systems.Integration.Runtime.Interfaces;
-using Game.Systems.Domain.AgentCommand.Controller;
+using Game.Systems.Domain.AgentCommand;
 using Game.Systems.Integration.Adapters;
 using Game.Scenarios.Core.Interfaces;
 

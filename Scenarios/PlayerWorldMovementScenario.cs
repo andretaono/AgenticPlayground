@@ -1,6 +1,6 @@
 using Game.Scenarios.Core.Interfaces;
-using Game.Systems.Domain.AgentCommand.Controller;
-using Game.Systems.Domain.AgentMovement.Controller;
+using Game.Systems.Domain.AgentCommand;
+using Game.Systems.Domain.AgentMovement;
 using Game.Systems.Domain.AgentMovement.Model;
 using Game.Systems.Domain.World;
 using Game.Systems.Domain.World.Model;
@@ -63,6 +63,7 @@ public sealed class PlayerWorldMovementScenario : IScenario
 			new TickEntry(movementSimulation, Order: 100)
 		}));
 
+		var coordinateConverter = new WorldCoordinateConverter();
 		const float deltaTime = 1f / 60f;
 		var quit = false;
 
@@ -72,7 +73,7 @@ public sealed class PlayerWorldMovementScenario : IScenario
 			Console.WriteLine(new string(' ', Console.WindowWidth - 1));
 
 			var position = movement.Input.GetPosition(entityId);
-			var tile = WorldPosition.FromWorldUnits(position.X, position.Y, worldData.TileSize);
+			var tile = coordinateConverter.ToTilePosition(position.X, position.Y, worldData.TileSize);
 			var playerTileX = tile.X;
 			var playerTileY = tile.Y;
 

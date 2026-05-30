@@ -1,6 +1,6 @@
 using Game.Scenarios.Core.Interfaces;
-using Game.Systems.Domain.AgentCommand.Controller;
-using Game.Systems.Domain.AgentCommand.Core;
+using Game.Systems.Domain.AgentCommand;
+using Game.Systems.Domain.AgentCommand.Model;
 using Game.Systems.Foundation.GameMath.Core.Model;
 using Game.Systems.Foundation.Primitives;
 

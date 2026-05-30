@@ -1,5 +1,5 @@
-using Game.Systems.Domain.AgentMovement.Interfaces;
 using Game.Systems.Domain.AgentMovement.Model;
+using Game.Systems.Domain.AgentMovement.Ports;
 using Game.Systems.Foundation.GameMath.Interfaces;
 using Game.Systems.Foundation.Primitives;
 

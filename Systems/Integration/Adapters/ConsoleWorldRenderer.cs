@@ -1,5 +1,5 @@
 using System.Text;
-using Game.Systems.Domain.World.Interfaces;
+using Game.Systems.Domain.World.Ports;
 using Game.Systems.Domain.World.Model;
 
 namespace Game.Systems.Integration.Adapters;

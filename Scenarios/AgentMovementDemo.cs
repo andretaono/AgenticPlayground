@@ -1,5 +1,5 @@
 using Game.Scenarios.Core.Interfaces;
-using Game.Systems.Domain.AgentMovement.Controller;
+using Game.Systems.Domain.AgentMovement;
 using Game.Systems.Foundation.GameMath.Core;
 using Game.Systems.Foundation.Primitives;
 using Game.Systems.Integration.Adapters;

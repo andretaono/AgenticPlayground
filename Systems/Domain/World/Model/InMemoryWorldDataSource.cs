@@ -1,4 +1,4 @@
-using Game.Systems.Domain.World.Interfaces;
+using Game.Systems.Domain.World.Ports;
 
 namespace Game.Systems.Domain.World.Model;
 

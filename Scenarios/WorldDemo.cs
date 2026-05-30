@@ -1,7 +1,7 @@
 using System.Text;
 using Game.Scenarios.Core.Interfaces;
 using Game.Systems.Domain.World.Model;
-using Game.Systems.Domain.World.Interfaces;
+using Game.Systems.Domain.World.Ports;
 using Game.Systems.Integration.Adapters;
 using Game.Systems.Domain.World;
 

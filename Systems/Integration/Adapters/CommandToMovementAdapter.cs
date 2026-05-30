@@ -1,7 +1,8 @@
 using System;
-using Game.Systems.Domain.AgentCommand.Controller;
-using Game.Systems.Domain.AgentCommand.Core;
-using Game.Systems.Domain.AgentMovement.Interfaces;
+using Game.Systems.Domain.AgentCommand;
+using Game.Systems.Domain.AgentCommand.Model;
+using Game.Systems.Domain.AgentCommand.Ports;
+using Game.Systems.Domain.AgentMovement.Ports;
 using Game.Systems.Foundation.Primitives;
 using Game.Systems.Integration.Runtime.Interfaces;
 
@@ -14,11 +15,11 @@ namespace Game.Systems.Integration.Adapters;
 /// </summary>
 public sealed class CommandToMovementAdapter : ITickable
 {
-    private readonly AgentCommandSystem _commandSystem;
+    private readonly IAgentCommandSystem _commandSystem;
     private readonly IAgentMovementController _movementController;
     private readonly Foundation.GameMath.Interfaces.IGameMath _math;
 
-    public CommandToMovementAdapter(AgentCommandSystem commandSystem, IAgentMovementController movementController, Foundation.GameMath.Interfaces.IGameMath math)
+    public CommandToMovementAdapter(IAgentCommandSystem commandSystem, IAgentMovementController movementController, Foundation.GameMath.Interfaces.IGameMath math)
     {
         _commandSystem = commandSystem ?? throw new ArgumentNullException(nameof(commandSystem));
         _movementController = movementController ?? throw new ArgumentNullException(nameof(movementController));
