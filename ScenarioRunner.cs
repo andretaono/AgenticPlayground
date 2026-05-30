@@ -14,7 +14,8 @@ namespace Game
 			registry.Register(new AgentMovementDemo());
 			registry.Register(new InputIntegrationDemo());
 			registry.Register(new InventoryDemo());
-			registry.Register(new WorldDemo()); // newly added
+			registry.Register(new WorldDemo());
+			registry.Register(new PlayerWorldMovementScenario());
 
 			while (true)
 			{

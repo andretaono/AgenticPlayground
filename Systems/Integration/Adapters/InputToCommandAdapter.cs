@@ -31,8 +31,8 @@ public sealed class InputToCommandAdapter : ITickable
     {
         var dir = key switch
         {
-            ConsoleKey.W => new Vector2(0f, 1f),
-            ConsoleKey.S => new Vector2(0f, -1f),
+            ConsoleKey.W => new Vector2(0f, -1f),
+            ConsoleKey.S => new Vector2(0f, 1f),
             ConsoleKey.A => new Vector2(-1f, 0f),
             ConsoleKey.D => new Vector2(1f, 0f),
             _ => Vector2.Zero
@@ -53,8 +53,8 @@ public sealed class InputToCommandAdapter : ITickable
         {
             switch (k)
             {
-                case ConsoleKey.W: y += 1f; break;
-                case ConsoleKey.S: y -= 1f; break;
+                case ConsoleKey.W: y -= 1f; break;
+                case ConsoleKey.S: y += 1f; break;
                 case ConsoleKey.A: x -= 1f; break;
                 case ConsoleKey.D: x += 1f; break;
             }
@@ -96,7 +96,7 @@ public sealed class InputToCommandAdapter : ITickable
         }
         catch (InvalidOperationException)
         {
-            // Console not available (e.g., running in non-interactive environment) ó ignore.
+            // Console not available (e.g., running in non-interactive environment) ù ignore.
         }
     }
 }

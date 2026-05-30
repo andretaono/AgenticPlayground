@@ -36,7 +36,7 @@ public sealed class CommandToMovementAdapter : ITickable
         {
             if (c is MoveCommand m)
             {
-                var v = _math.Create(m.Direction.X, 0f, m.Direction.Y);
+                var v = _math.Create(m.Direction.X, m.Direction.Y, 0f);
                 // convert AgentId to EntityId mapping: here we assume AgentId.Value == EntityId.Value
                 var entity = new EntityId(m.Agent.Value);
                 _movementController.ApplyMovement(entity, v);

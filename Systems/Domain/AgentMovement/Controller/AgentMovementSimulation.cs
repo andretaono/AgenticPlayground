@@ -45,9 +45,6 @@ internal class AgentMovementSimulation : IAgentMovementSimulation
         if (math == null) throw new ArgumentNullException(nameof(math));
         if (config == null) throw new ArgumentNullException(nameof(config));
 
-		if (!_movementPolicy.CanMove(agent))
-			return;
-
         var speed = agent.MovementState switch
         {
             AgentMovementState.Grounded => config.GroundSpeed,
@@ -57,8 +54,25 @@ internal class AgentMovementSimulation : IAgentMovementSimulation
         };
 
         var direction = math.Normalize(agent.PendingInput);
-        agent.Velocity = math.Scale(direction, speed);
-        agent.Position = math.Add(agent.Position, math.Scale(agent.Velocity, deltaTime));
+        if (math.MagnitudeSquared(direction) <= 0f)
+        {
+            agent.PendingInput = GameMathSystem.Zero;
+            agent.Velocity = GameMathSystem.Zero;
+            return;
+        }
+
+        var velocity = math.Scale(direction, speed);
+        var proposedPosition = math.Add(agent.Position, math.Scale(velocity, deltaTime));
+
+        if (!_movementPolicy.CanMoveTo(proposedPosition))
+        {
+            agent.PendingInput = GameMathSystem.Zero;
+            agent.Velocity = GameMathSystem.Zero;
+            return;
+        }
+
+        agent.Velocity = velocity;
+        agent.Position = proposedPosition;
 
         // Input is treated as "per-frame intent" (caller sets every frame).
         agent.PendingInput = GameMathSystem.Zero;

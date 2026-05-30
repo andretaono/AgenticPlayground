@@ -25,7 +25,7 @@ public class InputIntegrationDemo : IScenario
 
         // Foundation + systems
         var math = new GameMathSystem();
-        var movement = new AgentMovementSystem(math);
+        var movement = new AgentMovementSystem(math, new PermissiveMovementPolicy());
         var commandSystem = new AgentCommandSystem();
 
         // Register agent and create entity state (AgentId -> EntityId by value)
@@ -37,7 +37,7 @@ public class InputIntegrationDemo : IScenario
         // Adapters
         var inputAdapter = new InputToCommandAdapter(commandSystem, agentId);
         var commandToMovement = new CommandToMovementAdapter(commandSystem, movement.Input, math);
-        var movementAdapter = new MovementSimulationAdapter(movement.Simulation);
+        var movementAdapter = new AgentMovementSimulationAdapter(movement.Simulation);
 
         // Build runtime schedule: input -> commands->movement -> simulate
         var entries = new List<TickEntry>
@@ -68,17 +68,9 @@ public class InputIntegrationDemo : IScenario
         Console.WriteLine("Demo finished.");
     }
 
-    // small schedule impl
     private sealed class SimpleSchedule : ITickSchedule
     {
         public IReadOnlyList<TickEntry> Entries { get; }
         public SimpleSchedule(IReadOnlyList<TickEntry> entries) => Entries = entries;
-    }
-
-    private sealed class MovementSimulationAdapter : ITickable
-    {
-        private readonly Game.Systems.Domain.AgentMovement.Interfaces.IAgentMovementSimulation _sim;
-        public MovementSimulationAdapter(Game.Systems.Domain.AgentMovement.Interfaces.IAgentMovementSimulation sim) => _sim = sim;
-        public void Tick(float deltaTime) => _sim.AdvanceSimulation(deltaTime);
     }
 }

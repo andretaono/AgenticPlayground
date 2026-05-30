@@ -1,8 +1,8 @@
-﻿using Game.Systems.Domain.AgentMovement.Model;
+﻿using Game.Systems.Foundation.GameMath.Interfaces;
 
 namespace Game.Systems.Domain.AgentMovement.Interfaces;
 
 public interface IAgentMovementPolicy
 {
-	bool CanMove(AgentMovementAgentState agent);
+	bool CanMoveTo(IVector3 proposedPosition);
 }

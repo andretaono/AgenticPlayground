@@ -2,6 +2,7 @@ using Game.Scenarios.Core.Interfaces;
 using Game.Systems.Domain.AgentMovement.Controller;
 using Game.Systems.Foundation.GameMath.Core;
 using Game.Systems.Foundation.Primitives;
+using Game.Systems.Integration.Adapters;
 
 namespace Game.Scenarios;
 
@@ -12,7 +13,7 @@ public class AgentMovementDemo : IScenario
 	public void Run()
     {
         var math = new GameMathSystem();
-        var movement = new AgentMovementSystem(math);
+        var movement = new AgentMovementSystem(math, new PermissiveMovementPolicy());
 
         var player = new EntityId(1);
         movement.Registry.CreateAgent(player, math.Create(0f, 0f, 0f));

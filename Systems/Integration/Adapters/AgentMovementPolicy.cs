@@ -1,57 +1,40 @@
 ﻿using Game.Systems.Domain.AgentMovement.Interfaces;
-using Game.Systems.Domain.AgentMovement.Model;
 using Game.Systems.Domain.World.Model;
+using Game.Systems.Foundation.GameMath.Interfaces;
 
-namespace Game.Systems.Integration.Adapters
+namespace Game.Systems.Integration.Adapters;
+
+public sealed class AgentMovementPolicy : IAgentMovementPolicy
 {
-	public class AgentMovementPolicy : IAgentMovementPolicy
+	private readonly ITileRulesProvider _tileRulesProvider;
+	private readonly InMemoryWorldDataSource _worldData;
+	private readonly TileId[,] _map;
+
+	public AgentMovementPolicy(
+		ITileRulesProvider tileRulesProvider,
+		InMemoryWorldDataSource worldData)
 	{
-		private readonly ITileRulesProvider _tileRulesProvider;
-		private readonly InMemoryWorldDataSource _worldData;
-		private readonly TileId[,] _map;
+		_tileRulesProvider = tileRulesProvider;
+		_worldData = worldData;
+		_map = _worldData.LoadMap();
+	}
 
-		public AgentMovementPolicy(
-			ITileRulesProvider tileRulesProvider,
-			InMemoryWorldDataSource worldData)
+	public bool CanMoveTo(IVector3 proposedPosition)
+	{
+		var tile = WorldPosition.FromWorldUnits(proposedPosition.X, proposedPosition.Y, _worldData.TileSize);
+		var tileX = tile.X;
+		var tileY = tile.Y;
+
+		if (tileX < 0 || tileY < 0 ||
+			tileX >= _worldData.Width ||
+			tileY >= _worldData.Height)
 		{
-			_tileRulesProvider = tileRulesProvider;
-			_worldData = worldData;
-
-			// Cache map for simplicity
-			_map = _worldData.LoadMap();
+			return false;
 		}
 
-		public bool CanMove(AgentMovementAgentState agent)
-		{
-			// Predict target position
-			var targetX = agent.Position.X + agent.Velocity.X;
-			var targetY = agent.Position.Y + agent.Velocity.Y;
+		var tileId = _map[tileX, tileY];
+		var rules = _tileRulesProvider.GetRules(tileId);
 
-			// Convert world position -> tile coordinates
-			var tileX = (int)(targetX / _worldData.TileSize);
-			var tileY = (int)(targetY / _worldData.TileSize);
-
-			// Bounds check
-			if (tileX < 0 || tileY < 0 ||
-				tileX >= _worldData.Width ||
-				tileY >= _worldData.Height)
-			{
-				return false;
-			}
-
-			// Query tile
-			var tileId = _map[tileX, tileY];
-
-			// Query rules
-			var rules = _tileRulesProvider.GetRules(tileId);
-
-			// Block movement if tile blocks movement
-			if (rules == TileRules.BlocksMovement)
-			{
-				return false;
-			}
-
-			return true;
-		}
+		return rules != TileRules.BlocksMovement;
 	}
 }
