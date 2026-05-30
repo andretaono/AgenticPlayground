@@ -17,6 +17,7 @@ namespace Game
 			registry.Register(new WorldDemo());
 			registry.Register(new PlayerWorldMovementScenario());
 			registry.Register(new EntityResourceDemo());
+			registry.Register(new AgentBehaviourDemo());
 
 			while (true)
 			{
