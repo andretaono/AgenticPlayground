@@ -1,9 +1,25 @@
+using Game.Systems.Domain.EntityResource.Ports;
+
 namespace Game.Systems.Domain.EntityResource.Model;
 
-public sealed record ResourceDefinition(
-	ResourceId ResourceId,
-	string Name,
-	float MaximumAmount,
-	float RegenerationRate,
-	float DepletionRate,
-	float InitialAmount);
+public sealed class ResourceDefinition : ResourceDefinitionBase
+{
+	public ResourceDefinition(
+		Type resourceType,
+		ResourceId resourceId,
+		string name,
+		float maximumAmount,
+		float regenerationRate,
+		float depletionRate,
+		float initialAmount)
+		: base(
+			resourceType,
+			resourceId,
+			name,
+			maximumAmount,
+			regenerationRate,
+			depletionRate,
+			initialAmount)
+	{
+	}
+}

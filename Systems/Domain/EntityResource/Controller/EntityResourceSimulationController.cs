@@ -5,11 +5,11 @@ namespace Game.Systems.Domain.EntityResource.Controller;
 
 internal sealed class EntityResourceSimulationController : IEntityResourceSimulation
 {
-	private readonly EntityResourceStateStore _store;
+	private readonly EntityResourceRegistryController _registry;
 
-	public EntityResourceSimulationController(EntityResourceStateStore store)
+	public EntityResourceSimulationController(EntityResourceRegistryController registry)
 	{
-		_store = store ?? throw new ArgumentNullException(nameof(store));
+		_registry = registry ?? throw new ArgumentNullException(nameof(registry));
 	}
 
 	public void AdvanceSimulation(float deltaTime)
@@ -17,16 +17,10 @@ internal sealed class EntityResourceSimulationController : IEntityResourceSimula
 		if (float.IsNaN(deltaTime) || float.IsInfinity(deltaTime) || deltaTime < 0f)
 			throw new ArgumentOutOfRangeException(nameof(deltaTime), "deltaTime must be finite and non-negative.");
 
-		foreach (var entityResources in _store.Resources.Values)
+		foreach (var definition in _registry.AllDefinitions)
 		{
-			foreach (var resource in entityResources.Values)
-				Step(resource, deltaTime);
+			if (definition is ResourceDefinitionBase resource)
+				resource.AdvanceSimulation(deltaTime);
 		}
-	}
-
-	private static void Step(EntityResourceState resource, float deltaTime)
-	{
-		var netChange = (resource.RegenerationRate - resource.DepletionRate) * deltaTime;
-		resource.CurrentAmount = Math.Clamp(resource.CurrentAmount + netChange, 0f, resource.MaximumAmount);
 	}
 }

@@ -8,13 +8,14 @@ using Game.Systems.Domain.AgentCombat.Model;
 using Game.Systems.Domain.AgentCommand;
 using Game.Systems.Domain.AgentMovement;
 using Game.Systems.Domain.EntityResource;
-using Game.Systems.Domain.EntityResource.Model;
+using Game.Systems.Domain.EntityResource.Ports;
 using Game.Systems.Foundation.GameMath.Core;
 using Game.Systems.Foundation.GameMath.Core.Model;
 using Game.Systems.Foundation.Primitives;
 using Game.Systems.Integration.Adapters;
 using Game.Systems.Integration.Behaviours;
 using Game.Systems.Integration.Combat;
+using Game.Systems.Integration.Resources;
 using Game.Systems.Integration.Runtime.Core;
 using Game.Systems.Integration.Runtime.Interfaces;
 
@@ -38,21 +39,21 @@ public sealed class AgentCombatDemo : IScenario
 		var targetId = new EntityId(2);
 		var attackerEntityId = new EntityId(attackerId.Value);
 		const float attackRange = 2f;
-		var healthResourceId = new ResourceId("health");
 
 		commandSystem.RegisterAgent(attackerId);
 		movement.Registry.CreateAgent(attackerEntityId, math.Create(0f, 0f, 0f));
 		movement.Registry.CreateAgent(targetId, math.Create(6f, 0f, 0f));
 
-		RegisterHealth(resources, attackerEntityId, healthResourceId);
-		RegisterHealth(resources, targetId, healthResourceId);
+		AttachHealth(resources, attackerEntityId);
+		AttachHealth(resources, targetId);
 
 		var attackerCombatEntity = new CombatEntity(attackerEntityId);
 		var targetCombatEntity = new CombatEntity(targetId);
+		var targetHealth = resources.Registry.TryGetDefinition<IHealthResourceDefinition>(targetId)
+			?? throw new InvalidOperationException($"Target '{targetId}' has no health resource.");
 		var meleeAbility = MeleeAttackAbilityFactory.Create(
 			combat.Registry,
-			resources.Resource,
-			healthResourceId,
+			resources.Registry,
 			basePower: 25f);
 		attackerCombatEntity.AddAbilityTrigger(new PendingTargetTrigger(meleeAbility, attackerCombatEntity));
 		combat.Registry.Register(attackerCombatEntity);
@@ -102,7 +103,7 @@ public sealed class AgentCombatDemo : IScenario
 
 		Console.WriteLine($"Attack range: {attackRange:F1}");
 		Console.WriteLine($"Initial distance: {lastDistance:F1}");
-		PrintHealth(resources, targetId, healthResourceId, "Target health before");
+		PrintHealth(targetHealth, "Target health before");
 
 		const float deltaTime = 1f / 20f;
 		const float groundSpeed = 5f;
@@ -114,10 +115,10 @@ public sealed class AgentCombatDemo : IScenario
 			runtime.Tick(deltaTime);
 
 			var pos = movement.Input.GetPosition(attackerEntityId);
-			var health = resources.Resource.GetResource(targetId, healthResourceId);
+			var snapshot = targetHealth.GetSnapshot();
 			Console.WriteLine(
 				$"\nTick {tick}: distance={lastDistance:F1}, pos=({pos.X:F2}, {pos.Y:F2}), active={DescribeActive(behaviourSystem, attackerId)}");
-			Console.WriteLine($"Target health: {health.CurrentAmount:F1}/{health.MaximumAmount:F1}");
+			Console.WriteLine($"Target health: {snapshot.CurrentAmount:F1}/{snapshot.MaximumAmount:F1}");
 		}
 	}
 
@@ -134,27 +135,18 @@ public sealed class AgentCombatDemo : IScenario
 		return delta.Magnitude();
 	}
 
-	private static void RegisterHealth(
+	private static void AttachHealth(
 		EntityResourceSystem resources,
 		EntityId entityId,
-		ResourceId healthResourceId)
+		float maximum = 100f)
 	{
-		resources.Registry.AddResource(entityId, new ResourceDefinition(
-			ResourceId: healthResourceId,
-			Name: "Health",
-			MaximumAmount: 100f,
-			RegenerationRate: 0f,
-			DepletionRate: 0f,
-			InitialAmount: 100f));
+		var health = new HealthResource(entityId, maximum);
+		health.Attach(resources.Registry, entityId);
 	}
 
-	private static void PrintHealth(
-		EntityResourceSystem resources,
-		EntityId entityId,
-		ResourceId healthResourceId,
-		string label)
+	private static void PrintHealth(IHealthResourceDefinition health, string label)
 	{
-		var snapshot = resources.Resource.GetResource(entityId, healthResourceId);
+		var snapshot = health.GetSnapshot();
 		Console.WriteLine($"{label}: {snapshot.CurrentAmount:F1}/{snapshot.MaximumAmount:F1}");
 	}
 

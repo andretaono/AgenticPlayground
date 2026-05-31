@@ -8,14 +8,17 @@ Manages resources associated with entities, such as Health, Mana, Stamina, Energ
 - Supports passive regeneration and depletion through simulation ticks
 - Supports multiple resource types per entity
 - Does not communicate via events
-- Resource state is queried explicitly by other systems
+- Resource instances hold runtime state (`CurrentAmount`); registry indexes `(EntityId, ResourceType) → IResourceDefinition`
 - Full and depleted states are derived from current values
 
 ## Ports
-- `IEntityResourceSystem` — exposes `Registry`, `Resource`, `Simulation`
-- `IEntityResourceRegistry` — `AddResource`, `RemoveResource`, `HasResource`
-- `IEntityResourceController` — `IncreaseResource`, `DecreaseResource`, `SetResource`, `GetResource`, `IsDepleted`, `IsFull`
+- `IEntityResourceSystem` — exposes `Registry`, `Simulation`
+- `IEntityResourceRegistry` — `AddResource`, `RemoveResource`, `HasResource`, `TryGetDefinition<T>`
+- `IResourceDefinition` — registration contract with runtime mutations (`Increase`, `Decrease`, `Set`, `GetSnapshot`, `IsDepleted`, `IsFull`); base implementation `ResourceDefinitionBase`, default concrete `ResourceDefinition`
+- Marker definition types — `IHealthResourceDefinition`, `IStaminaResourceDefinition`, `IManaResourceDefinition`, etc.
 - `IEntityResourceSimulation` — `AdvanceSimulation`
+
+Integration-layer resource types (`HealthResource`, `StaminaResource`, `ManaResource`) implement `IResourceDefinition` per agent.
 
 ## Invariants
 - `CurrentAmount >= 0`
