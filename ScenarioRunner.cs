@@ -19,6 +19,7 @@ namespace Game
 			registry.Register(new EntityResourceDemo());
 			registry.Register(new AgentBehaviourDemo());
 			registry.Register(new AgentCombatDemo());
+			registry.Register(new ItemAssemblyDemo());
 
 			while (true)
 			{
