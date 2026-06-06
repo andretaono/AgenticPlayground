@@ -141,7 +141,7 @@ public sealed class ItemAssemblyDemo : IScenario
 
 		var system = new ItemAssemblySystem();
 		var catalog = new ModifierCatalog();
-		var randomizer = new LootRandomizer(system.ItemFactory, catalog, new Random(42));
+		var randomizer = new LootRandomizer(system.ItemFactory, catalog, new SeededRng(42));
 
 		Console.WriteLine("Rolling 5 loot drops (1-3 modifiers each):\n");
 

@@ -7,13 +7,13 @@ public sealed class LootRandomizer
 {
 	private readonly IItemFactory _itemFactory;
 	private readonly ModifierCatalog _catalog;
-	private readonly Random _random;
+	private readonly IRng _rng;
 
-	public LootRandomizer(IItemFactory itemFactory, ModifierCatalog catalog, Random? random = null)
+	public LootRandomizer(IItemFactory itemFactory, ModifierCatalog catalog, IRng rng)
 	{
 		_itemFactory = itemFactory ?? throw new ArgumentNullException(nameof(itemFactory));
 		_catalog = catalog ?? throw new ArgumentNullException(nameof(catalog));
-		_random = random ?? Random.Shared;
+		_rng = rng ?? throw new ArgumentNullException(nameof(rng));
 	}
 
 	public Item Roll(int minModifiers, int maxModifiers)
@@ -30,7 +30,7 @@ public sealed class LootRandomizer
 
 		var cappedMax = Math.Min(maxModifiers, pool.Count);
 		var cappedMin = Math.Min(minModifiers, cappedMax);
-		var count = _random.Next(cappedMin, cappedMax + 1);
+		var count = _rng.Next(cappedMin, cappedMax + 1);
 		var modifiers = PickModifiers(pool, count);
 
 		return _itemFactory.Create(modifiers);
@@ -63,7 +63,7 @@ public sealed class LootRandomizer
 			totalWeight += entry.Weight;
 		}
 
-		var roll = (float)(_random.NextDouble() * totalWeight);
+		var roll = _rng.NextFloat() * totalWeight;
 		var cumulative = 0f;
 
 		for (var i = 0; i < pool.Count; i++)
