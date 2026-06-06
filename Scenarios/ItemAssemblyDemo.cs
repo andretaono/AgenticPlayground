@@ -1,6 +1,7 @@
 using Game.Scenarios.Core.Interfaces;
 using Game.Systems.Domain.ItemAssembly;
 using Game.Systems.Domain.ItemAssembly.Model;
+using Game.Systems.Integration.Items;
 
 namespace Game.Scenarios;
 
@@ -17,6 +18,8 @@ public sealed class ItemAssemblyDemo : IScenario
 		RunFlagPriorityCase();
 		Console.WriteLine();
 		RunDeterminismCase();
+		Console.WriteLine();
+		RunLootRandomizerCase();
 	}
 
 	private static void RunFlatAggregationCase()
@@ -130,5 +133,38 @@ public sealed class ItemAssemblyDemo : IScenario
 
 		Console.WriteLine($"Deterministic resolve: {identical}");
 		Console.WriteLine($"Raw modifier order: {string.Join(", ", first.RawModifiers.Select(modifier => $"{modifier.Id}:{modifier.Kind}@{modifier.Priority}"))}");
+	}
+
+	private static void RunLootRandomizerCase()
+	{
+		Console.WriteLine("=== Case 5: Weighted loot randomizer rolls items from ModifierCatalog ===");
+
+		var system = new ItemAssemblySystem();
+		var catalog = new ModifierCatalog();
+		var randomizer = new LootRandomizer(system.ItemFactory, catalog, new Random(42));
+
+		Console.WriteLine("Rolling 5 loot drops (1-3 modifiers each):\n");
+
+		for (var roll = 1; roll <= 5; roll++)
+		{
+			var item = randomizer.Roll(minModifiers: 1, maxModifiers: 3);
+			Console.WriteLine($"Drop {roll} (item {item.Id}, {item.Modifiers.Count} modifiers):");
+
+			foreach (var modifier in item.Modifiers)
+				Console.WriteLine($"  - {modifier.Id} {modifier.Kind} {modifier.Value}");
+		}
+
+		Console.WriteLine("\nSpawn frequency over 1000 single-modifier rolls:");
+		var counts = new Dictionary<string, int>();
+
+		for (var i = 0; i < 1000; i++)
+		{
+			var item = randomizer.Roll(minModifiers: 1, maxModifiers: 1);
+			var id = item.Modifiers[0].Id.Value;
+			counts[id] = counts.GetValueOrDefault(id) + 1;
+		}
+
+		foreach (var entry in counts.OrderByDescending(pair => pair.Value))
+			Console.WriteLine($"  {entry.Key}: {entry.Value}");
 	}
 }
