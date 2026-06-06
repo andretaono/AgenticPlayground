@@ -233,3 +233,44 @@ They are:
 alternative evolutions
 rejected paths
 environmental philosophies
+
+## Implementation pattern
+
+Enemy AI in Integration follows a **profile** model: shared building blocks in `Systems/Integration/Enemies/Common/`, thin per-enemy folders for config and wiring.
+
+### Shared building blocks
+
+| Module | Purpose |
+|--------|---------|
+| `Common/Perception` | `EcologicalTargetPerception` — WCS scent/sight/awareness detection via `PerceptionConfig` |
+| `Common/Config` | `EnemyTacticalConfig` — attack/stalk ranges, behaviour priorities, unique `IdPrefix` |
+| `Common/Advantage` | Composable `IAttackAdvantageRule` list evaluated with OR semantics by `AttackAdvantageEvaluator` |
+| `Common/Behaviours` | `PatrolBehaviour`, `TrackTargetBehaviour`, `StalkTargetBehaviour`, `AdvantageAttackBehaviour` |
+| `Common/Context` | `TrackedTargetContextProvider` — updates perception and builds `BehaviourContext` per tick |
+| `Common/Assembly` | `PredatorEnemyAssembler` — wires the standard patrol → track → stalk → attack pipeline |
+
+### Per-enemy profile
+
+Each enemy folder supplies:
+
+1. **Config** — maps to `PerceptionConfig`, `EnemyTacticalConfig`, and (if applicable) advantage rules
+2. **Factory** — combat/health wiring plus behaviour registration
+3. **Optional unique behaviours** — only what does not fit a shared archetype
+
+### Archetype examples
+
+| Enemy | Assembler | Advantage rules | Unique behaviours |
+|-------|-----------|-----------------|-------------------|
+| Polar Bear | `PredatorEnemyAssembler` | Low health OR high presence OR awareness ≥ Tracked | Melee combat abilities |
+| Raven | None (observe-only) | None for attack | `ObserveTargetBehaviour` — holds observe distance, no strike |
+| Seal (planned) | Partial | Cornered subset only | Retreat, submerge intents |
+| Arctic Fox (planned) | Partial | Low health + high disturbance | Post-combat scavenger timing |
+
+### Adding a new enemy
+
+1. Create `Systems/Integration/Enemies/<Name>/<Name>Config.cs` with `ToPerceptionConfig()` and `ToTacticalConfig()`.
+2. If predator-style: implement `CreateAdvantageRules()` and call `PredatorEnemyAssembler.RegisterPredatorPipeline`.
+3. If non-predator: reuse `EcologicalTargetPerception` + `TrackedTargetContextProvider`, register custom `IBehaviour` implementations only.
+4. Use a unique `IdPrefix` in `EnemyTacticalConfig` to avoid `BehaviourId` collisions when multiple enemy types share a controller.
+
+Reference implementations: `PolarBear/` (full predator pipeline), `Raven/` (observe-only stub on shared perception).

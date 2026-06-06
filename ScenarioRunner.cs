@@ -21,6 +21,7 @@ namespace Game
 			registry.Register(new AgentCombatDemo());
 			registry.Register(new ItemAssemblyDemo());
 			registry.Register(new WorldCognitionDemo());
+			registry.Register(new PolarBearDemo());
 
 			while (true)
 			{
