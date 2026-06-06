@@ -4,6 +4,7 @@ using Game.Systems.Domain.AgentCombat.Model;
 using Game.Systems.Domain.EntityResource;
 using Game.Systems.Domain.WorldCognition.Ports;
 using Game.Systems.Foundation.Primitives;
+using Game.Systems.Integration.Actors;
 using Game.Systems.Integration.Combat;
 using Game.Systems.Integration.Enemies.Common.Assembly;
 using Game.Systems.Integration.Enemies.Common.Perception;
@@ -16,8 +17,7 @@ public sealed class PolarBearAgentFactory
 	private readonly PredatorEnemyAssembler _assembler = new();
 
 	public PolarBearAgentHandle Register(
-		AgentId bearAgentId,
-		EntityId bearEntityId,
+		ActorHandle bear,
 		EntityId playerEntityId,
 		PolarBearConfig config,
 		EcologicalTargetPerception perception,
@@ -26,9 +26,10 @@ public sealed class PolarBearAgentFactory
 		AgentCombatSystem combat,
 		EntityResourceSystem resources)
 	{
-		AttachHealth(resources, bearEntityId, maximum: 150f);
+		AttachHealth(resources, bear.EntityId, maximum: 150f);
+		combat.Registry.Register(new CombatEntity(playerEntityId));
 
-		var bearCombatEntity = new CombatEntity(bearEntityId);
+		var bearCombatEntity = new CombatEntity(bear.EntityId);
 		var meleeAbility = MeleeAttackAbilityFactory.Create(
 			combat.Registry,
 			resources.Registry,
@@ -37,7 +38,7 @@ public sealed class PolarBearAgentFactory
 		combat.Registry.Register(bearCombatEntity);
 
 		_assembler.RegisterPredatorPipeline(
-			bearAgentId,
+			bear.AgentId,
 			perception,
 			config.ToTacticalConfig(),
 			config.CreateAdvantageRules(),
@@ -45,7 +46,7 @@ public sealed class PolarBearAgentFactory
 			resources.Registry,
 			cognition);
 
-		return new PolarBearAgentHandle(bearAgentId, bearEntityId, playerEntityId, perception, config);
+		return new PolarBearAgentHandle(bear, playerEntityId, perception, config);
 	}
 
 	private static void AttachHealth(EntityResourceSystem resources, EntityId entityId, float maximum)
@@ -58,21 +59,20 @@ public sealed class PolarBearAgentFactory
 public sealed class PolarBearAgentHandle
 {
 	public PolarBearAgentHandle(
-		AgentId agentId,
-		EntityId entityId,
+		ActorHandle bear,
 		EntityId playerEntityId,
 		EcologicalTargetPerception perception,
 		PolarBearConfig config)
 	{
-		AgentId = agentId;
-		EntityId = entityId;
+		Bear = bear;
 		PlayerEntityId = playerEntityId;
 		Perception = perception;
 		Config = config;
 	}
 
-	public AgentId AgentId { get; }
-	public EntityId EntityId { get; }
+	public ActorHandle Bear { get; }
+	public AgentId AgentId => Bear.AgentId;
+	public EntityId EntityId => Bear.EntityId;
 	public EntityId PlayerEntityId { get; }
 	public EcologicalTargetPerception Perception { get; }
 	public PolarBearConfig Config { get; }

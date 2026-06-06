@@ -5,10 +5,10 @@ using Game.Systems.Domain.AgentMovement.Model;
 using Game.Systems.Domain.World;
 using Game.Systems.Domain.World.Model;
 using Game.Systems.Foundation.GameMath.Core;
-using Game.Systems.Foundation.Primitives;
+using Game.Systems.Integration.Actors;
 using Game.Systems.Integration.Adapters;
-using Game.Systems.Integration.Runtime.Core;
-using Game.Systems.Integration.Runtime.Interfaces;
+using Game.Systems.Integration.Presentation;
+using Game.Systems.Integration.Runtime;
 
 namespace Game.Scenarios;
 
@@ -45,23 +45,19 @@ public sealed class PlayerWorldMovementScenario : IScenario
 		var movement = new AgentMovementSystem(math, movementPolicy, movementConfig);
 
 		var commandSystem = new AgentCommandSystem();
-		var agentId = new AgentId(1);
-		var entityId = new EntityId(agentId.Value);
-		commandSystem.RegisterAgent(agentId);
+		var actorRegistry = new ActorRegistry(commandSystem, movement);
 
 		const float startX = 10f;
 		const float startY = 6f;
-		movement.Registry.CreateAgent(entityId, math.Create(startX, startY, 0f));
+		var player = actorRegistry.RegisterActor(math.Create(startX, startY, 0f));
 
-		var inputAdapter = new InputToCommandAdapter(commandSystem, agentId);
-		var commandExecution = new AgentCommandExecutionAdapter(commandSystem, movement.Input, math);
-		var movementSimulation = new AgentMovementSimulationAdapter(movement.Simulation);
-
-		var runtime = new RuntimeSystem(new SimpleSchedule(new[]
-		{
-			new TickEntry(commandExecution, Order: 75),
-			new TickEntry(movementSimulation, Order: 100)
-		}));
+		var inputSource = new ConsoleInputSource(player.AgentId);
+		var runtime = new GameRuntimeBuilder(math)
+			.WithExistingMovement(movement)
+			.WithExistingCommand(commandSystem)
+			.WithInput(inputSource, player.AgentId)
+			.WithPresenter(new NullWorldPresenter(), actorRegistry)
+			.Build();
 
 		var coordinateConverter = new WorldCoordinateConverter();
 		const float deltaTime = 1f / 60f;
@@ -72,7 +68,7 @@ public sealed class PlayerWorldMovementScenario : IScenario
 			Console.SetCursorPosition(0, 6);
 			Console.WriteLine(new string(' ', Console.WindowWidth - 1));
 
-			var position = movement.Input.GetPosition(entityId);
+			var position = movement.Input.GetPosition(player.EntityId);
 			var tile = coordinateConverter.ToTilePosition(position.X, position.Y, worldData.TileSize);
 			var playerTileX = tile.X;
 			var playerTileY = tile.Y;
@@ -81,7 +77,7 @@ public sealed class PlayerWorldMovementScenario : IScenario
 			renderer.Render(world, worldData.Width, worldData.Height, playerTileX, playerTileY);
 
 			Console.WriteLine();
-			Console.WriteLine($"Pos=({position.X:F2}, {position.Y:F2})  Tile=({playerTileX}, {playerTileY})  State={movement.Input.GetMovementState(entityId)}");
+			Console.WriteLine($"Pos=({position.X:F2}, {position.Y:F2})  Tile=({playerTileX}, {playerTileY})  State={movement.Input.GetMovementState(player.EntityId)}");
 
 			if (Console.KeyAvailable)
 			{
@@ -99,7 +95,7 @@ public sealed class PlayerWorldMovementScenario : IScenario
 				}
 
 				if (keys.Count > 0)
-					inputAdapter.OnKeys(keys);
+					inputSource.OnKeys(keys);
 			}
 
 			runtime.Tick(deltaTime);
@@ -150,10 +146,4 @@ public sealed class PlayerWorldMovementScenario : IScenario
 		return new InMemoryWorldDataSource(map);
 	}
 
-	private sealed class SimpleSchedule : ITickSchedule
-	{
-		public IReadOnlyList<TickEntry> Entries { get; }
-
-		public SimpleSchedule(IReadOnlyList<TickEntry> entries) => Entries = entries;
-	}
 }
