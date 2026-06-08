@@ -25,6 +25,6 @@ Engine-agnostic heightmap generation and terrain mesh building. Independent of t
 - No NaN or infinity in generated samples or mesh vertices
 - No dependency on World or Integration layers
 
-## Future (Integration)
+## Integration composition
 
-World tile data will be composed with TerrainMesh output in Integration (`WorldTerrainMeshComposer`) — not in this system.
+World tile data is composed with TerrainMesh in `Systems/Integration/TerrainMesh/` via `WorldTerrainMeshComposer`. World tile `(tx, ty)` maps 1:1 to heightmap sample `(tx, ty)` and mesh vertex index `ty * width + tx`. World's horizontal Y maps to mesh Z.

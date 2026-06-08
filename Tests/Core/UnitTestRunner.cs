@@ -43,6 +43,7 @@ public static class UnitTestRunner
 		yield return new AgentBehaviourScenarioTests();
 		yield return new ItemAssemblyScenarioTests();
 		yield return new WorldCognitionScenarioTests();
+		yield return new WorldTerrainMeshTests();
 		yield return new PolarBearTests();
 		yield return new AgentCombatTests();
 	}
