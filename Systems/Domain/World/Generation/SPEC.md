@@ -22,32 +22,25 @@ Procedural cave-style world map generation. Produces tile grids consumed by `IWo
 3. **Smooth** — repeat `CellularAutomataIterations` times: cell becomes `wall` if 8-neighbor wall count >= 5, else `ground`. Borders stay `wall`.
 4. **Place spawns** — Start = ground cell with minimum `x + y`; Goal = ground cell with maximum `x + y`.
 5. **Validate** — BFS from Start through 4-connected `ground` cells only; accept iff Goal is reached.
-6. **Retry** — on rejection, try `Seed + attempt` up to `MaxAttempts`.
+6. **Water** — carve small water pools without breaking the start→goal path.
+7. **Retry** — on rejection, try `Seed + attempt` up to `MaxAttempts` (ground/path validation only).
 
 ## Tile representation
 
 - Grid cells use `TileId` string identities (`ground`, `wall`, `water`).
-- Well-known ids live in `TileIds`.
-- Start and goal are `WorldPosition` metadata on `GeneratedWorldMap`, not special tile types.
+- Movement and pathfinding use this layer via `ToDataSource()`.
 
 ## Invariants
 
-- Same `WorldGenerationConfig` (including seed) → identical tiles, start, and goal.
+- Same `WorldGenerationConfig` (including seed) → identical ground layer.
 - Every accepted map has `Tiles[Start] == Ground` and `Tiles[Goal] == Ground`.
 - Every accepted map has a verified ground-only path from Start to Goal.
 - Border cells are always `wall`.
-- No dependency on Integration `TileRules` or TerrainMesh.
-
-## Non-goals (v1)
-
-- Water placement pass
-- Room or maze dungeon layouts
-- Integration with movement or terrain composition
 
 ## Integration
 
-Generated maps feed existing World query flow:
-
 ```
 GeneratedWorldMap.ToDataSource() → InMemoryWorldDataSource → WorldSystem
+GeneratedWorldMap → TerrainComposer → Heightmap (actor Y positioning)
+GeneratedWorldMap → UnityTerrainPresenter → per-tile cubes (Unity only)
 ```

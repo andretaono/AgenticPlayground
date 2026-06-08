@@ -2,11 +2,11 @@ using System.Collections.Generic;
 using Game.Systems.Domain.TerrainMesh;
 using Game.Systems.Domain.TerrainMesh.Model;
 using Game.Systems.Domain.TerrainMesh.Ports;
-using Game.Systems.Foundation.GameMath.Core.Model;
 using Game.Systems.Foundation.Primitives;
 using Game.Systems.Integration.Presentation.Ports;
 using UnityEngine;
-using Vector2 = Game.Systems.Foundation.GameMath.Core.Model.Vector2;
+using GameVector2 = Game.Systems.Foundation.GameMath.Core.Model.Vector2;
+using UnityVector3 = UnityEngine.Vector3;
 
 namespace Game.UnityBridge.Presentation
 {
@@ -36,7 +36,7 @@ namespace Game.UnityBridge.Presentation
 			_heightmapSampler = heightmapSampler ?? new TerrainMeshSystem().Sampler;
 		}
 
-		public void SyncActorPosition(EntityId entityId, Vector2 position)
+		public void SyncActorPosition(EntityId entityId, GameVector2 position)
 		{
 			if (!_actors.TryGetValue(entityId, out var actorTransform))
 			{
@@ -48,7 +48,7 @@ namespace Game.UnityBridge.Presentation
 			var worldZ = position.Y * _worldUnitsPerTile;
 			var surfaceHeight = _heightmapSampler.SampleBilinear(_heightmap, worldX, worldZ) * _heightScale;
 
-			actorTransform.position = new UnityEngine.Vector3(
+			actorTransform.position = new UnityVector3(
 				worldX,
 				surfaceHeight + _characterHalfHeight,
 				worldZ);
@@ -59,18 +59,18 @@ namespace Game.UnityBridge.Presentation
 
 		private Transform CreateActorVisual(EntityId entityId)
 		{
-			var actorObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+			var actorObject = UnityEngine.GameObject.CreatePrimitive(UnityEngine.PrimitiveType.Capsule);
 			actorObject.name = $"Actor_{entityId.Value}";
 			actorObject.transform.SetParent(_actorsRoot, worldPositionStays: false);
-			actorObject.transform.localScale = new UnityEngine.Vector3(0.5f, _characterHalfHeight, 0.5f);
+			actorObject.transform.localScale = new UnityVector3(0.5f, _characterHalfHeight, 0.5f);
 
 			var renderer = actorObject.GetComponent<Renderer>();
 			if (renderer != null)
-				renderer.material.color = new Color(0.9f, 0.25f, 0.2f);
+				renderer.material.color = new UnityEngine.Color(0.9f, 0.25f, 0.2f);
 
 			var collider = actorObject.GetComponent<Collider>();
 			if (collider != null)
-				Object.Destroy(collider);
+				UnityEngine.Object.Destroy(collider);
 
 			return actorObject.transform;
 		}

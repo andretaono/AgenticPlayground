@@ -5,22 +5,30 @@ namespace Game.Systems.Domain.World.Generation.Model;
 
 public sealed class GeneratedWorldMap
 {
-	public GeneratedWorldMap(TileId[,] tiles, WorldPosition start, WorldPosition goal, int seedUsed)
+	public GeneratedWorldMap(
+		TileId[,] groundLayer,
+		WorldPosition start,
+		WorldPosition goal,
+		int seedUsed)
 	{
-		Tiles = tiles ?? throw new ArgumentNullException(nameof(tiles));
+		GroundLayer = groundLayer ?? throw new ArgumentNullException(nameof(groundLayer));
 		Start = start;
 		Goal = goal;
 		SeedUsed = seedUsed;
-		Width = tiles.GetLength(0);
-		Height = tiles.GetLength(1);
+		Width = groundLayer.GetLength(0);
+		Height = groundLayer.GetLength(1);
 	}
 
-	public TileId[,] Tiles { get; }
+	public TileId[,] GroundLayer { get; }
+
+	/// <summary>Alias for <see cref="GroundLayer"/>.</summary>
+	public TileId[,] Tiles => GroundLayer;
+
 	public WorldPosition Start { get; }
 	public WorldPosition Goal { get; }
 	public int SeedUsed { get; }
 	public int Width { get; }
 	public int Height { get; }
 
-	public IWorldDataSource ToDataSource() => new InMemoryWorldDataSource(Tiles);
+	public IWorldDataSource ToDataSource() => new InMemoryWorldDataSource(GroundLayer);
 }

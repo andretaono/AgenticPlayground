@@ -1,28 +1,23 @@
 using Game.Systems.Domain.TerrainMesh.Model;
-using Game.Systems.Domain.TerrainMesh.Ports;
-using Game.Systems.Domain.World.Model;
 using Game.Systems.Domain.World.Ports;
 using Game.Systems.Integration.Adapters;
 
 namespace Game.Systems.Integration.TerrainMesh;
 
-public sealed class WorldTerrainMeshComposer
+public sealed class TerrainComposer
 {
-	private readonly ITerrainMeshSystem _terrainMesh;
 	private readonly ITileRulesProvider _tileRules;
 	private readonly TileHeightModifierSettings _modifierSettings;
 
-	public WorldTerrainMeshComposer(
-		ITerrainMeshSystem terrainMesh,
+	public TerrainComposer(
 		ITileRulesProvider tileRules,
 		TileHeightModifierSettings? modifierSettings = null)
 	{
-		_terrainMesh = terrainMesh ?? throw new ArgumentNullException(nameof(terrainMesh));
 		_tileRules = tileRules ?? throw new ArgumentNullException(nameof(tileRules));
 		_modifierSettings = modifierSettings ?? new TileHeightModifierSettings();
 	}
 
-	public WorldTerrainBuildResult Compose(IWorldDataSource worldDataSource, WorldTerrainMapping mapping)
+	public TerrainBuildResult Compose(IWorldDataSource worldDataSource, WorldTerrainMapping mapping)
 	{
 		if (worldDataSource is null)
 			throw new ArgumentNullException(nameof(worldDataSource));
@@ -38,33 +33,10 @@ public sealed class WorldTerrainMeshComposer
 		if (tiles.GetLength(0) != width || tiles.GetLength(1) != height)
 			throw new InvalidOperationException("Loaded map dimensions do not match the data source.");
 
-		var terrainConfig = WithCellSize(
-			mapping.TerrainConfig ?? new TerrainMeshConfig(),
-			mapping.WorldUnitsPerTile);
-
 		var modifierSettings = mapping.ModifierSettings ?? _modifierSettings;
 		var samples = TileHeightModifier.Build(tiles, _tileRules, modifierSettings);
 		var heightmap = Heightmap.FromSamples(samples, mapping.WorldUnitsPerTile);
-		var beveledMesh = BeveledTileMeshBuilder.Build(
-			tiles,
-			_tileRules,
-			modifierSettings,
-			terrainConfig.CellSize,
-			terrainConfig.HeightScale);
 
-		return new WorldTerrainBuildResult(
-			heightmap,
-			beveledMesh.Mesh,
-			beveledMesh.VertexTileOverlay);
+		return new TerrainBuildResult(heightmap);
 	}
-
-	private static TerrainMeshConfig WithCellSize(TerrainMeshConfig config, float cellSize) =>
-		new()
-		{
-			CellSize = cellSize,
-			HeightScale = config.HeightScale,
-			MinHeight = config.MinHeight,
-			MaxHeight = config.MaxHeight
-		};
-
 }

@@ -67,6 +67,7 @@ public sealed class WorldGenerationTests : ITestSuite
 				CellularAutomataIterations = config.CellularAutomataIterations,
 				MaxAttempts = config.MaxAttempts
 			});
+
 			TestAssert.True(GroundConnectivity.HasGroundPath(map.Tiles, map.Start, map.Goal));
 		}
 	}

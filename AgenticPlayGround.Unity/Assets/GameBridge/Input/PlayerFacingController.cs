@@ -1,5 +1,4 @@
-using UnityEngine;
-using Vector2 = Game.Systems.Foundation.GameMath.Core.Model.Vector2;
+using GameVector2 = Game.Systems.Foundation.GameMath.Core.Model.Vector2;
 
 namespace Game.UnityBridge.Input
 {
@@ -11,16 +10,16 @@ namespace Game.UnityBridge.Input
 
 		public void ApplyTurnInput(float horizontalAxis, float deltaTime, float turnSpeedDegrees)
 		{
-			if (Mathf.Abs(horizontalAxis) <= 1e-6f || deltaTime <= 0f)
+			if (UnityEngine.Mathf.Abs(horizontalAxis) <= 1e-6f || deltaTime <= 0f)
 				return;
 
 			FacingYawDegrees += horizontalAxis * turnSpeedDegrees * deltaTime;
 		}
 
-		public Vector2 GetForwardSimDirection()
+		public GameVector2 GetForwardSimDirection()
 		{
-			var yawRadians = FacingYawDegrees * Mathf.Deg2Rad;
-			return new Vector2(Mathf.Sin(yawRadians), Mathf.Cos(yawRadians));
+			var yawRadians = FacingYawDegrees * UnityEngine.Mathf.Deg2Rad;
+			return new GameVector2(UnityEngine.Mathf.Sin(yawRadians), UnityEngine.Mathf.Cos(yawRadians));
 		}
 	}
 }

@@ -16,14 +16,17 @@ namespace Game.UnityBridge.Bootstrap
 		public int WaterPoolAttempts = 12;
 		public int WaterPoolMaxSize = 5;
 
-		[Header("Terrain mesh")]
+		[Header("Terrain")]
 		public float WorldUnitsPerTile = 1f;
 		public float HeightScale = 1f;
 		public float GroundHeight = 0f;
 		public float WallHeight = 1f;
 		public float WaterHeight = -1f;
-		public float BevelInset = 0.3f;
-		public int BevelSegments = 4;
+
+		[Header("Layer debug")]
+		public bool EnableLayerDebug = true;
+		public KeyCode DebugGroundKey = KeyCode.Alpha1;
+		public KeyCode DebugOffKey = KeyCode.Alpha0;
 
 		[Header("Player")]
 		public float GroundSpeed = 4f;

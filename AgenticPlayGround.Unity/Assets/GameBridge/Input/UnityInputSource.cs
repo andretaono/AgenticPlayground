@@ -1,7 +1,6 @@
 using Game.Systems.Foundation.Primitives;
 using Game.Systems.Integration.Presentation.Ports;
-using UnityEngine;
-using Vector2 = Game.Systems.Foundation.GameMath.Core.Model.Vector2;
+using GameVector2 = Game.Systems.Foundation.GameMath.Core.Model.Vector2;
 
 namespace Game.UnityBridge.Input
 {
@@ -16,18 +15,18 @@ namespace Game.UnityBridge.Input
 			_facing = facing ?? throw new System.ArgumentNullException(nameof(facing));
 		}
 
-		public Vector2 PollMovementInput(AgentId agentId)
+		public GameVector2 PollMovementInput(AgentId agentId)
 		{
 			if (!agentId.Equals(_boundAgentId))
-				return Vector2.Zero;
+				return GameVector2.Zero;
 
 			var forwardBack = UnityEngine.Input.GetAxisRaw("Vertical");
-			if (Mathf.Abs(forwardBack) <= 1e-6f)
-				return Vector2.Zero;
+			if (UnityEngine.Mathf.Abs(forwardBack) <= 1e-6f)
+				return GameVector2.Zero;
 
 			var direction = _facing.GetForwardSimDirection();
 			if (forwardBack < 0f)
-				direction = new Vector2(-direction.X, -direction.Y);
+				direction = new GameVector2(-direction.X, -direction.Y);
 
 			return direction.Normalized();
 		}

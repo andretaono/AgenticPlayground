@@ -21,9 +21,9 @@ namespace Game.UnityBridge.Runtime
 
 			_context.Facing.ApplyTurnInput(
 				UnityEngine.Input.GetAxisRaw("Horizontal"),
-				Time.deltaTime,
+				UnityEngine.Time.deltaTime,
 				_turnSpeedDegrees);
-			_context.Runtime.Tick(Time.deltaTime);
+			_context.Runtime.Tick(UnityEngine.Time.deltaTime);
 		}
 	}
 }

@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityQuaternion = UnityEngine.Quaternion;
+using UnityVector3 = UnityEngine.Vector3;
 
 namespace Game.UnityBridge.Presentation
 {
@@ -6,7 +8,7 @@ namespace Game.UnityBridge.Presentation
 	{
 		private float _cameraYawDegrees;
 		private float _cameraYawVelocity;
-		private Vector3 _positionVelocity;
+		private UnityVector3 _positionVelocity;
 		private float _pitchDegrees;
 		private float _pitchVelocity;
 		private float _lookYawVelocity;
@@ -17,7 +19,7 @@ namespace Game.UnityBridge.Presentation
 		{
 			_cameraYawDegrees = facingYawDegrees;
 			_cameraYawVelocity = 0f;
-			_positionVelocity = Vector3.zero;
+			_positionVelocity = UnityVector3.zero;
 			_pitchDegrees = 0f;
 			_pitchVelocity = 0f;
 			_lookYawVelocity = 0f;
@@ -25,12 +27,12 @@ namespace Game.UnityBridge.Presentation
 			if (player == null || camera == null)
 				return;
 
-			player.rotation = Quaternion.Euler(0f, facingYawDegrees, 0f);
+			player.rotation = UnityQuaternion.Euler(0f, facingYawDegrees, 0f);
 
 			var settings = Settings;
 			var desiredPosition = ComputeCameraPosition(player.position, facingYawDegrees, settings);
 			var lookTarget = ComputeLookTarget(player.position, facingYawDegrees, settings);
-			var desiredRotation = Quaternion.LookRotation(lookTarget - desiredPosition, Vector3.up);
+			var desiredRotation = UnityQuaternion.LookRotation(lookTarget - desiredPosition, UnityVector3.up);
 
 			camera.transform.position = desiredPosition;
 			camera.transform.rotation = desiredRotation;
@@ -43,16 +45,16 @@ namespace Game.UnityBridge.Presentation
 				return;
 
 			var settings = Settings;
-			player.rotation = Quaternion.Euler(0f, facingYawDegrees, 0f);
+			player.rotation = UnityQuaternion.Euler(0f, facingYawDegrees, 0f);
 
-			_cameraYawDegrees = Mathf.SmoothDampAngle(
+			_cameraYawDegrees = UnityEngine.Mathf.SmoothDampAngle(
 				_cameraYawDegrees,
 				facingYawDegrees,
 				ref _cameraYawVelocity,
 				settings.YawSmoothTime);
 
 			var desiredPosition = ComputeCameraPosition(player.position, _cameraYawDegrees, settings);
-			camera.transform.position = Vector3.SmoothDamp(
+			camera.transform.position = UnityVector3.SmoothDamp(
 				camera.transform.position,
 				desiredPosition,
 				ref _positionVelocity,
@@ -63,42 +65,42 @@ namespace Game.UnityBridge.Presentation
 			if (toTarget.sqrMagnitude <= 1e-6f)
 				return;
 
-			var desiredRotation = Quaternion.LookRotation(toTarget, Vector3.up);
+			var desiredRotation = UnityQuaternion.LookRotation(toTarget, UnityVector3.up);
 			var desiredPitch = NormalizePitch(desiredRotation.eulerAngles.x);
 			var desiredLookYaw = desiredRotation.eulerAngles.y;
 
-			_pitchDegrees = Mathf.SmoothDampAngle(
+			_pitchDegrees = UnityEngine.Mathf.SmoothDampAngle(
 				_pitchDegrees,
 				desiredPitch,
 				ref _pitchVelocity,
 				settings.RotationSmoothTime);
 
-			var smoothedLookYaw = Mathf.SmoothDampAngle(
+			var smoothedLookYaw = UnityEngine.Mathf.SmoothDampAngle(
 				camera.transform.eulerAngles.y,
 				desiredLookYaw,
 				ref _lookYawVelocity,
 				settings.RotationSmoothTime);
 
-			camera.transform.rotation = Quaternion.Euler(_pitchDegrees, smoothedLookYaw, 0f);
+			camera.transform.rotation = UnityQuaternion.Euler(_pitchDegrees, smoothedLookYaw, 0f);
 		}
 
-		private static Vector3 ComputeCameraPosition(Vector3 playerPosition, float yawDegrees, SettingsConfig settings)
+		private static UnityVector3 ComputeCameraPosition(UnityVector3 playerPosition, float yawDegrees, SettingsConfig settings)
 		{
-			var yawRadians = yawDegrees * Mathf.Deg2Rad;
-			var forward = new Vector3(Mathf.Sin(yawRadians), 0f, Mathf.Cos(yawRadians));
-			var right = Vector3.Cross(Vector3.up, forward).normalized;
+			var yawRadians = yawDegrees * UnityEngine.Mathf.Deg2Rad;
+			var forward = new UnityVector3(UnityEngine.Mathf.Sin(yawRadians), 0f, UnityEngine.Mathf.Cos(yawRadians));
+			var right = UnityVector3.Cross(UnityVector3.up, forward).normalized;
 			return playerPosition
-				+ Vector3.up * settings.ShoulderHeight
+				+ UnityVector3.up * settings.ShoulderHeight
 				- forward * settings.FollowDistance
 				+ right * settings.ShoulderOffset;
 		}
 
-		private static Vector3 ComputeLookTarget(Vector3 playerPosition, float yawDegrees, SettingsConfig settings)
+		private static UnityVector3 ComputeLookTarget(UnityVector3 playerPosition, float yawDegrees, SettingsConfig settings)
 		{
-			var yawRadians = yawDegrees * Mathf.Deg2Rad;
-			var forward = new Vector3(Mathf.Sin(yawRadians), 0f, Mathf.Cos(yawRadians));
+			var yawRadians = yawDegrees * UnityEngine.Mathf.Deg2Rad;
+			var forward = new UnityVector3(UnityEngine.Mathf.Sin(yawRadians), 0f, UnityEngine.Mathf.Cos(yawRadians));
 			return playerPosition
-				+ Vector3.up * settings.LookHeight
+				+ UnityVector3.up * settings.LookHeight
 				+ forward * settings.LookAhead;
 		}
 

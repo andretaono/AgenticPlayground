@@ -17,7 +17,7 @@ namespace Game.UnityBridge.Runtime
 				return;
 			}
 
-			var camera = _context.Camera != null ? _context.Camera : Camera.main;
+			var camera = _context.Camera != null ? _context.Camera : UnityEngine.Camera.main;
 			if (camera == null)
 				return;
 

@@ -1,8 +1,12 @@
+using Game.Systems.Domain.World.Generation.Model;
 using Game.Systems.Integration.TerrainMesh;
 
 namespace Game.Systems.Integration.Presentation.Ports;
 
 public interface ITerrainPresenter
 {
-	void SyncTerrainMesh(WorldTerrainBuildResult buildResult);
+	void SyncTerrain(
+		GeneratedWorldMap map,
+		TerrainBuildResult result,
+		TileHeightModifierSettings settings);
 }

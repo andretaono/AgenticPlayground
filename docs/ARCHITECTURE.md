@@ -57,7 +57,7 @@ Each system MUST include:
 
 ### TerrainMesh (separate from World)
 
-`Systems/Domain/TerrainMesh/` owns procedural heightmaps and engine-agnostic mesh data. The World tile system is unchanged. Composition lives in `Systems/Integration/TerrainMesh/` (`WorldTerrainMeshComposer`, 1:1 tile-to-height grid). See [`Systems/Domain/TerrainMesh/SPEC.md`](Systems/Domain/TerrainMesh/SPEC.md).
+`Systems/Domain/TerrainMesh/` owns procedural heightmaps and engine-agnostic mesh data. The World tile system is unchanged. Composition lives in `Systems/Integration/TerrainMesh/` (`TerrainComposer`, 1:1 tile-to-height grid). Unity renders per-tile cubes from the ground layer. See [`Systems/Domain/TerrainMesh/SPEC.md`](Systems/Domain/TerrainMesh/SPEC.md).
 
 ---
 

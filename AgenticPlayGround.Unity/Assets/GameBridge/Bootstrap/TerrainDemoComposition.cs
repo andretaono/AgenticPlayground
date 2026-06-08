@@ -28,19 +28,20 @@ namespace Game.UnityBridge.Bootstrap
 			Material terrainMaterial,
 			Camera camera)
 		{
-			var map = GenerateMap(settings);
-			var buildResult = ComposeTerrain(settings, map);
-			var resolvedMaterial = terrainMaterial != null
-				? terrainMaterial
-				: TerrainMaterialFactory.CreateDefault();
-			var resolvedCamera = camera != null ? camera : Camera.main;
+			_ = terrainMaterial;
 
-			var sessionRoot = new GameObject("TerrainDemoSession").transform;
+			var map = GenerateMap(settings);
+			var modifierSettings = CreateModifierSettings(settings);
+			var buildResult = ComposeTerrain(settings, map, modifierSettings);
+			var resolvedCamera = camera != null ? camera : UnityEngine.Camera.main;
+
+			var sessionRoot = new UnityEngine.GameObject("TerrainDemoSession").transform;
 			sessionRoot.SetParent(bootstrapRoot, worldPositionStays: false);
 
-			var terrainRoot = new GameObject("TerrainRoot").transform;
+			var terrainRoot = new UnityEngine.GameObject("TerrainRoot").transform;
 			terrainRoot.SetParent(sessionRoot, worldPositionStays: false);
-			new UnityTerrainPresenter(terrainRoot, resolvedMaterial).SyncTerrainMesh(buildResult);
+			var terrainPresenter = new UnityTerrainPresenter(terrainRoot, settings.HeightScale);
+			terrainPresenter.SyncTerrain(map, buildResult, modifierSettings);
 
 			var worldData = (InMemoryWorldDataSource)map.ToDataSource();
 			var tileRules = new DefaultTileRulesProvider();
@@ -57,7 +58,7 @@ namespace Game.UnityBridge.Bootstrap
 				map.Start.Y + 0.5f,
 				0f));
 
-			var actorsRoot = new GameObject("ActorsRoot").transform;
+			var actorsRoot = new UnityEngine.GameObject("ActorsRoot").transform;
 			actorsRoot.SetParent(sessionRoot, worldPositionStays: false);
 
 			var worldPresenter = new UnityWorldPresenter(
@@ -114,12 +115,15 @@ namespace Game.UnityBridge.Bootstrap
 				resolvedCamera);
 
 			SnapCamera(context);
-			AttachHosts(sessionRoot.gameObject, context, settings.TurnSpeedDegrees);
+			AttachHosts(sessionRoot.gameObject, context, settings, terrainRoot);
 
-			Debug.Log(
+			var groundTiles = CountTiles(map.GroundLayer, TileIds.Ground);
+			var wallTiles = CountTiles(map.GroundLayer, TileIds.Wall);
+			var waterTiles = CountTiles(map.GroundLayer, TileIds.Water);
+			UnityEngine.Debug.Log(
 				$"Terrain demo ready. Seed={map.SeedUsed}, Start=({map.Start.X},{map.Start.Y}), " +
-				$"Goal=({map.Goal.X},{map.Goal.Y}), Vertices={buildResult.Mesh.Vertices.Count}. " +
-				"W/S move forward/back, A/D turn, camera follows behind.");
+				$"Goal=({map.Goal.X},{map.Goal.Y}), Ground={groundTiles}, Wall={wallTiles}, Water={waterTiles}. " +
+				"W/S move forward/back, A/D turn, camera follows behind. Key 1=ground tile overlay.");
 
 			return context;
 		}
@@ -141,13 +145,20 @@ namespace Game.UnityBridge.Bootstrap
 			return new WorldGenerationSystem().Generator.Generate(generationConfig);
 		}
 
-		private static WorldTerrainBuildResult ComposeTerrain(
+		private static TileHeightModifierSettings CreateModifierSettings(TerrainDemoSettings settings) =>
+			new()
+			{
+				GroundHeight = settings.GroundHeight,
+				WallHeight = settings.WallHeight,
+				WaterHeight = settings.WaterHeight
+			};
+
+		private static TerrainBuildResult ComposeTerrain(
 			TerrainDemoSettings settings,
-			GeneratedWorldMap map)
+			GeneratedWorldMap map,
+			TileHeightModifierSettings modifierSettings)
 		{
-			var composer = new WorldTerrainMeshComposer(
-				new TerrainMeshSystem(),
-				new DefaultTileRulesProvider());
+			var composer = new TerrainComposer(new DefaultTileRulesProvider());
 
 			return composer.Compose(
 				map.ToDataSource(),
@@ -158,14 +169,20 @@ namespace Game.UnityBridge.Bootstrap
 					{
 						HeightScale = settings.HeightScale
 					},
-					ModifierSettings: new TileHeightModifierSettings
-					{
-						GroundHeight = settings.GroundHeight,
-						WallHeight = settings.WallHeight,
-						WaterHeight = settings.WaterHeight,
-						BevelInset = settings.BevelInset,
-						BevelSegments = settings.BevelSegments
-					}));
+					ModifierSettings: modifierSettings));
+		}
+
+		private static int CountTiles(TileId[,] tiles, TileId tileId)
+		{
+			var count = 0;
+			for (var y = 0; y < tiles.GetLength(1); y++)
+			for (var x = 0; x < tiles.GetLength(0); x++)
+			{
+				if (tiles[x, y] == tileId)
+					count++;
+			}
+
+			return count;
 		}
 
 		private static void SnapCamera(TerrainDemoContext context)
@@ -182,10 +199,14 @@ namespace Game.UnityBridge.Bootstrap
 		private static void AttachHosts(
 			GameObject sessionObject,
 			TerrainDemoContext context,
-			float turnSpeedDegrees)
+			TerrainDemoSettings settings,
+			Transform terrainRoot)
 		{
-			sessionObject.AddComponent<GameLoopHost>().Initialize(context, turnSpeedDegrees);
+			sessionObject.AddComponent<GameLoopHost>().Initialize(context, settings.TurnSpeedDegrees);
 			sessionObject.AddComponent<CameraFollowHost>().Initialize(context);
+
+			if (settings.EnableLayerDebug)
+				sessionObject.AddComponent<WorldLayerDebugHost>().Initialize(context, settings, terrainRoot);
 		}
 	}
 }

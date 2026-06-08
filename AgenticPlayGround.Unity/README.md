@@ -16,8 +16,8 @@ See also: [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) (portable layers) an
 ## Demo pipeline
 
 1. **World** — `WorldGenerationSystem` produces a tile grid (`GeneratedWorldMap`)
-2. **Terrain** — `WorldTerrainMeshComposer` builds heightmap + `TerrainMeshData`
-3. **Render** — `UnityTerrainPresenter` (`ITerrainPresenter`) converts mesh data to `UnityEngine.Mesh`
+2. **Terrain** — `TerrainComposer` builds a per-tile heightmap for actor positioning
+3. **Render** — `UnityTerrainPresenter` (`ITerrainPresenter`) spawns per-tile cubes: wall on tile, ground offset below, water skipped
 4. **Runtime** — `TerrainDemoComposition` builds `GameRuntime` via `GameRuntimeBuilder` (same pipeline as `TestRunner` integration tests)
 5. **Play** — `GameLoopHost` ticks simulation; `CameraFollowHost` syncs the over-shoulder camera
 
@@ -26,6 +26,15 @@ See also: [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) (portable layers) an
 - **W / S** — move forward / backward along facing
 - **A / D** — turn left / right
 - Camera follows behind the player (over-shoulder)
+
+## Debug controls (TerrainDemo play mode)
+
+Layer debug is enabled by default (`TerrainDemoSettings.EnableLayerDebug`). A HUD in the top-left shows the tile under the player and ground tile type.
+
+| Key | Action |
+|-----|--------|
+| **1** | Ground layer overlay (tan = ground, blue = water, gray = wall) |
+| **0** | Turn overlay off |
 
 ## Prerequisites
 
@@ -59,8 +68,8 @@ Unity refreshes the plugin automatically when the DLL changes.
 
 1. Open `Assets/Scenes/TerrainDemo.unity`
 2. Press Play
-3. Console logs seed, start, and goal positions
-4. Terrain renders with vertex colors: tan = ground, blue = water, gray = wall cliffs
+3. Console logs seed, start, goal, and tile counts
+4. Terrain renders as per-tile cubes: tan = ground (below surface), gray = wall, water tiles have no geometry
 
 ## GameBridge layout
 
@@ -71,8 +80,9 @@ Unity refreshes the plugin automatically when the DLL changes.
 | `Runtime/` | Per-frame hosts (`GameLoopHost`, `CameraFollowHost`) added at compose time |
 | `Input/` | `IInputSource` implementation + facing (tank controls) |
 | `Presentation/` | `IWorldPresenter`, camera follow |
-| `Terrain/` | `ITerrainPresenter`, mesh conversion, default material helper |
-| `Shaders/` | `GameBridge/VertexColorUnlit` terrain shader |
+| `Terrain/` | `ITerrainPresenter`, per-tile cube visuals, material helper |
+| `Debug/` | Ground tile debug overlay |
+| `Shaders/` | `GameBridge/VertexColorUnlit` shader (legacy; cubes use Lit materials) |
 
 ### Organization conventions
 
@@ -85,7 +95,7 @@ Unity refreshes the plugin automatically when the DLL changes.
 | Capsule position on terrain | `UnityWorldPresenter` | `WorldPresentationAdapter` |
 | Camera smoothing / over-shoulder offset | `OverShoulderCameraFollow` | — |
 | Swimming state from tile type | — | `AgentMovementStateAdapter` |
-| World generation, mesh compose | Called from bootstrap/composition | `WorldGenerationSystem`, `WorldTerrainMeshComposer` |
+| World generation, heightmap compose | Called from bootstrap/composition | `WorldGenerationSystem`, `TerrainComposer` |
 
 When adding a feature, ask: *is this simulation or presentation?* Simulation stays in `Game.dll`; Unity only adapts ports and scene-specific UX.
 
@@ -115,6 +125,17 @@ unityY = heightmap sample at (unityX, unityZ)
 - No simulation logic in Unity scripts — wiring and presentation only
 - Headless tests remain in `TestRunner`; Unity is visual verification and host UX
 
+### Naming / Unity API (GameBridge)
+
+GameBridge scripts mix `Game.dll` types with Unity APIs. Avoid ambiguous references:
+
+- **Always qualify** static Unity APIs: `UnityEngine.Input`, `UnityEngine.Debug`, `UnityEngine.Time`, `UnityEngine.Object`, `UnityEngine.Shader`, `UnityEngine.GUILayout`, `UnityEngine.GUI`, `UnityEngine.Mathf`, `UnityEngine.Camera.main`
+- **Use type aliases** for game vs Unity math:
+  - `GameVector2` / `GameVector3` — simulation coordinates from `Game.Systems.Foundation.GameMath.Core.Model`
+  - `UnityVector3` / `UnityQuaternion` — scene geometry (`UnityEngine.Vector3`, etc.)
+- **Use `UnityEngine.Color`** for mesh tinting and materials; never bare `Color` when game types are in scope
+- Keep `using UnityEngine;` for inheritance and components (`MonoBehaviour`, `Transform`, `GameObject`, `MeshRenderer`, `Camera` parameters)
+
 ## Troubleshooting
 
 **Unity cannot load Game.dll / TypeCache backing-field errors:** Run `sync-unity.cmd` from the repo root — it builds and copies the `netstandard2.1` `Game.dll` (Unity-compatible). `TestRunner` still uses the `net8.0` build. `Game.dll` excludes test code so the plugin does not reference `System.Security.Cryptography`.
@@ -122,5 +143,3 @@ unityY = heightmap sample at (unityX, unityZ)
 **Out of memory on Play:** Close the Unity Profiler window when not actively profiling — it reserves memory even when not recording.
 
 **File-scoped namespace / C# version errors:** GameBridge scripts use classic block namespaces and `Assets/csc.rsp` sets `-langversion:latest` for Unity's compiler.
-
-**Pink terrain material:** Assign a material using the `GameBridge/VertexColorUnlit` shader, or let `TerrainDemoBootstrap` create one at runtime.

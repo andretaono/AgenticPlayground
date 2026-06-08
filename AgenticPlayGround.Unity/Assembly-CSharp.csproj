@@ -61,19 +61,23 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.47f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\GameBridge\Debug\WorldLayerDebugOverlay.cs" />
     <Compile Include="Assets\GameBridge\Terrain\UnityTerrainPresenter.cs" />
+    <Compile Include="Assets\GameBridge\Terrain\TileVisualMaterials.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoBootstrap.cs" />
     <Compile Include="Assets\GameBridge\Runtime\GameLoopHost.cs" />
+    <Compile Include="Assets\GameBridge\Debug\WorldLayerDebugMode.cs" />
     <Compile Include="Assets\GameBridge\Terrain\TerrainMaterialFactory.cs" />
     <Compile Include="Assets\GameBridge\Input\UnityInputSource.cs" />
     <Compile Include="Assets\GameBridge\Presentation\UnityWorldPresenter.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoSettings.cs" />
     <Compile Include="Assets\GameBridge\Input\PlayerFacingController.cs" />
-    <Compile Include="Assets\GameBridge\Terrain\UnityMeshFactory.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoComposition.cs" />
     <Compile Include="Assets\GameBridge\Runtime\CameraFollowHost.cs" />
     <Compile Include="Assets\GameBridge\Presentation\OverShoulderCameraFollow.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoContext.cs" />
+    <Compile Include="Assets\GameBridge\Debug\WorldLayerDebugColors.cs" />
+    <Compile Include="Assets\GameBridge\Runtime\WorldLayerDebugHost.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\csc.rsp" />
