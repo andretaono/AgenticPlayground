@@ -1,6 +1,6 @@
-namespace Game.Scenarios.Runners;
+namespace Game.Tests.Integration.Runners;
 
-public sealed record PolarBearScenarioResult(
+public sealed record PolarBearIntegrationResult(
 	bool AttackCommitted,
 	int FirstAttackTick,
 	float FinalPlayerHealth,

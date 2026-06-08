@@ -1,6 +1,6 @@
-namespace Game.Scenarios.Runners;
+namespace Game.Tests.Integration.Runners;
 
-public sealed record AgentCombatScenarioResult(
+public sealed record AgentCombatIntegrationResult(
 	bool TargetDamaged,
 	float InitialDistance,
 	float FinalDistance,

@@ -1,4 +1,4 @@
-using Game.Scenarios.Runners;
+using Game.Tests.Integration.Runners;
 using Game.Systems.Foundation.Testing;
 
 namespace Game.Tests.Integration;
@@ -11,7 +11,7 @@ public sealed class PolarBearTests : ITestSuite
 	{
 		registry.Add(Name, "commits attack within time limit", () =>
 		{
-			var result = new PolarBearScenarioRunner().Run();
+			var result = new PolarBearIntegrationRunner().Run();
 			TestAssert.True(result.TrackingDetected);
 			TestAssert.True(result.AttackCommitted);
 			TestAssert.True(result.FirstAttackTick > 0);
@@ -20,7 +20,7 @@ public sealed class PolarBearTests : ITestSuite
 
 		registry.Add(Name, "behaviour trace includes track before attack", () =>
 		{
-			var result = new PolarBearScenarioRunner().Run();
+			var result = new PolarBearIntegrationRunner().Run();
 			TestAssert.True(result.AttackCommitted);
 
 			var trackIndex = IndexOf(result.BehaviourTrace, "polar-bear-track");
@@ -33,7 +33,7 @@ public sealed class PolarBearTests : ITestSuite
 
 		registry.Add(Name, "can attack without low health when presence or awareness qualifies", () =>
 		{
-			var result = new PolarBearScenarioRunner().Run();
+			var result = new PolarBearIntegrationRunner().Run();
 			TestAssert.True(result.AttackCommitted);
 			TestAssert.True(result.AdvantageWithoutLowHealth);
 		});

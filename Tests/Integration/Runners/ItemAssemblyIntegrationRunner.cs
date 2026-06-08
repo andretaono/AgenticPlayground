@@ -1,31 +1,13 @@
-using Game.Scenarios.Core.Interfaces;
 using Game.Systems.Domain.ItemAssembly;
 using Game.Systems.Domain.ItemAssembly.Model;
 using Game.Systems.Integration.Items;
 
-namespace Game.Scenarios;
+namespace Game.Tests.Integration.Runners;
 
-public sealed class ItemAssemblyDemo : IScenario
+public sealed class ItemAssemblyIntegrationRunner
 {
-	public string Name => "item-assembly";
-
-	public void Run()
+	public ItemAssemblyFlatResult RunFlatAggregation()
 	{
-		RunFlatAggregationCase();
-		Console.WriteLine();
-		RunMixedModifierCase();
-		Console.WriteLine();
-		RunFlagPriorityCase();
-		Console.WriteLine();
-		RunDeterminismCase();
-		Console.WriteLine();
-		RunLootRandomizerCase();
-	}
-
-	private static void RunFlatAggregationCase()
-	{
-		Console.WriteLine("=== Case 1: Flat modifiers sum across socketed items ===");
-
 		var system = new ItemAssemblySystem();
 		var assembly = system.AssemblyFactory.Create(socketCount: 2);
 
@@ -42,20 +24,16 @@ public sealed class ItemAssemblyDemo : IScenario
 
 		system.Assembly.AddItem(assembly, socketIndex: 0, sword);
 		system.Assembly.AddItem(assembly, socketIndex: 1, ring);
-
 		var resolved = system.Resolver.Resolve(assembly);
 
-		Console.WriteLine($"Socket 0: item {sword.Id} (+25 Damage, +1.5 AttackRange)");
-		Console.WriteLine($"Socket 1: item {ring.Id} (+10 Damage)");
-		Console.WriteLine($"Resolved Damage: {resolved.FlatValues[new ModifierId("Damage")]}");
-		Console.WriteLine($"Resolved AttackRange: {resolved.FlatValues[new ModifierId("AttackRange")]}");
-		Console.WriteLine($"Raw modifier count: {resolved.RawModifiers.Count}");
+		return new ItemAssemblyFlatResult(
+			Damage: resolved.FlatValues[new ModifierId("Damage")],
+			AttackRange: resolved.FlatValues[new ModifierId("AttackRange")],
+			RawModifierCount: resolved.RawModifiers.Count);
 	}
 
-	private static void RunMixedModifierCase()
+	public ItemAssemblyMixedResult RunMixedModifiers()
 	{
-		Console.WriteLine("=== Case 2: Flat, percent, and flag modifiers ===");
-
 		var system = new ItemAssemblySystem();
 		var assembly = system.AssemblyFactory.Create(socketCount: 1);
 
@@ -69,15 +47,14 @@ public sealed class ItemAssemblyDemo : IScenario
 		system.Assembly.AddItem(assembly, socketIndex: 0, boots);
 		var resolved = system.Resolver.Resolve(assembly);
 
-		Console.WriteLine($"MovementSpeed (flat): {resolved.FlatValues[new ModifierId("MovementSpeed")]}");
-		Console.WriteLine($"MovementSpeed (percent): {resolved.PercentValues[new ModifierId("MovementSpeed")]}");
-		Console.WriteLine($"CanSwim enabled: {resolved.Flags.Contains(new ModifierId("CanSwim"))}");
+		return new ItemAssemblyMixedResult(
+			FlatMovementSpeed: resolved.FlatValues[new ModifierId("MovementSpeed")],
+			PercentMovementSpeed: resolved.PercentValues[new ModifierId("MovementSpeed")],
+			CanSwimEnabled: resolved.Flags.Contains(new ModifierId("CanSwim")));
 	}
 
-	private static void RunFlagPriorityCase()
+	public ItemAssemblyFlagResult RunFlagPriority()
 	{
-		Console.WriteLine("=== Case 3: Conflicting flags resolve by priority ===");
-
 		var system = new ItemAssemblySystem();
 		var assembly = system.AssemblyFactory.Create(socketCount: 2);
 
@@ -93,18 +70,14 @@ public sealed class ItemAssemblyDemo : IScenario
 
 		system.Assembly.AddItem(assembly, socketIndex: 0, curse);
 		system.Assembly.AddItem(assembly, socketIndex: 1, wings);
-
 		var resolved = system.Resolver.Resolve(assembly);
 
-		Console.WriteLine("Curse: CanFly=false (priority 1)");
-		Console.WriteLine("Wings: CanFly=true (priority 10)");
-		Console.WriteLine($"CanFly enabled: {resolved.Flags.Contains(new ModifierId("CanFly"))}");
+		return new ItemAssemblyFlagResult(
+			CanFlyEnabled: resolved.Flags.Contains(new ModifierId("CanFly")));
 	}
 
-	private static void RunDeterminismCase()
+	public ItemAssemblyDeterminismResult RunDeterminism()
 	{
-		Console.WriteLine("=== Case 4: Same assembly produces identical resolved output ===");
-
 		var system = new ItemAssemblySystem();
 		var assembly = system.AssemblyFactory.Create(socketCount: 2);
 
@@ -131,32 +104,22 @@ public sealed class ItemAssemblyDemo : IScenario
 			first.Flags.SetEquals(second.Flags) &&
 			first.RawModifiers.SequenceEqual(second.RawModifiers);
 
-		Console.WriteLine($"Deterministic resolve: {identical}");
-		Console.WriteLine($"Raw modifier order: {string.Join(", ", first.RawModifiers.Select(modifier => $"{modifier.Id}:{modifier.Kind}@{modifier.Priority}"))}");
+		return new ItemAssemblyDeterminismResult(
+			Identical: identical,
+			FirstRawModifierCount: first.RawModifiers.Count);
 	}
 
-	private static void RunLootRandomizerCase()
+	public ItemAssemblyLootResult RunLootRandomizer()
 	{
-		Console.WriteLine("=== Case 5: Weighted loot randomizer rolls items from ModifierCatalog ===");
-
 		var system = new ItemAssemblySystem();
 		var catalog = new ModifierCatalog();
 		var randomizer = new LootRandomizer(system.ItemFactory, catalog, new SeededRng(42));
 
-		Console.WriteLine("Rolling 5 loot drops (1-3 modifiers each):\n");
-
+		var drops = new List<Item>(5);
 		for (var roll = 1; roll <= 5; roll++)
-		{
-			var item = randomizer.Roll(minModifiers: 1, maxModifiers: 3);
-			Console.WriteLine($"Drop {roll} (item {item.Id}, {item.Modifiers.Count} modifiers):");
+			drops.Add(randomizer.Roll(minModifiers: 1, maxModifiers: 3));
 
-			foreach (var modifier in item.Modifiers)
-				Console.WriteLine($"  - {modifier.Id} {modifier.Kind} {modifier.Value}");
-		}
-
-		Console.WriteLine("\nSpawn frequency over 1000 single-modifier rolls:");
 		var counts = new Dictionary<string, int>();
-
 		for (var i = 0; i < 1000; i++)
 		{
 			var item = randomizer.Roll(minModifiers: 1, maxModifiers: 1);
@@ -164,7 +127,29 @@ public sealed class ItemAssemblyDemo : IScenario
 			counts[id] = counts.GetValueOrDefault(id) + 1;
 		}
 
-		foreach (var entry in counts.OrderByDescending(pair => pair.Value))
-			Console.WriteLine($"  {entry.Key}: {entry.Value}");
+		var topModifier = counts.MaxBy(pair => pair.Value).Key;
+
+		return new ItemAssemblyLootResult(
+			AllDropsHaveModifiers: drops.All(item => item.Modifiers.Count >= 1),
+			DistinctModifierTypesRolled: counts.Count,
+			TopModifierId: topModifier,
+			TopModifierRollCount: counts[topModifier]);
 	}
 }
+
+public sealed record ItemAssemblyFlatResult(float Damage, float AttackRange, int RawModifierCount);
+
+public sealed record ItemAssemblyMixedResult(
+	float FlatMovementSpeed,
+	float PercentMovementSpeed,
+	bool CanSwimEnabled);
+
+public sealed record ItemAssemblyFlagResult(bool CanFlyEnabled);
+
+public sealed record ItemAssemblyDeterminismResult(bool Identical, int FirstRawModifierCount);
+
+public sealed record ItemAssemblyLootResult(
+	bool AllDropsHaveModifiers,
+	int DistinctModifierTypesRolled,
+	string TopModifierId,
+	int TopModifierRollCount);

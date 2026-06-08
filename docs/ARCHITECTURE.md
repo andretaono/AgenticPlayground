@@ -109,17 +109,17 @@ See [`docs/actors.md`](actors.md) for the `AgentId` / `EntityId` model and `Acto
 
 - Tick-based deterministic simulation
 - `GameRuntimeBuilder` composes domain systems and standard tick adapters
-- ScenarioRunner executes isolated scenarios for manual exploration
-- `TestRunner` console project runs headless tests via `dotnet run --project TestRunner` (exit code 1 on failure)
+- `TestRunner` console project is the sole entry point: `dotnet run --project TestRunner` (exit code 1 on failure)
+- Main `Game` project is a library referenced by `TestRunner`
 
 ### Tests
 
 | Layer | Location | What they exercise |
 |-------|----------|-------------------|
 | **Domain unit** | `Systems/Domain/{System}/Tests/` | Single `XxxSystem`, public ports, domain fakes — no Integration |
-| **Integration** | `Tests/Integration/` | Multi-system scenarios via `GameRuntimeBuilder` and scenario runners |
+| **Integration** | `Tests/Integration/` | Multi-system harnesses in `Tests/Integration/Runners/` |
 
-Filter examples: `dotnet run --project TestRunner -- unit` (all domain unit suites), `dotnet run --project TestRunner -- polar-bear`.
+Filter examples: `dotnet run --project TestRunner -- unit` (domain unit suites), `dotnet run --project TestRunner -- polar-bear`, `dotnet run --project TestRunner -- item-assembly`.
 
 Domain unit tests may use `Tests/Fakes/` under the same system folder. Shared domain fakes belong in `Systems/Domain/Common/Tests/Fakes/` if needed.
 
@@ -134,8 +134,7 @@ When generating a Domain system:
 - `/Controller`
 - `/Ports`
 - `/Tests` (optional) — `ITestSuite` for domain unit tests; register in `Tests/Core/UnitTestRunner.cs`
-- One console scenario under `/Scenarios`
-- Register scenario in `ScenarioRunner.cs`
+- Integration coverage (optional) — `ITestSuite` in `Tests/Integration/` + `*IntegrationRunner` in `Tests/Integration/Runners/`; register in `UnitTestRunner`
 
 ---
 

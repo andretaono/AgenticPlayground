@@ -29,6 +29,18 @@ public static class UnitTestRunner
 		yield return new WorldCognitionTests();
 		yield return new AgentBehaviourTests();
 		yield return new EntityResourceTests();
+
+		yield return new RuntimeTests();
+		yield return new AgentCommandTests();
+		yield return new AgentMovementTests();
+		yield return new InputIntegrationTests();
+		yield return new InventoryTests();
+		yield return new WorldDemoTests();
+		yield return new PlayerWorldMovementTests();
+		yield return new EntityResourceScenarioTests();
+		yield return new AgentBehaviourScenarioTests();
+		yield return new ItemAssemblyScenarioTests();
+		yield return new WorldCognitionScenarioTests();
 		yield return new PolarBearTests();
 		yield return new AgentCombatTests();
 	}

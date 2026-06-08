@@ -14,15 +14,15 @@ using Game.Systems.Integration.Combat;
 using Game.Systems.Integration.Resources;
 using Game.Systems.Integration.Runtime;
 
-namespace Game.Scenarios.Runners;
+namespace Game.Tests.Integration.Runners;
 
-public sealed class AgentCombatScenarioRunner
+public sealed class AgentCombatIntegrationRunner
 {
 	private const float AttackRange = 2f;
 	private const float DeltaTime = 1f / 20f;
 	private const float GroundSpeed = 5f;
 
-	public AgentCombatScenarioResult Run()
+	public AgentCombatIntegrationResult Run()
 	{
 		var math = new GameMathSystem();
 		var movement = new Game.Systems.Domain.AgentMovement.AgentMovementSystem(
@@ -95,7 +95,7 @@ public sealed class AgentCombatScenarioRunner
 		for (var tick = 1; tick <= totalTicks; tick++)
 			combatRuntime.Tick(DeltaTime);
 
-		return new AgentCombatScenarioResult(
+		return new AgentCombatIntegrationResult(
 			TargetDamaged: targetHealth.CurrentAmount < initialHealth,
 			InitialDistance: initialDistance,
 			FinalDistance: lastDistance,
@@ -125,23 +125,4 @@ public sealed class AgentCombatScenarioRunner
 		health.Attach(resources.Registry, entityId);
 	}
 
-	private sealed class ScriptedContextProvider : IBehaviourContextProvider
-	{
-		private readonly AgentId _agentId;
-		private readonly Func<BehaviourContext> _factory;
-
-		public ScriptedContextProvider(AgentId agentId, Func<BehaviourContext> factory)
-		{
-			_agentId = agentId;
-			_factory = factory;
-		}
-
-		public BehaviourContext GetContext(AgentId agentId)
-		{
-			if (!agentId.Equals(_agentId))
-				throw new KeyNotFoundException($"No scripted context for agent '{agentId}'.");
-
-			return _factory();
-		}
-	}
 }

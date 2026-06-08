@@ -20,16 +20,16 @@ using Game.Systems.Integration.Resources;
 using Game.Systems.Integration.Runtime;
 using Game.Systems.Integration.Runtime.Interfaces;
 
-namespace Game.Scenarios.Runners;
+namespace Game.Tests.Integration.Runners;
 
-public sealed class PolarBearScenarioRunner
+public sealed class PolarBearIntegrationRunner
 {
 	private const float DeltaTime = 1f / 20f;
 	private const int MaxTicks = 500;
 	private const int PostAttackTicks = 80;
 	private const float RestTriggerDistance = 70f;
 
-	public PolarBearScenarioResult Run()
+	public PolarBearIntegrationResult Run()
 	{
 		var bearConfig = new PolarBearConfig
 		{
@@ -178,7 +178,7 @@ public sealed class PolarBearScenarioRunner
 			}
 		}
 
-		return new PolarBearScenarioResult(
+		return new PolarBearIntegrationResult(
 			AttackCommitted: attackCommitted,
 			FirstAttackTick: firstAttackTick,
 			FinalPlayerHealth: playerHealth.CurrentAmount,
