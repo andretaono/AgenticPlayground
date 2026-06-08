@@ -55,6 +55,10 @@ Each system MUST include:
 - Domain defines all interfaces (ports)
 - No cross-system coupling inside Domain
 
+### TerrainMesh (separate from World)
+
+`Systems/Domain/TerrainMesh/` owns procedural heightmaps and engine-agnostic mesh data. The World tile system is unchanged; composing World data into terrain meshes is an Integration concern (later phase). See [`Systems/Domain/TerrainMesh/SPEC.md`](Systems/Domain/TerrainMesh/SPEC.md).
+
 ---
 
 ## Integration Layer

@@ -1,6 +1,7 @@
 using Game.Systems.Domain.AgentBehaviour.Tests;
 using Game.Systems.Domain.EntityResource.Tests;
 using Game.Systems.Domain.ItemAssembly.Tests;
+using Game.Systems.Domain.TerrainMesh.Tests;
 using Game.Systems.Domain.WorldCognition.Tests;
 using Game.Systems.Foundation.Testing;
 using Game.Tests.Integration;
@@ -26,6 +27,7 @@ public static class UnitTestRunner
 	private static IEnumerable<ITestSuite> CreateSuites()
 	{
 		yield return new ItemAssemblyTests();
+		yield return new TerrainMeshTests();
 		yield return new WorldCognitionTests();
 		yield return new AgentBehaviourTests();
 		yield return new EntityResourceTests();
