@@ -110,7 +110,18 @@ See [`docs/actors.md`](actors.md) for the `AgentId` / `EntityId` model and `Acto
 - Tick-based deterministic simulation
 - `GameRuntimeBuilder` composes domain systems and standard tick adapters
 - ScenarioRunner executes isolated scenarios for manual exploration
-- `TestRunner` console project runs headless unit tests via `dotnet run --project TestRunner` (exit code 1 on failure)
+- `TestRunner` console project runs headless tests via `dotnet run --project TestRunner` (exit code 1 on failure)
+
+### Tests
+
+| Layer | Location | What they exercise |
+|-------|----------|-------------------|
+| **Domain unit** | `Systems/Domain/{System}/Tests/` | Single `XxxSystem`, public ports, domain fakes — no Integration |
+| **Integration** | `Tests/Integration/` | Multi-system scenarios via `GameRuntimeBuilder` and scenario runners |
+
+Filter examples: `dotnet run --project TestRunner -- unit` (all domain unit suites), `dotnet run --project TestRunner -- polar-bear`.
+
+Domain unit tests may use `Tests/Fakes/` under the same system folder. Shared domain fakes belong in `Systems/Domain/Common/Tests/Fakes/` if needed.
 
 ---
 
@@ -122,6 +133,7 @@ When generating a Domain system:
 - `/Model`
 - `/Controller`
 - `/Ports`
+- `/Tests` (optional) — `ITestSuite` for domain unit tests; register in `Tests/Core/UnitTestRunner.cs`
 - One console scenario under `/Scenarios`
 - Register scenario in `ScenarioRunner.cs`
 
@@ -136,4 +148,4 @@ When generating a Domain system:
 - No simulation state ownership inside Integration
 - No orchestration inside Controllers
 - No domain logic outside Domain layer
-
+

@@ -1,5 +1,9 @@
+using Game.Systems.Domain.AgentBehaviour.Tests;
+using Game.Systems.Domain.EntityResource.Tests;
+using Game.Systems.Domain.ItemAssembly.Tests;
+using Game.Systems.Domain.WorldCognition.Tests;
 using Game.Systems.Foundation.Testing;
-using Game.Tests;
+using Game.Tests.Integration;
 
 namespace Game.Tests.Core;
 
@@ -21,6 +25,10 @@ public static class UnitTestRunner
 
 	private static IEnumerable<ITestSuite> CreateSuites()
 	{
+		yield return new ItemAssemblyTests();
+		yield return new WorldCognitionTests();
+		yield return new AgentBehaviourTests();
+		yield return new EntityResourceTests();
 		yield return new PolarBearTests();
 		yield return new AgentCombatTests();
 	}

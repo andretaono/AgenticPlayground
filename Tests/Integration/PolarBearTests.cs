@@ -1,7 +1,7 @@
 using Game.Scenarios.Runners;
 using Game.Systems.Foundation.Testing;
 
-namespace Game.Tests;
+namespace Game.Tests.Integration;
 
 public sealed class PolarBearTests : ITestSuite
 {
