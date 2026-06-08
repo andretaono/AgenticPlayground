@@ -43,15 +43,19 @@ public sealed class WorldTerrainMeshComposer
 			mapping.WorldUnitsPerTile);
 
 		var modifierSettings = mapping.ModifierSettings ?? _modifierSettings;
-		var baseHeightmap = _terrainMesh.Generator.Generate(mapping.Seed, width, height, terrainConfig);
-		var modifiedSamples = TileHeightModifier.Apply(baseHeightmap, tiles, _tileRules, modifierSettings);
-		var heightmap = Heightmap.FromSamples(modifiedSamples, mapping.WorldUnitsPerTile);
-		var mesh = _terrainMesh.MeshBuilder.Build(heightmap, terrainConfig);
+		var samples = TileHeightModifier.Build(tiles, _tileRules, modifierSettings);
+		var heightmap = Heightmap.FromSamples(samples, mapping.WorldUnitsPerTile);
+		var beveledMesh = BeveledTileMeshBuilder.Build(
+			tiles,
+			_tileRules,
+			modifierSettings,
+			terrainConfig.CellSize,
+			terrainConfig.HeightScale);
 
 		return new WorldTerrainBuildResult(
 			heightmap,
-			mesh,
-			FlattenTileOverlay(tiles, width, height));
+			beveledMesh.Mesh,
+			beveledMesh.VertexTileOverlay);
 	}
 
 	private static TerrainMeshConfig WithCellSize(TerrainMeshConfig config, float cellSize) =>
@@ -60,23 +64,7 @@ public sealed class WorldTerrainMeshComposer
 			CellSize = cellSize,
 			HeightScale = config.HeightScale,
 			MinHeight = config.MinHeight,
-			MaxHeight = config.MaxHeight,
-			NoiseFrequency = config.NoiseFrequency,
-			NoiseOctaves = config.NoiseOctaves,
-			NoisePersistence = config.NoisePersistence,
-			NoiseLacunarity = config.NoiseLacunarity
+			MaxHeight = config.MaxHeight
 		};
 
-	private static IReadOnlyList<TileId> FlattenTileOverlay(TileId[,] tiles, int width, int height)
-	{
-		var overlay = new TileId[width * height];
-
-		for (var y = 0; y < height; y++)
-		{
-			for (var x = 0; x < width; x++)
-				overlay[y * width + x] = tiles[x, y];
-		}
-
-		return overlay;
-	}
 }

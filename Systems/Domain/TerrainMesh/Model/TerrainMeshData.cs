@@ -17,4 +17,10 @@ public sealed class TerrainMeshData
 	public IReadOnlyList<Vector3> Vertices { get; }
 	public IReadOnlyList<int> Indices { get; }
 	public IReadOnlyList<Vector3> Normals { get; }
+
+	public static TerrainMeshData Create(
+		IReadOnlyList<Vector3> vertices,
+		IReadOnlyList<int> indices,
+		IReadOnlyList<Vector3> normals) =>
+		new(vertices, indices, normals);
 }

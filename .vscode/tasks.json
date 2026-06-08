@@ -1,0 +1,36 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Sync Unity DLL",
+      "type": "shell",
+      "command": "${workspaceFolder}/sync-unity.cmd",
+      "windows": {
+        "command": "${workspaceFolder}\\sync-unity.cmd"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "Watch Unity DLL",
+      "type": "shell",
+      "command": "${workspaceFolder}/watch-unity.cmd",
+      "windows": {
+        "command": "${workspaceFolder}\\watch-unity.cmd"
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": "$msCompile"
+    }
+  ]
+}

@@ -17,6 +17,9 @@ public sealed class WorldGenerationTests : ITestSuite
 		registry.Add(Name, "start and goal tiles are ground", StartAndGoalTilesAreGround);
 		registry.Add(Name, "border cells are wall", BorderCellsAreWall);
 		registry.Add(Name, "small grid completes within max attempts", SmallGridCompletesWithinMaxAttempts);
+		registry.Add(Name, "water placement creates carvable pools", WaterPlacementCreatesPools);
+		registry.Add(Name, "water placement preserves ground path", WaterPlacementPreservesGroundPath);
+		registry.Add(Name, "start and goal are never water", StartAndGoalAreNeverWater);
 	}
 
 	private static WorldGenerationSystem CreateSystem() => new();
@@ -93,6 +96,58 @@ public sealed class WorldGenerationTests : ITestSuite
 			TestAssert.Equal(TileIds.Wall.Id, map.Tiles[0, y].Id);
 			TestAssert.Equal(TileIds.Wall.Id, map.Tiles[map.Width - 1, y].Id);
 		}
+	}
+
+	private static void WaterPlacementCreatesPools()
+	{
+		var system = CreateSystem();
+		var map = system.Generator.Generate(DefaultConfig());
+
+		TestAssert.True(CountTiles(map.Tiles, TileIds.Water) > 0);
+	}
+
+	private static void WaterPlacementPreservesGroundPath()
+	{
+		var system = CreateSystem();
+
+		for (var seed = 1; seed <= 10; seed++)
+		{
+			var map = system.Generator.Generate(new WorldGenerationConfig
+			{
+				Width = 32,
+				Height = 24,
+				Seed = seed,
+				WaterPoolAttempts = 12,
+				WaterPoolMaxSize = 5
+			});
+
+			TestAssert.True(GroundConnectivity.HasGroundPath(map.Tiles, map.Start, map.Goal));
+		}
+	}
+
+	private static void StartAndGoalAreNeverWater()
+	{
+		var system = CreateSystem();
+		var map = system.Generator.Generate(DefaultConfig());
+
+		TestAssert.NotEqual(TileIds.Water.Id, map.Tiles[map.Start.X, map.Start.Y].Id);
+		TestAssert.NotEqual(TileIds.Water.Id, map.Tiles[map.Goal.X, map.Goal.Y].Id);
+	}
+
+	private static int CountTiles(TileId[,] tiles, TileId tileId)
+	{
+		var count = 0;
+		var width = tiles.GetLength(0);
+		var height = tiles.GetLength(1);
+
+		for (var y = 0; y < height; y++)
+		for (var x = 0; x < width; x++)
+		{
+			if (tiles[x, y] == tileId)
+				count++;
+		}
+
+		return count;
 	}
 
 	private static void SmallGridCompletesWithinMaxAttempts()

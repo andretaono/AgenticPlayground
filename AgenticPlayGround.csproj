@@ -22,4 +22,9 @@
     <Compile Remove="Systems/Foundation/Testing/**" />
   </ItemGroup>
 
+  <Target Name="CopyGameDllToUnity" AfterTargets="Build" Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(MSBuildProjectDirectory)\AgenticPlayGround.Unity\Assets\Plugins\Game\" SkipUnchangedFiles="true" />
+    <Message Importance="high" Text="Copied Game.dll to Unity plugin folder." />
+  </Target>
+
 </Project>

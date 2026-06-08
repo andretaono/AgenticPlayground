@@ -43,7 +43,7 @@ RenderSettings:
 LightmapSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 13
-  m_GIWorkflowMode: 1
+  m_BakeOnSceneLoad: 0
   m_GISettings:
     serializedVersion: 2
     m_BounceScale: 1
@@ -198,6 +198,9 @@ Light:
   m_ForceVisible: 0
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+  m_LightUnit: 1
+  m_LuxAtDistance: 1
+  m_EnableSpotReflector: 1
 --- !u!4 &705507995
 Transform:
   m_ObjectHideFlags: 0
@@ -351,19 +354,27 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _mapWidth: 64
   _mapHeight: 48
-  _seed: 42
-  _fillProbability: 0.48
+  _seed: 77
+  _fillProbability: 0.55
   _cellularAutomataIterations: 5
   _maxAttempts: 50
+  _waterPoolAttempts: 12
+  _waterPoolMaxSize: 10
   _worldUnitsPerTile: 1
-  _minHeight: 0
-  _maxHeight: 10
   _heightScale: 1
-  _noiseFrequency: 0.08
-  _noiseOctaves: 4
-  _seaLevel: 0.5
-  _cliffHeight: 8
+  _groundHeight: 0
+  _wallHeight: 1
+  _waterHeight: -1
+  _bevelInset: 0
+  _bevelSegments: 4
   _terrainMaterial: {fileID: 0}
   _camera: {fileID: 963194227}
   _cameraHeight: 40
   _cameraPitch: 55
+--- !u!1660057539 &9223372036854775807
+SceneRoots:
+  m_ObjectHideFlags: 0
+  m_Roots:
+  - {fileID: 705507995}
+  - {fileID: 963194228}
+  - {fileID: 1234567891}

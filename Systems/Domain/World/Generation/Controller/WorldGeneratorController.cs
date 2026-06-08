@@ -19,6 +19,10 @@ internal sealed class WorldGeneratorController : IWorldGenerator
 			throw new ArgumentOutOfRangeException(nameof(config), "CellularAutomataIterations must be non-negative.");
 		if (config.MaxAttempts < 1)
 			throw new ArgumentOutOfRangeException(nameof(config), "MaxAttempts must be at least 1.");
+		if (config.WaterPoolAttempts < 0)
+			throw new ArgumentOutOfRangeException(nameof(config), "WaterPoolAttempts must be non-negative.");
+		if (config.WaterPoolMaxSize < 0)
+			throw new ArgumentOutOfRangeException(nameof(config), "WaterPoolMaxSize must be non-negative.");
 
 		for (var attempt = 0; attempt < config.MaxAttempts; attempt++)
 		{
@@ -32,6 +36,11 @@ internal sealed class WorldGeneratorController : IWorldGenerator
 
 			if (!GroundConnectivity.TryPickStartAndGoal(tiles, out var start, out var goal))
 				continue;
+
+			if (!GroundConnectivity.HasGroundPath(tiles, start, goal))
+				continue;
+
+			WaterPlacer.Apply(tiles, start, goal, seed, config);
 
 			if (!GroundConnectivity.HasGroundPath(tiles, start, goal))
 				continue;

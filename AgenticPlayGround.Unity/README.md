@@ -15,39 +15,26 @@ Unity 6 host for the engine-agnostic `Game.dll` library. Unity code lives only u
 
 ## Setup
 
-From the repo root (or `AgenticPlayGround.Unity`):
+From the **repo root** (recommended):
 
 ```cmd
-AgenticPlayGround.Unity\copy-game-dll.cmd
-```
-
-Or from `AgenticPlayGround.Unity`:
-
-```cmd
-copy-game-dll.cmd
-```
-
-PowerShell alternative (if script execution is allowed):
-
-```powershell
-.\copy-game-dll.ps1
-```
-
-If PowerShell blocks scripts (`PSSecurityException`), use the `.cmd` file above or run once:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\copy-game-dll.ps1
+sync-unity.cmd
 ```
 
 Then open the project in Unity Hub (`AgenticPlayGround.Unity`).
 
-After changing core library code, rebuild and recopy:
+## Syncing after core library changes
 
-```cmd
-copy-game-dll.cmd Debug
-```
+| When | Command |
+|------|---------|
+| One-shot sync | `sync-unity.cmd` (repo root) |
+| Hands-free while coding | `watch-unity.cmd` (repo root; leave running in a terminal) |
+| From Cursor / VS Code | **Terminal → Run Build Task** (Ctrl+Shift+B) — runs "Sync Unity DLL" |
+| From Unity folder | `copy-game-dll.cmd` (alias for the same build) |
 
-Unity will refresh the plugin automatically.
+`dotnet build -f netstandard2.1` also auto-copies `Game.dll` into `Assets/Plugins/Game/` via an MSBuild target in `AgenticPlayGround.csproj`.
+
+Unity refreshes the plugin automatically when the DLL changes.
 
 ## Running the demo
 
@@ -72,7 +59,9 @@ Unity will refresh the plugin automatically.
 
 ## Troubleshooting
 
-**Unity cannot load Game.dll / TypeCache backing-field errors:** Run `copy-game-dll.cmd` — it copies the `netstandard2.1` build of `Game.dll` (Unity-compatible). `TestRunner` still uses the `net8.0` build. `Game.dll` excludes test code so the plugin does not reference `System.Security.Cryptography`.
+**Unity cannot load Game.dll / TypeCache backing-field errors:** Run `sync-unity.cmd` from the repo root — it builds and copies the `netstandard2.1` `Game.dll` (Unity-compatible). `TestRunner` still uses the `net8.0` build. `Game.dll` excludes test code so the plugin does not reference `System.Security.Cryptography`.
+
+**Out of memory on Play:** Close the Unity Profiler window when not actively profiling — it reserves memory even when not recording.
 
 **File-scoped namespace / C# version errors:** GameBridge scripts use classic block namespaces and `Assets/csc.rsp` sets `-langversion:latest` for Unity's compiler.
 

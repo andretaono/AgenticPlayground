@@ -22,16 +22,17 @@ namespace Game.UnityBridge.Bootstrap
 		[SerializeField] private float _fillProbability = 0.48f;
 		[SerializeField] private int _cellularAutomataIterations = 5;
 		[SerializeField] private int _maxAttempts = 50;
+		[SerializeField] private int _waterPoolAttempts = 12;
+		[SerializeField] private int _waterPoolMaxSize = 5;
 
 		[Header("Terrain mesh")]
 		[SerializeField] private float _worldUnitsPerTile = 1f;
-		[SerializeField] private float _minHeight = 0f;
-		[SerializeField] private float _maxHeight = 10f;
 		[SerializeField] private float _heightScale = 1f;
-		[SerializeField] private float _noiseFrequency = 0.08f;
-		[SerializeField] private int _noiseOctaves = 4;
-		[SerializeField] private float _seaLevel = 0.5f;
-		[SerializeField] private float _cliffHeight = 8f;
+		[SerializeField] private float _groundHeight = 0f;
+		[SerializeField] private float _wallHeight = 1f;
+		[SerializeField] private float _waterHeight = -1f;
+		[SerializeField] private float _bevelInset = 0.3f;
+		[SerializeField] private int _bevelSegments = 4;
 
 		[Header("Scene")]
 		[SerializeField] private Material _terrainMaterial;
@@ -48,7 +49,9 @@ namespace Game.UnityBridge.Bootstrap
 				Seed = _seed,
 				FillProbability = _fillProbability,
 				CellularAutomataIterations = _cellularAutomataIterations,
-				MaxAttempts = _maxAttempts
+				MaxAttempts = _maxAttempts,
+				WaterPoolAttempts = _waterPoolAttempts,
+				WaterPoolMaxSize = _waterPoolMaxSize
 			};
 
 			var map = new WorldGenerationSystem().Generator.Generate(generationConfig);
@@ -64,16 +67,15 @@ namespace Game.UnityBridge.Bootstrap
 					WorldUnitsPerTile: _worldUnitsPerTile,
 					TerrainConfig: new TerrainMeshConfig
 					{
-						MinHeight = _minHeight,
-						MaxHeight = _maxHeight,
-						HeightScale = _heightScale,
-						NoiseFrequency = _noiseFrequency,
-						NoiseOctaves = _noiseOctaves
+						HeightScale = _heightScale
 					},
 					ModifierSettings: new TileHeightModifierSettings
 					{
-						SeaLevel = _seaLevel,
-						CliffHeight = _cliffHeight
+						GroundHeight = _groundHeight,
+						WallHeight = _wallHeight,
+						WaterHeight = _waterHeight,
+						BevelInset = _bevelInset,
+						BevelSegments = _bevelSegments
 					}));
 
 			var terrainRoot = new GameObject("TerrainRoot").transform;

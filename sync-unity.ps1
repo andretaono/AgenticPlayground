@@ -4,10 +4,10 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$repoRoot = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
+$repoRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $gameProject = Join-Path $repoRoot "AgenticPlayGround.csproj"
 
-Write-Host "Building and syncing Game.dll to Unity ($Configuration, netstandard2.1)..."
+Write-Host "Syncing Game.dll to Unity ($Configuration, netstandard2.1)..."
 dotnet build $gameProject -c $Configuration -f netstandard2.1
 if ($LASTEXITCODE -ne 0) {
     throw "Game.dll sync failed."

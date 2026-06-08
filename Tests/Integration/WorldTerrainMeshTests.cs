@@ -10,10 +10,11 @@ public sealed class WorldTerrainMeshTests : ITestSuite
 	public void Register(TestRegistry registry)
 	{
 		registry.Add(Name, "heightmap grid matches world dimensions", GridMatchesWorldDimensions);
-		registry.Add(Name, "water tiles clamp to sea level", WaterTilesClampToSeaLevel);
-		registry.Add(Name, "wall tiles raise to cliff height", WallTilesRaiseToCliffHeight);
-		registry.Add(Name, "mesh vertex count matches tile grid", MeshVertexCountMatchesGrid);
-		registry.Add(Name, "height sample matches mesh vertex at same cell", HeightSampleMatchesMeshVertex);
+		registry.Add(Name, "water tiles use water height", WaterTilesUseWaterHeight);
+		registry.Add(Name, "wall tiles use wall height", WallTilesUseWallHeight);
+		registry.Add(Name, "mesh vertex count matches beveled grid", MeshVertexCountMatchesBeveledGrid);
+		registry.Add(Name, "tile center height matches heightmap sample", TileCenterHeightMatchesHeightmap);
+		registry.Add(Name, "bevel softens height transitions", BevelSoftensHeightTransitions);
 		registry.Add(Name, "tile overlay preserves world tile ids", TileOverlayPreservesTileIds);
 	}
 
@@ -25,38 +26,48 @@ public sealed class WorldTerrainMeshTests : ITestSuite
 		TestAssert.Equal(result.WorldHeight, result.HeightmapHeight);
 	}
 
-	private static void WaterTilesClampToSeaLevel()
+	private static void WaterTilesUseWaterHeight()
 	{
 		var result = new WorldTerrainMeshIntegrationRunner().Run();
 
 		TestAssert.Equal("water", result.WaterTileId);
-		TestAssert.True(result.WaterHeight <= 0.5f);
-		TestAssert.Equal(result.WaterHeight, result.WaterVertexY);
+		TestAssert.Equal(-1f, result.WaterHeight);
+		TestAssert.Equal(-1f, result.WaterVertexY);
 	}
 
-	private static void WallTilesRaiseToCliffHeight()
+	private static void WallTilesUseWallHeight()
 	{
 		var result = new WorldTerrainMeshIntegrationRunner().Run();
 
 		TestAssert.Equal("wall", result.WallTileId);
-		TestAssert.Equal(8f, result.WallHeight);
-		TestAssert.Equal(8f, result.WallVertexY);
+		TestAssert.Equal(1f, result.WallHeight);
+		TestAssert.Equal(1f, result.WallVertexY);
 	}
 
-	private static void MeshVertexCountMatchesGrid()
+	private static void MeshVertexCountMatchesBeveledGrid()
 	{
 		var result = new WorldTerrainMeshIntegrationRunner().Run();
+		var gridWidth = result.WorldWidth * result.BevelSegments + 1;
+		var gridHeight = result.WorldHeight * result.BevelSegments + 1;
 
-		TestAssert.Equal(result.WorldWidth * result.WorldHeight, result.VertexCount);
+		TestAssert.Equal(gridWidth * gridHeight, result.VertexCount);
 		TestAssert.Equal(result.VertexCount, result.TileOverlayCount);
 	}
 
-	private static void HeightSampleMatchesMeshVertex()
+	private static void TileCenterHeightMatchesHeightmap()
 	{
 		var result = new WorldTerrainMeshIntegrationRunner().Run();
 
 		TestAssert.Equal(result.GroundHeight, result.GroundVertexY);
-		TestAssert.True(result.GroundHeight > 0.5f);
+		TestAssert.Equal(0f, result.GroundHeight);
+	}
+
+	private static void BevelSoftensHeightTransitions()
+	{
+		var result = new WorldTerrainMeshIntegrationRunner().Run();
+
+		TestAssert.True(result.GroundEdgeNearWaterY > result.WaterHeight);
+		TestAssert.True(result.GroundEdgeNearWaterY < result.GroundHeight);
 	}
 
 	private static void TileOverlayPreservesTileIds()
