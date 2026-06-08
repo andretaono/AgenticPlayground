@@ -1,11 +1,21 @@
+using Game.Systems.Domain.AgentCommand;
+using Game.Systems.Domain.AgentMovement;
+using Game.Systems.Domain.AgentMovement.Model;
 using Game.Systems.Domain.TerrainMesh;
 using Game.Systems.Domain.TerrainMesh.Model;
 using Game.Systems.Domain.World.Generation;
 using Game.Systems.Domain.World.Generation.Model;
 using Game.Systems.Domain.World.Model;
+using Game.Systems.Foundation.GameMath.Core;
+using Game.Systems.Foundation.Primitives;
+using Game.Systems.Integration.Actors;
 using Game.Systems.Integration.Adapters;
 using Game.Systems.Integration.Presentation.Ports;
+using Game.Systems.Integration.Runtime;
 using Game.Systems.Integration.TerrainMesh;
+using Game.UnityBridge.Input;
+using Game.UnityBridge.Presentation;
+using GameVector2 = Game.Systems.Foundation.GameMath.Core.Model.Vector2;
 using GameVector3 = Game.Systems.Foundation.GameMath.Core.Model.Vector3;
 using UnityEngine;
 using System.Collections.Generic;
@@ -34,11 +44,31 @@ namespace Game.UnityBridge.Bootstrap
 		[SerializeField] private float _bevelInset = 0.3f;
 		[SerializeField] private int _bevelSegments = 4;
 
+		[Header("Player")]
+		[SerializeField] private float _groundSpeed = 4f;
+		[SerializeField] private float _swimSpeed = 2.5f;
+		[SerializeField] private float _characterHalfHeight = 0.5f;
+		[SerializeField] private float _turnSpeedDegrees = 180f;
+
 		[Header("Scene")]
 		[SerializeField] private Material _terrainMaterial;
 		[SerializeField] private Camera _camera;
-		[SerializeField] private float _cameraHeight = 40f;
-		[SerializeField] private float _cameraPitch = 55f;
+
+		[Header("Over-shoulder camera")]
+		[SerializeField] private float _cameraFollowDistance = 5f;
+		[SerializeField] private float _cameraShoulderHeight = 2.2f;
+		[SerializeField] private float _cameraShoulderOffset = 0.65f;
+		[SerializeField] private float _cameraLookHeight = 1.4f;
+		[SerializeField] private float _cameraLookAhead = 2f;
+		[SerializeField] private float _cameraYawSmoothTime = 0.18f;
+		[SerializeField] private float _cameraPositionSmoothTime = 0.12f;
+		[SerializeField] private float _cameraRotationSmoothTime = 0.1f;
+
+		private GameRuntime _runtime;
+		private UnityWorldPresenter _worldPresenter;
+		private OverShoulderCameraFollow _cameraFollow;
+		private PlayerFacingController _playerFacing;
+		private EntityId _playerEntityId;
 
 		private void Awake()
 		{
@@ -82,30 +112,119 @@ namespace Game.UnityBridge.Bootstrap
 			terrainRoot.SetParent(transform, worldPositionStays: false);
 
 			var material = _terrainMaterial != null ? _terrainMaterial : CreateDefaultMaterial();
-			var presenter = new UnityTerrainPresenter(terrainRoot, material);
-			presenter.SyncTerrainMesh(buildResult);
+			var terrainPresenter = new UnityTerrainPresenter(terrainRoot, material);
+			terrainPresenter.SyncTerrainMesh(buildResult);
 
-			FrameCamera(map.Width, map.Height);
+			var worldData = (InMemoryWorldDataSource)map.ToDataSource();
+			var tileRules = new DefaultTileRulesProvider();
+			var math = new GameMathSystem();
+			var movement = new AgentMovementSystem(
+				math,
+				new AgentMovementPolicy(tileRules, worldData),
+				new AgentMovementConfig(_groundSpeed, _swimSpeed, _groundSpeed));
+			var commandSystem = new AgentCommandSystem();
+			var actorRegistry = new ActorRegistry(commandSystem, movement);
+
+			var startX = map.Start.X + 0.5f;
+			var startY = map.Start.Y + 0.5f;
+			var player = actorRegistry.RegisterActor(math.Create(startX, startY, 0f));
+			_playerEntityId = player.EntityId;
+
+			var actorsRoot = new GameObject("ActorsRoot").transform;
+			actorsRoot.SetParent(transform, worldPositionStays: false);
+
+			_worldPresenter = new UnityWorldPresenter(
+				actorsRoot,
+				buildResult.Heightmap,
+				_worldUnitsPerTile,
+				_heightScale,
+				_characterHalfHeight,
+				new TerrainMeshSystem().Sampler);
+
+			_playerFacing = new PlayerFacingController();
+			var inputSource = new UnityInputSource(player.AgentId, _playerFacing);
+			var movementStateAdapter = new AgentMovementStateAdapter(
+				actorRegistry,
+				movement,
+				tileRules,
+				worldData);
+
+			_runtime = new GameRuntimeBuilder(math)
+				.WithExistingMovement(movement)
+				.WithExistingCommand(commandSystem)
+				.WithInput(inputSource, player.AgentId)
+				.WithPresenter(_worldPresenter, actorRegistry)
+				.WithExtraTickable(movementStateAdapter, StandardTickOrder.MovementState)
+				.Build();
+
+			var startPosition = movement.Input.GetPosition(player.EntityId);
+			_worldPresenter.SyncActorPosition(
+				player.EntityId,
+				new GameVector2(startPosition.X, startPosition.Y));
+
+			_cameraFollow = new OverShoulderCameraFollow
+			{
+				Settings = new OverShoulderCameraFollow.SettingsConfig
+				{
+					FollowDistance = _cameraFollowDistance,
+					ShoulderHeight = _cameraShoulderHeight,
+					ShoulderOffset = _cameraShoulderOffset,
+					LookHeight = _cameraLookHeight,
+					LookAhead = _cameraLookAhead,
+					YawSmoothTime = _cameraYawSmoothTime,
+					PositionSmoothTime = _cameraPositionSmoothTime,
+					RotationSmoothTime = _cameraRotationSmoothTime
+				}
+			};
+
+			InitializeCameraFollow();
 			Debug.Log(
 				$"Terrain demo ready. Seed={map.SeedUsed}, Start=({map.Start.X},{map.Start.Y}), " +
-				$"Goal=({map.Goal.X},{map.Goal.Y}), Vertices={buildResult.Mesh.Vertices.Count}");
+				$"Goal=({map.Goal.X},{map.Goal.Y}), Vertices={buildResult.Mesh.Vertices.Count}. " +
+				"W/S move forward/back, A/D turn, camera follows behind.");
 		}
 
-		private void FrameCamera(int mapWidth, int mapHeight)
+		private void Update()
 		{
+			_playerFacing?.ApplyTurnInput(
+				UnityEngine.Input.GetAxisRaw("Horizontal"),
+				Time.deltaTime,
+				_turnSpeedDegrees);
+			_runtime?.Tick(Time.deltaTime);
+		}
+
+		private void LateUpdate()
+		{
+			if (_cameraFollow == null ||
+			    _worldPresenter == null ||
+			    !_worldPresenter.TryGetTransform(_playerEntityId, out var playerTransform))
+			{
+				return;
+			}
+
 			var camera = _camera != null ? _camera : Camera.main;
 			if (camera == null)
 				return;
 
-			var centerX = mapWidth * _worldUnitsPerTile * 0.5f;
-			var centerZ = mapHeight * _worldUnitsPerTile * 0.5f;
-			var distance = Mathf.Max(mapWidth, mapHeight) * _worldUnitsPerTile * 0.75f;
+			_cameraFollow.LateUpdate(
+				playerTransform,
+				camera,
+				_playerFacing.FacingYawDegrees);
+		}
 
-			camera.transform.position = new Vector3(
-				centerX,
-				_cameraHeight,
-				centerZ - distance);
-			camera.transform.rotation = Quaternion.Euler(_cameraPitch, 0f, 0f);
+		private void InitializeCameraFollow()
+		{
+			if (_cameraFollow == null ||
+			    !_worldPresenter.TryGetTransform(_playerEntityId, out var playerTransform))
+			{
+				return;
+			}
+
+			var camera = _camera != null ? _camera : Camera.main;
+			if (camera == null)
+				return;
+
+			_cameraFollow.SnapTo(playerTransform, camera);
 		}
 
 		private static Material CreateDefaultMaterial()

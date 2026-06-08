@@ -367,10 +367,15 @@ MonoBehaviour:
   _waterHeight: -1
   _bevelInset: 0
   _bevelSegments: 4
+  _groundSpeed: 4
+  _swimSpeed: 1
+  _characterHalfHeight: 0.5
   _terrainMaterial: {fileID: 0}
   _camera: {fileID: 963194227}
   _cameraHeight: 40
   _cameraPitch: 55
+  _cameraFollowDistance: 24
+  _cameraLerpSpeed: 4
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -62,6 +62,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoBootstrap.cs" />
+    <Compile Include="Assets\GameBridge\Input\UnityInputSource.cs" />
+    <Compile Include="Assets\GameBridge\Presentation\UnityWorldPresenter.cs" />
+    <Compile Include="Assets\GameBridge\Input\PlayerFacingController.cs" />
+    <Compile Include="Assets\GameBridge\Presentation\OverShoulderCameraFollow.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\csc.rsp" />

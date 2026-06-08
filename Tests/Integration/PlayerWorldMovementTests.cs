@@ -27,5 +27,13 @@ public sealed class PlayerWorldMovementTests : ITestSuite
 			var result = new PlayerWorldMovementIntegrationRunner().Run();
 			TestAssert.True(result.WaterTileWalkable);
 		});
+
+		registry.Add(Name, "swimming reduces movement speed on water", () =>
+		{
+			var result = new PlayerWorldMovementIntegrationRunner().RunSwimSpeedComparison();
+			TestAssert.True(result.WaterSlowerThanGround);
+			TestAssert.True(result.GroundDisplacement > 0f);
+			TestAssert.True(result.WaterDisplacement > 0f);
+		});
 	}
 }

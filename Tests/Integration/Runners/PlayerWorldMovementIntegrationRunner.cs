@@ -18,6 +18,46 @@ public sealed class PlayerWorldMovementIntegrationRunner
 	private const float StartY = 6f;
 	private const float DeltaTime = 1f / 60f;
 
+	public PlayerWorldMovementSwimSpeedResult RunSwimSpeedComparison()
+	{
+		const int ticks = 60;
+		const float deltaTime = 1f / 60f;
+		const float groundStartX = 10f;
+		const float groundStartY = 6f;
+		const float waterStartX = 9.5f;
+		const float waterStartY = 4.5f;
+
+		var worldData = CreateWorldDataSource();
+		var tileRules = new DefaultTileRulesProvider();
+		var movementConfig = new AgentMovementConfig(
+			GroundSpeed: 4f,
+			SwimSpeed: 2.5f,
+			AirSpeed: 4f);
+
+		var groundDisplacement = SimulateDisplacement(
+			worldData,
+			tileRules,
+			movementConfig,
+			groundStartX,
+			groundStartY,
+			ticks,
+			deltaTime);
+
+		var waterDisplacement = SimulateDisplacement(
+			worldData,
+			tileRules,
+			movementConfig,
+			waterStartX,
+			waterStartY,
+			ticks,
+			deltaTime);
+
+		return new PlayerWorldMovementSwimSpeedResult(
+			GroundDisplacement: groundDisplacement,
+			WaterDisplacement: waterDisplacement,
+			WaterSlowerThanGround: waterDisplacement < groundDisplacement * 0.85f);
+	}
+
 	public PlayerWorldMovementIntegrationResult Run()
 	{
 		var worldData = CreateWorldDataSource();
@@ -57,6 +97,43 @@ public sealed class PlayerWorldMovementIntegrationRunner
 			IsInBounds: world.IsInBounds(new WorldPosition(
 				(int)MathF.Floor(positionAfterGround.X),
 				(int)MathF.Floor(positionAfterGround.Y))));
+	}
+
+	private static float SimulateDisplacement(
+		InMemoryWorldDataSource worldData,
+		DefaultTileRulesProvider tileRules,
+		AgentMovementConfig movementConfig,
+		float startX,
+		float startY,
+		int ticks,
+		float deltaTime)
+	{
+		var math = new GameMathSystem();
+		var movementPolicy = new AgentMovementPolicy(tileRules, worldData);
+		var movement = new AgentMovementSystem(math, movementPolicy, movementConfig);
+		var commandSystem = new AgentCommandSystem();
+		var actorRegistry = new ActorRegistry(commandSystem, movement);
+		var player = actorRegistry.RegisterActor(math.Create(startX, startY, 0f));
+
+		var inputSource = new ScriptedInputSource(player.AgentId, new Vector2(1f, 0f));
+		var stateAdapter = new AgentMovementStateAdapter(
+			actorRegistry,
+			movement,
+			tileRules,
+			worldData);
+
+		var runtime = new GameRuntimeBuilder(math)
+			.WithExistingMovement(movement)
+			.WithExistingCommand(commandSystem)
+			.WithInput(inputSource, player.AgentId)
+			.WithExtraTickable(stateAdapter, StandardTickOrder.MovementState)
+			.Build();
+
+		for (var i = 0; i < ticks; i++)
+			runtime.Tick(deltaTime);
+
+		var position = movement.Input.GetPosition(player.EntityId);
+		return position.X - startX;
 	}
 
 	private static IVector3 SimulateTicks(
@@ -110,6 +187,11 @@ public sealed class PlayerWorldMovementIntegrationRunner
 		return new InMemoryWorldDataSource(map);
 	}
 }
+
+public sealed record PlayerWorldMovementSwimSpeedResult(
+	float GroundDisplacement,
+	float WaterDisplacement,
+	bool WaterSlowerThanGround);
 
 public sealed record PlayerWorldMovementIntegrationResult(
 	float StartX,
