@@ -101,6 +101,10 @@ Integration has two documented sub-roles:
 - Game content implements ports; domain systems execute simulation
 - Orchestration and wiring live in runtime builders and adapters
 
+### Host adapters (Unity)
+
+Unity-specific port implementations and scene wiring live in [`AgenticPlayGround.Unity/Assets/GameBridge/`](../AgenticPlayGround.Unity/Assets/GameBridge/) — see [`AgenticPlayGround.Unity/README.md`](../AgenticPlayGround.Unity/README.md). This is outer integration (hexagon driving adapters), not a third layer inside `Game.dll`.
+
 ---
 
 ## Actor identity

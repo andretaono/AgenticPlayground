@@ -352,30 +352,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1b2c3d4e5f60718293a4b5c6d7e8f90, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _mapWidth: 64
-  _mapHeight: 48
-  _seed: 77
-  _fillProbability: 0.55
-  _cellularAutomataIterations: 5
-  _maxAttempts: 50
-  _waterPoolAttempts: 12
-  _waterPoolMaxSize: 10
-  _worldUnitsPerTile: 1
-  _heightScale: 1
-  _groundHeight: 0
-  _wallHeight: 1
-  _waterHeight: -1
-  _bevelInset: 0
-  _bevelSegments: 4
-  _groundSpeed: 4
-  _swimSpeed: 1
-  _characterHalfHeight: 0.5
+  _settings:
+    MapWidth: 64
+    MapHeight: 48
+    Seed: 45
+    FillProbability: 0.55
+    CellularAutomataIterations: 5
+    MaxAttempts: 50
+    WaterPoolAttempts: 12
+    WaterPoolMaxSize: 10
+    WorldUnitsPerTile: 1
+    HeightScale: 1
+    GroundHeight: 0
+    WallHeight: 4
+    WaterHeight: -1
+    BevelInset: 0
+    BevelSegments: 2
+    GroundSpeed: 4
+    SwimSpeed: 2.5
+    CharacterHalfHeight: 0.5
+    TurnSpeedDegrees: 180
+    CameraFollowDistance: 5
+    CameraShoulderHeight: 2.2
+    CameraShoulderOffset: 0.65
+    CameraLookHeight: 1.4
+    CameraLookAhead: 2
+    CameraYawSmoothTime: 0.18
+    CameraPositionSmoothTime: 0.12
+    CameraRotationSmoothTime: 0.1
   _terrainMaterial: {fileID: 0}
   _camera: {fileID: 963194227}
-  _cameraHeight: 40
-  _cameraPitch: 55
-  _cameraFollowDistance: 24
-  _cameraLerpSpeed: 4
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
