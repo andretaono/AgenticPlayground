@@ -20,12 +20,12 @@ public sealed class PredatorEnemyAssembler
 		IEntityResourceRegistry resources,
 		IWorldCognitionController cognition)
 	{
-		ArgumentNullException.ThrowIfNull(tracking);
-		ArgumentNullException.ThrowIfNull(tacticalConfig);
-		ArgumentNullException.ThrowIfNull(advantageRules);
-		ArgumentNullException.ThrowIfNull(behaviourController);
-		ArgumentNullException.ThrowIfNull(resources);
-		ArgumentNullException.ThrowIfNull(cognition);
+		if (tracking is null) throw new ArgumentNullException(nameof(tracking));
+		if (tacticalConfig is null) throw new ArgumentNullException(nameof(tacticalConfig));
+		if (advantageRules is null) throw new ArgumentNullException(nameof(advantageRules));
+		if (behaviourController is null) throw new ArgumentNullException(nameof(behaviourController));
+		if (resources is null) throw new ArgumentNullException(nameof(resources));
+		if (cognition is null) throw new ArgumentNullException(nameof(cognition));
 
 		var advantageEvaluator = new AttackAdvantageEvaluator(advantageRules);
 

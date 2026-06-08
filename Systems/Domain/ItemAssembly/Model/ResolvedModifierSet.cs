@@ -5,7 +5,7 @@ public sealed class ResolvedModifierSet
 	internal ResolvedModifierSet(
 		IReadOnlyDictionary<ModifierId, float> flatValues,
 		IReadOnlyDictionary<ModifierId, float> percentValues,
-		IReadOnlySet<ModifierId> flags,
+		IReadOnlyCollection<ModifierId> flags,
 		IReadOnlyList<Modifier> rawModifiers)
 	{
 		FlatValues = flatValues;
@@ -18,7 +18,7 @@ public sealed class ResolvedModifierSet
 
 	public IReadOnlyDictionary<ModifierId, float> PercentValues { get; }
 
-	public IReadOnlySet<ModifierId> Flags { get; }
+	public IReadOnlyCollection<ModifierId> Flags { get; }
 
 	public IReadOnlyList<Modifier> RawModifiers { get; }
 }

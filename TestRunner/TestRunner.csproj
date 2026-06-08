@@ -13,4 +13,10 @@
     <ProjectReference Include="..\AgenticPlayGround.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\Systems\Domain\**\Tests\**\*.cs" />
+    <Compile Include="..\Systems\Foundation\Testing\**\*.cs" />
+    <Compile Include="..\Tests\**\*.cs" />
+  </ItemGroup>
+
 </Project>

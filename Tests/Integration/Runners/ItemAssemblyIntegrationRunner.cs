@@ -101,7 +101,7 @@ public sealed class ItemAssemblyIntegrationRunner
 		var identical =
 			first.FlatValues.SequenceEqual(second.FlatValues) &&
 			first.PercentValues.SequenceEqual(second.PercentValues) &&
-			first.Flags.SetEquals(second.Flags) &&
+			first.Flags.OrderBy(id => id.Value).SequenceEqual(second.Flags.OrderBy(id => id.Value)) &&
 			first.RawModifiers.SequenceEqual(second.RawModifiers);
 
 		return new ItemAssemblyDeterminismResult(
