@@ -9,10 +9,12 @@ public sealed class NullTerrainPresenter : ITerrainPresenter
 	public void SyncTerrain(
 		GeneratedWorldMap map,
 		TerrainBuildResult result,
-		TileHeightModifierSettings settings)
+		TileHeightModifierSettings settings,
+		TileSurfaceMeshSettings? surfaceSettings = null)
 	{
 		_ = map;
 		_ = result;
 		_ = settings;
+		_ = surfaceSettings;
 	}
 }

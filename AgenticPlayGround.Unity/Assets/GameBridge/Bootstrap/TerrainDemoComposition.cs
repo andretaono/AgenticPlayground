@@ -40,6 +40,7 @@ namespace Game.UnityBridge.Bootstrap
 			GroundLayerTextDumper.LogToConsole(map);
 			var modifierSettings = CreateModifierSettings(settings);
 			var buildResult = ComposeTerrain(settings, map, modifierSettings);
+			LogSurfaceMeshSettings(settings.SurfaceMesh, buildResult);
 			var resolvedCamera = camera != null ? camera : UnityEngine.Camera.main;
 
 			var sessionRoot = new UnityEngine.GameObject("TerrainDemoSession").transform;
@@ -48,7 +49,11 @@ namespace Game.UnityBridge.Bootstrap
 			var terrainRoot = new UnityEngine.GameObject("TerrainRoot").transform;
 			terrainRoot.SetParent(sessionRoot, worldPositionStays: false);
 			var terrainPresenter = new UnityTerrainPresenter(terrainRoot, settings.HeightScale);
-			terrainPresenter.SyncTerrain(map, buildResult, modifierSettings);
+			terrainPresenter.SyncTerrain(
+				map,
+				buildResult,
+				modifierSettings,
+				settings.SurfaceMesh.ToIntegrationSettings());
 
 			var worldData = (InMemoryWorldDataSource)map.ToDataSource();
 			var tileRules = new DefaultTileRulesProvider();
@@ -230,6 +235,23 @@ namespace Game.UnityBridge.Bootstrap
 				WallHeight = settings.WallHeight,
 				WaterHeight = settings.WaterHeight
 			};
+
+		private static void LogSurfaceMeshSettings(
+			TileSurfaceDemoSettings surfaceMesh,
+			TerrainBuildResult buildResult)
+		{
+			if (buildResult.SurfaceMesh is null)
+				return;
+
+			var triangleCount = 0;
+			foreach (var group in buildResult.SurfaceMesh.Groups)
+				triangleCount += group.Mesh.Indices.Count / 3;
+
+			UnityEngine.Debug.Log(
+				$"[SurfaceMesh] GeometrySmoothing={surfaceMesh.EnableGeometrySmoothing}, " +
+				$"Divisions={surfaceMesh.GeometrySmoothDivisions}, Strength={surfaceMesh.GeometrySmoothStrength:F2}, " +
+				$"Groups={buildResult.SurfaceMesh.Groups.Count}, Triangles={triangleCount}");
+		}
 
 		private static TerrainBuildResult ComposeTerrain(
 			TerrainDemoSettings settings,

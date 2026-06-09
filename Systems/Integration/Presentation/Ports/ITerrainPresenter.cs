@@ -8,5 +8,6 @@ public interface ITerrainPresenter
 	void SyncTerrain(
 		GeneratedWorldMap map,
 		TerrainBuildResult result,
-		TileHeightModifierSettings settings);
+		TileHeightModifierSettings settings,
+		TileSurfaceMeshSettings? surfaceSettings = null);
 }

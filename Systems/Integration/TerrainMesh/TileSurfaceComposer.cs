@@ -20,6 +20,7 @@ public sealed class TileSurfaceComposer
 
 	private static IEnumerable<ITileSurfaceMeshPostProcessor> DefaultPostProcessors()
 	{
+		yield return new FaceSubdivisionSmoothingPostProcessor();
 		yield return new NormalSmoothingPostProcessor();
 	}
 

@@ -482,10 +482,14 @@ MonoBehaviour:
     WallHeight: 1.5
     WaterHeight: -0.5
     SurfaceMesh:
-      EnableNormalSmoothing: 1
-      EnableStructuralNormalSmoothing: 1
+      EnableNormalSmoothing: 0
+      EnableStructuralNormalSmoothing: 0
+      EnableGeometrySmoothing: 1
+      EnableStructuralGeometrySmoothing: 1
+      GeometrySmoothDivisions: 1
+      GeometrySmoothStrength: 1
       UpHardNormalThreshold: 0.9
-      WeldEpsilon: 0.0001
+      WeldEpsilon: 0.000153
     EnableLayerDebug: 1
     DebugGroundKey: 49
     DebugOffKey: 48

@@ -223,6 +223,440 @@ public sealed class TileSurfaceMeshIntegrationRunner
 			upHardThreshold: 0.9f);
 	}
 
+	public bool RunGeometrySmoothingDisabledUnchanged()
+	{
+		var groundLayer = new TileId[1, 1] { { TileIds.Ground } };
+		var map = new GeneratedWorldMap(
+			groundLayer,
+			new WorldPosition(0, 0),
+			new WorldPosition(0, 0),
+			seedUsed: 11);
+
+		var baselineSettings = new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = false
+		};
+		var baseline = Compose(map, baselineSettings);
+		var disabled = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = false,
+			GeometrySmoothDivisions = 2
+		});
+		var divisionsZero = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = true,
+			GeometrySmoothDivisions = 0
+		});
+
+		var baselineMesh = baseline.Groups.First(group => group.Material == SurfaceMaterialId.Ground).Mesh;
+		var disabledMesh = disabled.Groups.First(group => group.Material == SurfaceMaterialId.Ground).Mesh;
+		var divisionsZeroMesh = divisionsZero.Groups.First(group => group.Material == SurfaceMaterialId.Ground).Mesh;
+
+		return baselineMesh.Indices.Count / 3 == disabledMesh.Indices.Count / 3 &&
+		       baselineMesh.Indices.Count / 3 == divisionsZeroMesh.Indices.Count / 3 &&
+		       MeshesEqual(baselineMesh, disabledMesh) &&
+		       MeshesEqual(baselineMesh, divisionsZeroMesh);
+	}
+
+	public bool RunUpwardYPreservedWhenGeometrySmoothing()
+	{
+		var map = CreateWallWithCeilingStackMap();
+		var settings = new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = true,
+			GeometrySmoothDivisions = 1,
+			GeometrySmoothStrength = 0.5f
+		};
+		var baseline = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = false,
+			GeometrySmoothDivisions = settings.GeometrySmoothDivisions,
+			GeometrySmoothStrength = settings.GeometrySmoothStrength,
+			EnableStructuralGeometrySmoothing = settings.EnableStructuralGeometrySmoothing
+		});
+		var smoothed = Compose(map, settings);
+
+		const float threshold = 0.9f;
+		foreach (var material in new[] { SurfaceMaterialId.Wall, SurfaceMaterialId.CeilingStack })
+		{
+			var baselineMesh = baseline.Groups.First(group => group.Material == material).Mesh;
+			var smoothedMesh = smoothed.Groups.First(group => group.Material == material).Mesh;
+			if (!UpwardVerticesPreserveY(baselineMesh, smoothedMesh, threshold))
+				return false;
+		}
+
+		return true;
+	}
+
+	public bool RunSoftFacesSubdivide()
+	{
+		var groundLayer = new TileId[1, 1] { { TileIds.Wall } };
+		var map = new GeneratedWorldMap(
+			groundLayer,
+			new WorldPosition(0, 0),
+			new WorldPosition(0, 0),
+			seedUsed: 17);
+
+		var baseline = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = false
+		});
+		var subdivided = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = true,
+			GeometrySmoothDivisions = 1,
+			GeometrySmoothStrength = 0.35f
+		});
+
+		var baselineCount = baseline.Groups
+			.First(group => group.Material == SurfaceMaterialId.Wall)
+			.Mesh.Indices.Count / 3;
+		var subdividedCount = subdivided.Groups
+			.First(group => group.Material == SurfaceMaterialId.Wall)
+			.Mesh.Indices.Count / 3;
+
+		return subdividedCount > baselineCount;
+	}
+
+	public bool RunHardTopFacesSubdivide()
+	{
+		var groundLayer = new TileId[1, 1] { { TileIds.Wall } };
+		var map = new GeneratedWorldMap(
+			groundLayer,
+			new WorldPosition(0, 0),
+			new WorldPosition(0, 0),
+			seedUsed: 19);
+
+		var baseline = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = false
+		});
+		var subdivided = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = true,
+			GeometrySmoothDivisions = 1,
+			GeometrySmoothStrength = 0.35f
+		});
+
+		const float threshold = 0.9f;
+		var baselineMesh = baseline.Groups.First(group => group.Material == SurfaceMaterialId.Wall).Mesh;
+		var subdividedMesh = subdivided.Groups.First(group => group.Material == SurfaceMaterialId.Wall).Mesh;
+
+		return CountUpwardTriangles(subdividedMesh, threshold) >
+		       CountUpwardTriangles(baselineMesh, threshold);
+	}
+
+	private static int CountUpwardTriangles(TerrainMeshData mesh, float upHardThreshold)
+	{
+		var count = 0;
+		for (var triIndex = 0; triIndex < mesh.Indices.Count; triIndex += 3)
+		{
+			var i0 = mesh.Indices[triIndex];
+			var i1 = mesh.Indices[triIndex + 1];
+			var i2 = mesh.Indices[triIndex + 2];
+			var faceNormal = ComputeTriangleNormal(
+				mesh.Vertices[i0],
+				mesh.Vertices[i1],
+				mesh.Vertices[i2]);
+
+			if (faceNormal.Y >= upHardThreshold)
+				count++;
+		}
+
+		return count;
+	}
+
+	public bool RunUpwardHorizontalRelaxOnly()
+	{
+		var groundLayer = new TileId[1, 1] { { TileIds.Wall } };
+		var map = new GeneratedWorldMap(
+			groundLayer,
+			new WorldPosition(0, 0),
+			new WorldPosition(0, 0),
+			seedUsed: 21);
+
+		var baseline = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = false
+		});
+		var mild = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = true,
+			GeometrySmoothDivisions = 1,
+			GeometrySmoothStrength = 0.15f
+		});
+		var strong = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = true,
+			GeometrySmoothDivisions = 1,
+			GeometrySmoothStrength = 0.5f
+		});
+
+		const float threshold = 0.9f;
+		var baselineMesh = baseline.Groups.First(group => group.Material == SurfaceMaterialId.Wall).Mesh;
+		var mildMesh = mild.Groups.First(group => group.Material == SurfaceMaterialId.Wall).Mesh;
+		var strongMesh = strong.Groups.First(group => group.Material == SurfaceMaterialId.Wall).Mesh;
+
+		return UpwardVerticesPreserveY(baselineMesh, mildMesh, threshold) &&
+		       UpwardVerticesPreserveY(baselineMesh, strongMesh, threshold) &&
+		       AnyUpwardVertexHorizontalChange(mildMesh, strongMesh, threshold);
+	}
+
+	private static bool UpwardVerticesPreserveY(
+		TerrainMeshData baseline,
+		TerrainMeshData smoothed,
+		float upHardThreshold,
+		float epsilon = 1e-4f)
+	{
+		var referenceY = GetUpwardReferenceY(baseline, upHardThreshold);
+		if (referenceY is null)
+			return false;
+
+		for (var triIndex = 0; triIndex < smoothed.Indices.Count; triIndex += 3)
+		{
+			var i0 = smoothed.Indices[triIndex];
+			var i1 = smoothed.Indices[triIndex + 1];
+			var i2 = smoothed.Indices[triIndex + 2];
+			var faceNormal = ComputeTriangleNormal(
+				smoothed.Vertices[i0],
+				smoothed.Vertices[i1],
+				smoothed.Vertices[i2]);
+
+			if (faceNormal.Y < upHardThreshold)
+				continue;
+
+			if (!ApproxEqualY(smoothed.Vertices[i0].Y, referenceY.Value, epsilon) ||
+			    !ApproxEqualY(smoothed.Vertices[i1].Y, referenceY.Value, epsilon) ||
+			    !ApproxEqualY(smoothed.Vertices[i2].Y, referenceY.Value, epsilon))
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	private static float? GetUpwardReferenceY(TerrainMeshData mesh, float upHardThreshold)
+	{
+		for (var triIndex = 0; triIndex < mesh.Indices.Count; triIndex += 3)
+		{
+			var i0 = mesh.Indices[triIndex];
+			var i1 = mesh.Indices[triIndex + 1];
+			var i2 = mesh.Indices[triIndex + 2];
+			var faceNormal = ComputeTriangleNormal(
+				mesh.Vertices[i0],
+				mesh.Vertices[i1],
+				mesh.Vertices[i2]);
+
+			if (faceNormal.Y >= upHardThreshold)
+				return mesh.Vertices[i0].Y;
+		}
+
+		return null;
+	}
+
+	private static bool AnyUpwardVertexHorizontalChange(
+		TerrainMeshData left,
+		TerrainMeshData right,
+		float upHardThreshold,
+		float epsilon = 1e-4f)
+	{
+		if (left.Indices.Count != right.Indices.Count ||
+		    left.Vertices.Count != right.Vertices.Count)
+		{
+			return true;
+		}
+
+		for (var triIndex = 0; triIndex < left.Indices.Count; triIndex += 3)
+		{
+			var i0 = left.Indices[triIndex];
+			var i1 = left.Indices[triIndex + 1];
+			var i2 = left.Indices[triIndex + 2];
+			var faceNormal = ComputeTriangleNormal(
+				left.Vertices[i0],
+				left.Vertices[i1],
+				left.Vertices[i2]);
+
+			if (faceNormal.Y < upHardThreshold)
+				continue;
+
+			if (HorizontalPositionChanged(left.Vertices[i0], right.Vertices[i0], epsilon) ||
+			    HorizontalPositionChanged(left.Vertices[i1], right.Vertices[i1], epsilon) ||
+			    HorizontalPositionChanged(left.Vertices[i2], right.Vertices[i2], epsilon))
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private static bool HorizontalPositionChanged(Vector3 left, Vector3 right, float epsilon) =>
+		MathF.Abs(left.X - right.X) > epsilon || MathF.Abs(left.Z - right.Z) > epsilon;
+
+	private static bool ApproxEqualY(float a, float b, float epsilon) =>
+		MathF.Abs(a - b) <= epsilon;
+
+	private static Dictionary<(long, long, long), Vector3> BuildUpwardVertexPositionMap(
+		TerrainMeshData mesh,
+		float upHardThreshold,
+		float scale)
+	{
+		var map = new Dictionary<(long, long, long), Vector3>();
+
+		for (var triIndex = 0; triIndex < mesh.Indices.Count; triIndex += 3)
+		{
+			var i0 = mesh.Indices[triIndex];
+			var i1 = mesh.Indices[triIndex + 1];
+			var i2 = mesh.Indices[triIndex + 2];
+			var faceNormal = ComputeTriangleNormal(
+				mesh.Vertices[i0],
+				mesh.Vertices[i1],
+				mesh.Vertices[i2]);
+
+			if (faceNormal.Y < upHardThreshold)
+				continue;
+
+			RecordCorner(map, mesh.Vertices[i0], scale);
+			RecordCorner(map, mesh.Vertices[i1], scale);
+			RecordCorner(map, mesh.Vertices[i2], scale);
+		}
+
+		return map;
+	}
+
+	public bool RunGeometryStrengthMovesSharedCorner()
+	{
+		var map = CreateWallWithCeilingStackMap();
+		var noDeform = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = false,
+			GeometrySmoothDivisions = 1,
+			EnableStructuralGeometrySmoothing = true
+		});
+		var withStrength = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = true,
+			GeometrySmoothDivisions = 1,
+			GeometrySmoothStrength = 0.5f,
+			EnableStructuralGeometrySmoothing = true
+		});
+
+		const float threshold = 0.9f;
+		var wallBaseline = noDeform.Groups.First(group => group.Material == SurfaceMaterialId.Wall).Mesh;
+		var wallDeformed = withStrength.Groups.First(group => group.Material == SurfaceMaterialId.Wall).Mesh;
+
+		return AnySoftVertexPositionChanged(wallBaseline, wallDeformed, threshold) &&
+		       SharedSoftPositionsMatch(
+			       withStrength,
+			       SurfaceMaterialId.Wall,
+			       SurfaceMaterialId.CeilingStack,
+			       threshold);
+	}
+
+	private static bool AnySoftVertexPositionChanged(
+		TerrainMeshData baseline,
+		TerrainMeshData deformed,
+		float upHardThreshold,
+		float epsilon = 1e-4f)
+	{
+		var scale = 1f / epsilon;
+		var baselinePositions = BuildSoftVertexPositionMap(baseline, upHardThreshold, scale);
+		var deformedPositions = BuildSoftVertexPositionMap(deformed, upHardThreshold, scale);
+
+		foreach (var kvp in deformedPositions)
+		{
+			if (!baselinePositions.TryGetValue(kvp.Key, out var baselinePosition))
+				return true;
+
+			if (!ApproxEqual(baselinePosition, kvp.Value, epsilon))
+				return true;
+		}
+
+		return false;
+	}
+
+	private static bool SharedSoftPositionsMatch(
+		TileSurfaceMeshResult surface,
+		SurfaceMaterialId materialA,
+		SurfaceMaterialId materialB,
+		float upHardThreshold,
+		float epsilon = 1e-4f)
+	{
+		var scale = 1f / epsilon;
+		var positionsA = BuildSoftVertexPositionMap(
+			surface.Groups.First(group => group.Material == materialA).Mesh,
+			upHardThreshold,
+			scale);
+		var positionsB = BuildSoftVertexPositionMap(
+			surface.Groups.First(group => group.Material == materialB).Mesh,
+			upHardThreshold,
+			scale);
+
+		var sharedCount = 0;
+		foreach (var kvp in positionsA)
+		{
+			if (!positionsB.TryGetValue(kvp.Key, out var positionB))
+				continue;
+
+			sharedCount++;
+			if (!ApproxEqual(kvp.Value, positionB, epsilon))
+				return false;
+		}
+
+		return sharedCount > 0;
+	}
+
+	private static void RecordCorner(
+		Dictionary<(long, long, long), Vector3> map,
+		Vector3 position,
+		float scale)
+	{
+		map[QuantizeKey(position, scale)] = position;
+	}
+
+	private static Dictionary<(long, long, long), Vector3> BuildSoftVertexPositionMap(
+		TerrainMeshData mesh,
+		float upHardThreshold,
+		float scale)
+	{
+		var map = new Dictionary<(long, long, long), Vector3>();
+
+		for (var triIndex = 0; triIndex < mesh.Indices.Count; triIndex += 3)
+		{
+			var i0 = mesh.Indices[triIndex];
+			var i1 = mesh.Indices[triIndex + 1];
+			var i2 = mesh.Indices[triIndex + 2];
+			var faceNormal = ComputeTriangleNormal(
+				mesh.Vertices[i0],
+				mesh.Vertices[i1],
+				mesh.Vertices[i2]);
+
+			if (faceNormal.Y >= upHardThreshold)
+				continue;
+
+			RecordCorner(map, mesh.Vertices[i0], scale);
+			RecordCorner(map, mesh.Vertices[i1], scale);
+			RecordCorner(map, mesh.Vertices[i2], scale);
+		}
+
+		return map;
+	}
+
 	private static GeneratedWorldMap CreateWallWithCeilingStackMap()
 	{
 		var groundLayer = new TileId[1, 1] { { TileIds.Wall } };

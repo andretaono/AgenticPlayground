@@ -57,5 +57,35 @@ public sealed class TileSurfaceMeshTests : ITestSuite
 		{
 			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunStructuralSmoothingOffBreaksSharedNormals());
 		});
+
+		registry.Add(Name, "disabled geometry smoothing leaves mesh unchanged", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunGeometrySmoothingDisabledUnchanged());
+		});
+
+		registry.Add(Name, "preserves upward Y when geometry smoothing enabled", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunUpwardYPreservedWhenGeometrySmoothing());
+		});
+
+		registry.Add(Name, "subdivides soft wall faces when geometry smoothing enabled", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunSoftFacesSubdivide());
+		});
+
+		registry.Add(Name, "subdivides upward faces when geometry smoothing enabled", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunHardTopFacesSubdivide());
+		});
+
+		registry.Add(Name, "relaxes upward vertices horizontally only", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunUpwardHorizontalRelaxOnly());
+		});
+
+		registry.Add(Name, "geometry strength moves shared wall ceiling corners", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunGeometryStrengthMovesSharedCorner());
+		});
 	}
 }

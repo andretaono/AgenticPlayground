@@ -29,7 +29,8 @@ namespace Game.UnityBridge.Terrain
 		public void SyncTerrain(
 			GeneratedWorldMap map,
 			TerrainBuildResult result,
-			TileHeightModifierSettings settings)
+			TileHeightModifierSettings settings,
+			TileSurfaceMeshSettings? surfaceSettings = null)
 		{
 			if (map is null)
 				throw new ArgumentNullException(nameof(map));
@@ -52,7 +53,8 @@ namespace Game.UnityBridge.Terrain
 						{
 							HeightScale = _heightScale
 						},
-						ModifierSettings: settings));
+						ModifierSettings: settings,
+						SurfaceSettings: surfaceSettings ?? new TileSurfaceMeshSettings()));
 			}
 
 			SyncSurfaceMeshes(surfaceMesh);
