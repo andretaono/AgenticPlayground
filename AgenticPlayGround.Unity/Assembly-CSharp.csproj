@@ -78,6 +78,7 @@
     <Compile Include="Assets\GameBridge\Bootstrap\PlayerDemoSettings.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoComposition.cs" />
     <Compile Include="Assets\GameBridge\Runtime\CameraFollowHost.cs" />
+    <Compile Include="Assets\GameBridge\Bootstrap\TileSurfaceDemoSettings.cs" />
     <Compile Include="Assets\GameBridge\Presentation\TopDownRpgCameraFollow.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoContext.cs" />
     <Compile Include="Assets\GameBridge\Debug\WorldLayerDebugColors.cs" />

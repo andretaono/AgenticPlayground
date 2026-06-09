@@ -32,5 +32,30 @@ public sealed class TileSurfaceMeshTests : ITestSuite
 		{
 			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunSingleGroundTriangleWinding());
 		});
+
+		registry.Add(Name, "preserves hard normals on upward-facing triangles", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunHardTopNormalsPreserved());
+		});
+
+		registry.Add(Name, "smooths wall corner normals", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunSoftWallCornerSmoothed());
+		});
+
+		registry.Add(Name, "disabled smoothing leaves mesh unchanged", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunSmoothingDisabledMatchesFlat());
+		});
+
+		registry.Add(Name, "matches wall and ceiling normals at shared soft seams", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunStructuralWallCeilingSharedNormals());
+		});
+
+		registry.Add(Name, "structural smoothing off allows seam normal mismatch", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunStructuralSmoothingOffBreaksSharedNormals());
+		});
 	}
 }

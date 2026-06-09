@@ -6,4 +6,5 @@ public sealed record WorldTerrainMapping(
 	int Seed,
 	float WorldUnitsPerTile,
 	TerrainMeshConfig TerrainConfig,
-	TileHeightModifierSettings? ModifierSettings = null);
+	TileHeightModifierSettings? ModifierSettings = null,
+	TileSurfaceMeshSettings? SurfaceSettings = null);

@@ -8,10 +8,19 @@ public sealed class TileSurfaceComposer
 	private readonly ITileRulesProvider _tileRules;
 	private readonly TileBlockLayoutBuilder _layoutBuilder = new();
 	private readonly VisibleSurfaceMeshBuilder _meshBuilder = new();
+	private readonly IReadOnlyList<ITileSurfaceMeshPostProcessor> _postProcessors;
 
-	public TileSurfaceComposer(ITileRulesProvider tileRules)
+	public TileSurfaceComposer(
+		ITileRulesProvider tileRules,
+		IEnumerable<ITileSurfaceMeshPostProcessor>? postProcessors = null)
 	{
 		_tileRules = tileRules ?? throw new ArgumentNullException(nameof(tileRules));
+		_postProcessors = (postProcessors ?? DefaultPostProcessors()).ToList();
+	}
+
+	private static IEnumerable<ITileSurfaceMeshPostProcessor> DefaultPostProcessors()
+	{
+		yield return new NormalSmoothingPostProcessor();
 	}
 
 	public TileSurfaceMeshResult Compose(
@@ -25,6 +34,7 @@ public sealed class TileSurfaceComposer
 			throw new ArgumentNullException(nameof(mapping));
 
 		var settings = mapping.ModifierSettings ?? modifierSettings ?? new TileHeightModifierSettings();
+		var surfaceSettings = mapping.SurfaceSettings ?? new TileSurfaceMeshSettings();
 		var heightScale = mapping.TerrainConfig?.HeightScale ?? 1f;
 		var blocks = _layoutBuilder.Build(
 			map,
@@ -33,6 +43,10 @@ public sealed class TileSurfaceComposer
 			heightScale,
 			settings);
 
-		return _meshBuilder.Build(blocks);
+		var result = _meshBuilder.Build(blocks);
+		foreach (var postProcessor in _postProcessors)
+			result = postProcessor.Process(result, surfaceSettings, mapping.WorldUnitsPerTile);
+
+		return result;
 	}
 }

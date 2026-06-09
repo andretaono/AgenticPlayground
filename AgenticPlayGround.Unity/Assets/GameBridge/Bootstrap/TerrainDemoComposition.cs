@@ -15,7 +15,7 @@ using Game.Systems.Integration.Enemies.PolarBear;
 using Game.Systems.Integration.Navigation;
 using Game.Systems.Integration.Runtime;
 using Game.Systems.Integration.TerrainMesh;
-using Game.UnityBridge.Debug;
+using Game.UnityBridge.Debugging;
 using Game.UnityBridge.Input;
 using Game.UnityBridge.Presentation;
 using Game.UnityBridge.Runtime;
@@ -244,7 +244,8 @@ namespace Game.UnityBridge.Bootstrap
 				{
 					HeightScale = settings.HeightScale
 				},
-				ModifierSettings: modifierSettings);
+				ModifierSettings: modifierSettings,
+				SurfaceSettings: settings.SurfaceMesh.ToIntegrationSettings());
 
 			return composer.ComposeFromMap(map, mapping);
 		}
