@@ -63,21 +63,122 @@ internal class AgentMovementSimulation : IAgentMovementSimulation
             return;
         }
 
-        var velocity = math.Scale(direction, speed);
-        var proposedPosition = math.Add(agent.Position, math.Scale(velocity, deltaTime));
+        var displacement = math.Scale(math.Scale(direction, speed), deltaTime);
+        var resolvedPosition = ResolveSlidingPosition(
+            entityId,
+            agent.Position,
+            displacement,
+            config.BodyRadius,
+            math);
 
-        if (!_movementPolicy.CanMoveTo(entityId, proposedPosition))
+        var moved = math.Distance(agent.Position, resolvedPosition) > 1e-6f;
+        if (!moved)
         {
             agent.PendingInput = GameMathSystem.Zero;
             agent.Velocity = GameMathSystem.Zero;
             return;
         }
 
-        agent.Velocity = velocity;
-        agent.Position = proposedPosition;
+        if (deltaTime > 0f)
+        {
+            var actualDisplacement = math.Subtract(resolvedPosition, agent.Position);
+            agent.Velocity = math.Scale(actualDisplacement, 1f / deltaTime);
+        }
+        else
+        {
+            agent.Velocity = GameMathSystem.Zero;
+        }
+
+        agent.Position = new Game.Systems.Foundation.GameMath.Core.Model.Vector3(
+            resolvedPosition.X,
+            resolvedPosition.Y,
+            resolvedPosition.Z);
 
         // Input is treated as "per-frame intent" (caller sets every frame).
         agent.PendingInput = GameMathSystem.Zero;
     }
-}
 
+    private IVector3 ResolveSlidingPosition(
+        EntityId entityId,
+        IVector3 currentPosition,
+        IVector3 displacement,
+        float bodyRadius,
+        IGameMath math)
+    {
+        var proposed = math.Add(currentPosition, displacement);
+        if (_movementPolicy.CanMoveTo(entityId, proposed, bodyRadius))
+            return proposed;
+
+        var deltaX = math.Create(displacement.X, 0f, 0f);
+        var deltaY = math.Create(0f, displacement.Y, 0f);
+
+        var afterX = TryAxisMove(entityId, currentPosition, deltaX, bodyRadius, math);
+        var afterY = TryAxisMove(entityId, currentPosition, deltaY, bodyRadius, math);
+        var afterYX = TryAxisMove(entityId, afterY, deltaX, bodyRadius, math);
+        var afterXY = TryAxisMove(entityId, afterX, deltaY, bodyRadius, math);
+
+        return ChooseBestSlide(
+            currentPosition,
+            displacement,
+            afterX,
+            afterY,
+            afterYX,
+            afterXY,
+            math);
+    }
+
+    private static IVector3 ChooseBestSlide(
+        IVector3 currentPosition,
+        IVector3 intendedDisplacement,
+        IVector3 afterX,
+        IVector3 afterY,
+        IVector3 afterYX,
+        IVector3 afterXY,
+        IGameMath math)
+    {
+        var best = currentPosition;
+        var bestScore = 0f;
+
+        ConsiderSlideCandidate(currentPosition, intendedDisplacement, afterX, math, ref best, ref bestScore);
+        ConsiderSlideCandidate(currentPosition, intendedDisplacement, afterY, math, ref best, ref bestScore);
+        ConsiderSlideCandidate(currentPosition, intendedDisplacement, afterYX, math, ref best, ref bestScore);
+        ConsiderSlideCandidate(currentPosition, intendedDisplacement, afterXY, math, ref best, ref bestScore);
+
+        return best;
+    }
+
+    private static void ConsiderSlideCandidate(
+        IVector3 currentPosition,
+        IVector3 intendedDisplacement,
+        IVector3 candidate,
+        IGameMath math,
+        ref IVector3 best,
+        ref float bestScore)
+    {
+        if (math.Distance(currentPosition, candidate) <= 1e-6f)
+            return;
+
+        var score = math.Dot(math.Subtract(candidate, currentPosition), intendedDisplacement);
+        if (score <= bestScore + 1e-6f)
+            return;
+
+        bestScore = score;
+        best = candidate;
+    }
+
+    private IVector3 TryAxisMove(
+        EntityId entityId,
+        IVector3 currentPosition,
+        IVector3 axisDelta,
+        float bodyRadius,
+        IGameMath math)
+    {
+        if (math.MagnitudeSquared(axisDelta) <= 1e-12f)
+            return currentPosition;
+
+        var proposed = math.Add(currentPosition, axisDelta);
+        return _movementPolicy.CanMoveTo(entityId, proposed, bodyRadius)
+            ? proposed
+            : currentPosition;
+    }
+}

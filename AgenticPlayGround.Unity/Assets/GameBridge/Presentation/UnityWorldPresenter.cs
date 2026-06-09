@@ -1,8 +1,7 @@
 using System.Collections.Generic;
-using Game.Systems.Domain.TerrainMesh;
 using Game.Systems.Domain.TerrainMesh.Model;
-using Game.Systems.Domain.TerrainMesh.Ports;
 using Game.Systems.Foundation.Primitives;
+using Game.Systems.Integration.Adapters;
 using Game.Systems.Integration.Presentation.Ports;
 using UnityEngine;
 using GameVector2 = Game.Systems.Foundation.GameMath.Core.Model.Vector2;
@@ -14,12 +13,14 @@ namespace Game.UnityBridge.Presentation
 	{
 		private readonly Transform _actorsRoot;
 		private readonly Heightmap _heightmap;
-		private readonly IHeightmapSampler _heightmapSampler;
+		private readonly WalkableSurfaceHeightSampler _surfaceHeightSampler;
 		private readonly float _worldUnitsPerTile;
 		private readonly float _heightScale;
 		private readonly float _characterHalfHeight;
+		private readonly float _characterRadius;
 		private readonly Dictionary<EntityId, Transform> _actors = new();
 		private readonly HashSet<EntityId> _polarBears = new();
+		private readonly Dictionary<EntityId, float> _actorVisualRadii = new();
 
 		public UnityWorldPresenter(
 			Transform actorsRoot,
@@ -27,14 +28,17 @@ namespace Game.UnityBridge.Presentation
 			float worldUnitsPerTile,
 			float heightScale,
 			float characterHalfHeight,
-			IHeightmapSampler heightmapSampler = null)
+			float characterRadius,
+			WalkableSurfaceHeightSampler surfaceHeightSampler)
 		{
 			_actorsRoot = actorsRoot ?? throw new System.ArgumentNullException(nameof(actorsRoot));
 			_heightmap = heightmap ?? throw new System.ArgumentNullException(nameof(heightmap));
+			_surfaceHeightSampler = surfaceHeightSampler ??
+			                        throw new System.ArgumentNullException(nameof(surfaceHeightSampler));
 			_worldUnitsPerTile = worldUnitsPerTile;
 			_heightScale = heightScale;
 			_characterHalfHeight = characterHalfHeight;
-			_heightmapSampler = heightmapSampler ?? new TerrainMeshSystem().Sampler;
+			_characterRadius = characterRadius;
 		}
 
 		public void SyncActorPosition(EntityId entityId, GameVector2 position)
@@ -47,7 +51,11 @@ namespace Game.UnityBridge.Presentation
 
 			var worldX = position.X * _worldUnitsPerTile;
 			var worldZ = position.Y * _worldUnitsPerTile;
-			var surfaceHeight = _heightmapSampler.SampleBilinear(_heightmap, worldX, worldZ) * _heightScale;
+			var surfaceHeight = _surfaceHeightSampler.Sample(
+				_heightmap,
+				position.X,
+				position.Y,
+				_heightScale);
 
 			actorTransform.position = new UnityVector3(
 				worldX,
@@ -58,10 +66,16 @@ namespace Game.UnityBridge.Presentation
 		public bool TryGetTransform(EntityId entityId, out Transform transform) =>
 			_actors.TryGetValue(entityId, out transform);
 
-		public void ConfigurePolarBearVisual(EntityId entityId) => _polarBears.Add(entityId);
+		public void ConfigurePolarBearVisual(EntityId entityId, float bodyRadius)
+		{
+			_polarBears.Add(entityId);
+			_actorVisualRadii[entityId] = bodyRadius;
+		}
 
 		private Transform CreateActorVisual(EntityId entityId)
 		{
+			const float unityCapsuleMeshRadius = 0.5f;
+
 			var actorObject = UnityEngine.GameObject.CreatePrimitive(UnityEngine.PrimitiveType.Capsule);
 			actorObject.name = _polarBears.Contains(entityId)
 				? $"PolarBear_{entityId.Value}"
@@ -69,8 +83,13 @@ namespace Game.UnityBridge.Presentation
 			actorObject.transform.SetParent(_actorsRoot, worldPositionStays: false);
 
 			var isPolarBear = _polarBears.Contains(entityId);
-			var scale = isPolarBear ? 0.85f : 0.5f;
-			actorObject.transform.localScale = new UnityVector3(scale, _characterHalfHeight * (isPolarBear ? 1.2f : 1f), scale);
+			var visualRadius = ResolveVisualRadius(entityId);
+			var visualRadiusWorld = visualRadius * _worldUnitsPerTile;
+			var horizontalScale = visualRadiusWorld / unityCapsuleMeshRadius;
+			actorObject.transform.localScale = new UnityVector3(
+				horizontalScale,
+				_characterHalfHeight * (isPolarBear ? 1.2f : 1f),
+				horizontalScale);
 
 			var renderer = actorObject.GetComponent<Renderer>();
 			if (renderer != null)
@@ -86,5 +105,8 @@ namespace Game.UnityBridge.Presentation
 
 			return actorObject.transform;
 		}
+
+		private float ResolveVisualRadius(EntityId entityId) =>
+			_actorVisualRadii.TryGetValue(entityId, out var radius) ? radius : _characterRadius;
 	}
 }

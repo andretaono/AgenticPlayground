@@ -35,5 +35,20 @@ public sealed class PlayerWorldMovementTests : ITestSuite
 			TestAssert.True(result.GroundDisplacement > 0f);
 			TestAssert.True(result.WaterDisplacement > 0f);
 		});
+
+		registry.Add(Name, "stops equally before wall from both sides", () =>
+		{
+			TestAssert.True(new PlayerWorldMovementIntegrationRunner().RunWallApproachStopsSymmetrically());
+		});
+
+		registry.Add(Name, "does not ramp actor height into wall tiles", () =>
+		{
+			TestAssert.True(new PlayerWorldMovementIntegrationRunner().RunWalkableHeightDoesNotRampIntoWall());
+		});
+
+		registry.Add(Name, "slides along wall when moving at an angle", () =>
+		{
+			TestAssert.True(new PlayerWorldMovementIntegrationRunner().RunWallSlidePreservesParallelMotion());
+		});
 	}
 }

@@ -499,6 +499,7 @@ MonoBehaviour:
       GroundSpeed: 2
       SwimSpeed: 1
       CharacterHalfHeight: 0.5
+      CharacterRadius: 0.4
       TurnSpeedDegrees: 180
     CameraOrbitDistance: 14
     CameraPitchDegrees: 70

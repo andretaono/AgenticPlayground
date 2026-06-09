@@ -9,7 +9,6 @@ namespace Game.Systems.Integration.Adapters;
 public sealed class OccupancyAwareMovementPolicy : IAgentMovementPolicy
 {
 	private readonly IAgentMovementPolicy _inner;
-	private readonly WorldCoordinateConverter _coordinateConverter = new();
 	private readonly int _tileSize;
 	private ITileOccupancyQuery? _occupancy;
 
@@ -25,15 +24,19 @@ public sealed class OccupancyAwareMovementPolicy : IAgentMovementPolicy
 	public void SetOccupancyQuery(ITileOccupancyQuery occupancy) =>
 		_occupancy = occupancy ?? throw new ArgumentNullException(nameof(occupancy));
 
-	public bool CanMoveTo(EntityId entityId, IVector3 proposedPosition)
+	public bool CanMoveTo(EntityId entityId, IVector3 proposedPosition, float bodyRadius)
 	{
-		if (!_inner.CanMoveTo(entityId, proposedPosition))
+		if (!_inner.CanMoveTo(entityId, proposedPosition, bodyRadius))
 			return false;
 
 		if (_occupancy is null)
 			return true;
 
-		var tile = _coordinateConverter.ToTilePosition(proposedPosition.X, proposedPosition.Y, _tileSize);
-		return !_occupancy.IsTileOccupied(tile, entityId);
+		return MovementFootprint.CircleFits(
+			proposedPosition.X,
+			proposedPosition.Y,
+			bodyRadius,
+			_tileSize,
+			(tileX, tileY) => _occupancy.IsTileOccupied(new WorldPosition(tileX, tileY), entityId));
 	}
 }

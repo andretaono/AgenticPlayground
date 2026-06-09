@@ -80,13 +80,15 @@ namespace Game.UnityBridge.Bootstrap
 			var actorsRoot = new UnityEngine.GameObject("ActorsRoot").transform;
 			actorsRoot.SetParent(sessionRoot, worldPositionStays: false);
 
+			var surfaceHeightSampler = new WalkableSurfaceHeightSampler(tileRules, worldData);
 			var worldPresenter = new UnityWorldPresenter(
 				actorsRoot,
 				buildResult.Heightmap,
 				settings.WorldUnitsPerTile,
 				settings.HeightScale,
 				settings.Player.CharacterHalfHeight,
-				new TerrainMeshSystem().Sampler);
+				settings.Player.CharacterRadius,
+				surfaceHeightSampler);
 
 			var facing = new PlayerFacingController();
 			var inputSource = new UnityInputSource(player.AgentId, facing);
@@ -123,7 +125,7 @@ namespace Game.UnityBridge.Bootstrap
 			if (polarBearSetup is not null)
 			{
 				foreach (var bear in polarBearSetup.Bears)
-					worldPresenter.ConfigurePolarBearVisual(bear.EntityId);
+					worldPresenter.ConfigurePolarBearVisual(bear.EntityId, bodyRadius: 0.25f);
 
 				runtimeBuilder
 					.WithBehaviour(polarBearSetup.BehaviourSystem)

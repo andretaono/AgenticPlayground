@@ -9,5 +9,5 @@ namespace Game.Systems.Integration.Adapters;
 /// </summary>
 public sealed class PermissiveMovementPolicy : IAgentMovementPolicy
 {
-	public bool CanMoveTo(EntityId entityId, IVector3 proposedPosition) => true;
+	public bool CanMoveTo(EntityId entityId, IVector3 proposedPosition, float bodyRadius) => true;
 }

@@ -27,7 +27,7 @@ public sealed class PolarBearConfig
 	public float SwimSpeed { get; init; } = 1.0f;
 
 	public AgentMovementConfig ToMovementConfig() =>
-		new(GroundSpeed, SwimSpeed, GroundSpeed);
+		new(GroundSpeed, SwimSpeed, GroundSpeed, BodyRadius: 0.25f);
 
 	public PerceptionConfig ToPerceptionConfig() => new()
 	{

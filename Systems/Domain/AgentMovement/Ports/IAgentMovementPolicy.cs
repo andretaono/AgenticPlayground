@@ -5,5 +5,5 @@ namespace Game.Systems.Domain.AgentMovement.Ports;
 
 public interface IAgentMovementPolicy
 {
-	bool CanMoveTo(EntityId entityId, IVector3 proposedPosition);
+	bool CanMoveTo(EntityId entityId, IVector3 proposedPosition, float bodyRadius);
 }

@@ -11,34 +11,38 @@ public sealed class AgentMovementPolicy : IAgentMovementPolicy
 	private readonly InMemoryWorldDataSource _worldData;
 	private readonly TileId[,] _map;
 
-	private readonly WorldCoordinateConverter _coordinateConverter = new();
-
 	public AgentMovementPolicy(
 		ITileRulesProvider tileRulesProvider,
 		InMemoryWorldDataSource worldData)
 	{
-		_tileRulesProvider = tileRulesProvider;
-		_worldData = worldData;
+		_tileRulesProvider = tileRulesProvider ?? throw new ArgumentNullException(nameof(tileRulesProvider));
+		_worldData = worldData ?? throw new ArgumentNullException(nameof(worldData));
 		_map = _worldData.LoadMap();
 	}
 
-	public bool CanMoveTo(EntityId entityId, IVector3 proposedPosition)
+	public bool CanMoveTo(EntityId entityId, IVector3 proposedPosition, float bodyRadius)
 	{
 		_ = entityId;
-		var tile = _coordinateConverter.ToTilePosition(proposedPosition.X, proposedPosition.Y, _worldData.TileSize);
-		var tileX = tile.X;
-		var tileY = tile.Y;
+		if (bodyRadius < 0f)
+			throw new ArgumentOutOfRangeException(nameof(bodyRadius), "Body radius must be non-negative.");
 
+		return MovementFootprint.CircleFits(
+			proposedPosition.X,
+			proposedPosition.Y,
+			bodyRadius,
+			_worldData.TileSize,
+			IsBlocked);
+	}
+
+	private bool IsBlocked(int tileX, int tileY)
+	{
 		if (tileX < 0 || tileY < 0 ||
 			tileX >= _worldData.Width ||
 			tileY >= _worldData.Height)
 		{
-			return false;
+			return true;
 		}
 
-		var tileId = _map[tileX, tileY];
-		var rules = _tileRulesProvider.GetRules(tileId);
-
-		return rules != TileRules.BlocksMovement;
+		return _tileRulesProvider.GetRules(_map[tileX, tileY]).HasFlag(TileRules.BlocksMovement);
 	}
 }
