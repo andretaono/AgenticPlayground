@@ -1,5 +1,6 @@
 using Game.Systems.Domain.AgentCommand;
 using Game.Systems.Domain.AgentMovement;
+using Game.Systems.Domain.AgentMovement.Model;
 using Game.Systems.Foundation.GameMath.Interfaces;
 using Game.Systems.Foundation.Primitives;
 
@@ -20,25 +21,25 @@ public sealed class ActorRegistry : IActorRegistry
 
 	public IReadOnlyList<ActorHandle> Actors => _actors;
 
-	public ActorHandle RegisterActor(IVector3 position)
+	public ActorHandle RegisterActor(IVector3 position, AgentMovementConfig? movementConfig = null)
 	{
 		var id = _nextId++;
 		var agentId = new AgentId(id);
 		var entityId = new EntityId(id);
 
 		_commandSystem.RegisterAgent(agentId);
-		_movement.Registry.CreateAgent(entityId, position);
+		_movement.Registry.CreateAgent(entityId, position, movementConfig);
 
 		var handle = new ActorHandle(agentId, entityId);
 		_actors.Add(handle);
 		return handle;
 	}
 
-	public EntityId RegisterEntity(IVector3 position)
+	public EntityId RegisterEntity(IVector3 position, AgentMovementConfig? movementConfig = null)
 	{
 		var id = _nextId++;
 		var entityId = new EntityId(id);
-		_movement.Registry.CreateAgent(entityId, position);
+		_movement.Registry.CreateAgent(entityId, position, movementConfig);
 		return entityId;
 	}
 

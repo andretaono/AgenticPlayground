@@ -1,3 +1,4 @@
+using Game.Systems.Domain.AgentMovement.Model;
 using Game.Systems.Domain.WorldCognition.Model;
 using Game.Systems.Integration.Enemies.Common.Advantage;
 using Game.Systems.Integration.Enemies.Common.Config;
@@ -22,6 +23,11 @@ public sealed class PolarBearConfig
 	public int CognitionGridWidth { get; init; } = 64;
 	public int CognitionGridHeight { get; init; } = 64;
 	public float MeleeBasePower { get; init; } = 35f;
+	public float GroundSpeed { get; init; } = 1.5f;
+	public float SwimSpeed { get; init; } = 1.0f;
+
+	public AgentMovementConfig ToMovementConfig() =>
+		new(GroundSpeed, SwimSpeed, GroundSpeed);
 
 	public PerceptionConfig ToPerceptionConfig() => new()
 	{

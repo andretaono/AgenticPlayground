@@ -19,6 +19,8 @@ public sealed class TrackedTargetContextProvider : IBehaviourContextProvider
 	private readonly PerceptionConfig _perceptionConfig;
 	private readonly EnemyTacticalConfig _tacticalConfig;
 
+	public EcologicalTargetPerception Perception => _perception;
+
 	public TrackedTargetContextProvider(
 		AgentId agentId,
 		EntityId entityId,

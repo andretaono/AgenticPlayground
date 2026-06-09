@@ -1,3 +1,4 @@
+using System.Linq;
 using Game.Systems.Domain.AgentCommand;
 using Game.Systems.Domain.AgentMovement;
 using Game.Systems.Domain.AgentMovement.Model;
@@ -9,6 +10,9 @@ using Game.Systems.Domain.World.Model;
 using Game.Systems.Foundation.GameMath.Core;
 using Game.Systems.Integration.Actors;
 using Game.Systems.Integration.Adapters;
+using Game.Systems.Domain.Navigation.Controller;
+using Game.Systems.Integration.Enemies.PolarBear;
+using Game.Systems.Integration.Navigation;
 using Game.Systems.Integration.Runtime;
 using Game.Systems.Integration.TerrainMesh;
 using Game.UnityBridge.Debug;
@@ -49,17 +53,24 @@ namespace Game.UnityBridge.Bootstrap
 			var worldData = (InMemoryWorldDataSource)map.ToDataSource();
 			var tileRules = new DefaultTileRulesProvider();
 			var math = new GameMathSystem();
+			var playerConfig = settings.Player.ToPlayerConfig();
+			var playerMovementConfig = playerConfig.ToMovementConfig();
+			var tileMovementPolicy = new AgentMovementPolicy(tileRules, worldData);
+			var movementPolicy = new OccupancyAwareMovementPolicy(tileMovementPolicy);
 			var movement = new AgentMovementSystem(
 				math,
-				new AgentMovementPolicy(tileRules, worldData),
-				new AgentMovementConfig(settings.GroundSpeed, settings.SwimSpeed, settings.GroundSpeed));
+				movementPolicy,
+				playerMovementConfig);
 			var commandSystem = new AgentCommandSystem();
 			var actorRegistry = new ActorRegistry(commandSystem, movement);
+			movementPolicy.SetOccupancyQuery(new MovementTileOccupancyQuery(actorRegistry, movement));
 
-			var player = actorRegistry.RegisterActor(math.Create(
-				map.Start.X + 0.5f,
-				map.Start.Y + 0.5f,
-				0f));
+			var player = actorRegistry.RegisterActor(
+				math.Create(
+					map.Start.X + 0.5f,
+					map.Start.Y + 0.5f,
+					0f),
+				playerMovementConfig);
 
 			var actorsRoot = new UnityEngine.GameObject("ActorsRoot").transform;
 			actorsRoot.SetParent(sessionRoot, worldPositionStays: false);
@@ -69,7 +80,7 @@ namespace Game.UnityBridge.Bootstrap
 				buildResult.Heightmap,
 				settings.WorldUnitsPerTile,
 				settings.HeightScale,
-				settings.CharacterHalfHeight,
+				settings.Player.CharacterHalfHeight,
 				new TerrainMeshSystem().Sampler);
 
 			var facing = new PlayerFacingController();
@@ -80,26 +91,57 @@ namespace Game.UnityBridge.Bootstrap
 				tileRules,
 				worldData);
 
-			var runtime = new GameRuntimeBuilder(math)
+			var navigationGrid = NavigationGridBuilder.Build(worldData, tileRules);
+			var tileOccupancy = new MovementTileOccupancyQuery(actorRegistry, movement);
+			var pathNavigator = new AgentPathNavigator(
+				navigationGrid,
+				new AStarGridPathfinder(),
+				occupancy: tileOccupancy);
+
+			var polarBearSetup = new PolarBearTerrainDemoSetup().TryBuild(
+				map,
+				settings.MinPolarBearCount,
+				settings.MaxPolarBearCount,
+				player,
+				actorRegistry,
+				math,
+				movement,
+				pathNavigator);
+
+			var runtimeBuilder = new GameRuntimeBuilder(math)
 				.WithExistingMovement(movement)
 				.WithExistingCommand(commandSystem)
 				.WithInput(inputSource, player.AgentId)
 				.WithPresenter(worldPresenter, actorRegistry)
-				.WithExtraTickable(movementStateAdapter, StandardTickOrder.MovementState)
-				.Build();
+				.WithExtraTickable(movementStateAdapter, StandardTickOrder.MovementState);
+
+			if (polarBearSetup is not null)
+			{
+				foreach (var bear in polarBearSetup.Bears)
+					worldPresenter.ConfigurePolarBearVisual(bear.EntityId);
+
+				runtimeBuilder
+					.WithBehaviour(polarBearSetup.BehaviourSystem)
+					.WithExistingCombat(polarBearSetup.Combat)
+					.WithExistingResources(polarBearSetup.Resources)
+					.WithExistingCognition(polarBearSetup.Cognition)
+					.WithIntentAgents(polarBearSetup.BearAgentIds.ToArray())
+					.WithExtraTickable(polarBearSetup.PlayerPresence, StandardTickOrder.PreCognition);
+			}
+
+			var runtime = runtimeBuilder.Build();
 
 			var startPosition = movement.Input.GetPosition(player.EntityId);
 			worldPresenter.SyncActorPosition(
 				player.EntityId,
 				new GameVector2(startPosition.X, startPosition.Y));
 
-			var cameraFollow = new OverShoulderCameraFollow
+			var cameraFollow = new TopDownRpgCameraFollow
 			{
-				Settings = new OverShoulderCameraFollow.SettingsConfig
+				Settings = new TopDownRpgCameraFollow.SettingsConfig
 				{
-					FollowDistance = settings.CameraFollowDistance,
-					ShoulderHeight = settings.CameraShoulderHeight,
-					ShoulderOffset = settings.CameraShoulderOffset,
+					OrbitDistance = settings.CameraOrbitDistance,
+					PitchDegrees = settings.CameraPitchDegrees,
 					LookHeight = settings.CameraLookHeight,
 					LookAhead = settings.CameraLookAhead,
 					YawSmoothTime = settings.CameraYawSmoothTime,
@@ -123,10 +165,12 @@ namespace Game.UnityBridge.Bootstrap
 			var groundTiles = CountTiles(map.GroundLayer, TileIds.Ground);
 			var wallTiles = CountTiles(map.GroundLayer, TileIds.Wall);
 			var waterTiles = CountTiles(map.GroundLayer, TileIds.Water);
+			var polarBearCount = polarBearSetup?.Bears.Count ?? 0;
 			UnityEngine.Debug.Log(
 				$"Terrain demo ready. Seed={map.SeedUsed}, Start=({map.Start.X},{map.Start.Y}), " +
-				$"Goal=({map.Goal.X},{map.Goal.Y}), Ground={groundTiles}, Wall={wallTiles}, Water={waterTiles}. " +
-				"W/S move forward/back, A/D turn, camera follows behind. Key 1=ground tile overlay.");
+				$"Goal=({map.Goal.X},{map.Goal.Y}), Ground={groundTiles}, Wall={wallTiles}, Water={waterTiles}, " +
+				$"PolarBears={polarBearCount}. " +
+				"W/S move forward/back, A/D turn, top-down camera follows. Key 1=ground tile overlay.");
 
 			return context;
 		}
@@ -237,7 +281,7 @@ namespace Game.UnityBridge.Bootstrap
 			Transform terrainRoot,
 			CaveCeilingVisibility caveCeilingVisibility)
 		{
-			sessionObject.AddComponent<GameLoopHost>().Initialize(context, settings.TurnSpeedDegrees);
+			sessionObject.AddComponent<GameLoopHost>().Initialize(context, settings.Player.TurnSpeedDegrees);
 			sessionObject.AddComponent<CameraFollowHost>().Initialize(context);
 			sessionObject.AddComponent<CaveCeilingVisibilityHost>()
 				.Initialize(context, caveCeilingVisibility);

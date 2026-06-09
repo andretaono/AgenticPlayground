@@ -15,5 +15,6 @@ public sealed class AgentMovementAgentState
     public Vector3 Velocity;
     public Vector3 PendingInput;
     public AgentMovementState MovementState;
+    public AgentMovementConfig MovementConfig = null!;
 }
 

@@ -3,6 +3,7 @@ using Game.Systems.Domain.AgentBehaviour.Ports;
 using Game.Systems.Foundation.GameMath.Core.Model;
 using Game.Systems.Integration.Enemies.Common.Config;
 using Game.Systems.Integration.Enemies.Common.Perception;
+using Game.Systems.Integration.Navigation;
 
 namespace Game.Systems.Integration.Enemies.Common.Behaviours;
 
@@ -10,11 +11,16 @@ public sealed class StalkTargetBehaviour : IBehaviour
 {
 	private readonly ITargetTrackingState _tracking;
 	private readonly EnemyTacticalConfig _config;
+	private readonly IAgentPathNavigator _navigator;
 
-	public StalkTargetBehaviour(ITargetTrackingState tracking, EnemyTacticalConfig config)
+	public StalkTargetBehaviour(
+		ITargetTrackingState tracking,
+		EnemyTacticalConfig config,
+		IAgentPathNavigator navigator)
 	{
 		_tracking = tracking ?? throw new ArgumentNullException(nameof(tracking));
 		_config = config ?? throw new ArgumentNullException(nameof(config));
+		_navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
 	}
 
 	public BehaviourId Id => new($"{_config.IdPrefix}-stalk");
@@ -30,21 +36,35 @@ public sealed class StalkTargetBehaviour : IBehaviour
 
 	public IReadOnlyList<IBehaviourIntent> Execute(BehaviourContext context)
 	{
-		var target = _tracking.LastKnownTargetPosition;
-		var delta = new Vector2(target.X - context.Position.X, target.Y - context.Position.Y);
-		var distance = delta.Magnitude();
-		if (distance <= 1e-6f)
+		var goal = StalkGoalPosition(context);
+		var direction = _navigator.GetMoveDirection(context.Agent, context.Position, goal);
+		if (direction.Magnitude() <= 1e-6f)
 			return Array.Empty<IBehaviourIntent>();
-
-		var direction = delta.Normalized();
-
-		if (distance < _config.StalkMinDistance)
-			direction = new Vector2(-direction.X, -direction.Y);
 
 		return new IBehaviourIntent[]
 		{
 			new MoveBehaviourIntent(context.Agent, direction)
 		};
+	}
+
+	private Vector2 StalkGoalPosition(BehaviourContext context)
+	{
+		var target = _tracking.LastKnownTargetPosition;
+		var delta = new Vector2(target.X - context.Position.X, target.Y - context.Position.Y);
+		var distance = delta.Magnitude();
+		if (distance <= 1e-6f)
+			return target;
+
+		var direction = delta.Normalized();
+		if (distance < _config.StalkMinDistance)
+		{
+			direction = new Vector2(-direction.X, -direction.Y);
+			return new Vector2(
+				target.X + direction.X * _config.StalkMinDistance,
+				target.Y + direction.Y * _config.StalkMinDistance);
+		}
+
+		return target;
 	}
 
 	private float DistanceToTarget(BehaviourContext context) =>

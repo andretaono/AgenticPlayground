@@ -372,7 +372,7 @@ Camera:
     height: 1
   near clip plane: 0.3
   far clip plane: 1000
-  field of view: 60
+  field of view: 50
   orthographic: 0
   orthographic size: 5
   m_Depth: -1
@@ -450,50 +450,52 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _settings:
-    MapWidth: 32
-    MapHeight: 32
-    Seed: 7876554
-    FillProbability: 0.6
+    MapWidth: 24
+    MapHeight: 24
+    Seed: 23
+    FillProbability: 0.57
     CellularAutomataIterations: 5
     MaxAttempts: 50
     WaterPoolAttempts: 12
-    WaterPoolMaxSize: 5
+    WaterPoolMaxSize: 6
     EnableCeilingLayer: 1
     MinWallBlobSize: 25
     MinCaveAreaSize: 3
     MaxCaveAreaSize: 49
     MinCaveEntrances: 1
-    MaxCaveEntrances: 2
+    MaxCaveEntrances: 3
     MinEntranceWidth: 1
     MaxEntranceWidth: 3
     MinEntranceDepth: 1
     MaxEntranceDepth: 8
     MaxCaveCount: 4
     MaxCavesPerBlob: 3
-    ExtraWallStackChance: 0
+    ExtraWallStackChance: 0.13
     ExtraWallStackClusterChance: 0.75
     ExtraWallStackGrowPasses: 4
     StartCeilingClearanceRadius: 4
-    WorldUnitsPerTile: 1
-    HeightScale: 1
+    MinPolarBearCount: 1
+    MaxPolarBearCount: 3
+    WorldUnitsPerTile: 1.5
+    HeightScale: 1.5
     GroundHeight: 0
-    WallHeight: 1
-    WaterHeight: -1
+    WallHeight: 1.5
+    WaterHeight: -0.5
     EnableLayerDebug: 1
     DebugGroundKey: 49
     DebugOffKey: 48
-    GroundSpeed: 4
-    SwimSpeed: 2.5
-    CharacterHalfHeight: 0.5
-    TurnSpeedDegrees: 180
-    CameraFollowDistance: 5
-    CameraShoulderHeight: 2.2
-    CameraShoulderOffset: 0.65
-    CameraLookHeight: 1.4
-    CameraLookAhead: 2
-    CameraYawSmoothTime: 0.18
-    CameraPositionSmoothTime: 0.12
-    CameraRotationSmoothTime: 0.1
+    Player:
+      GroundSpeed: 2
+      SwimSpeed: 1
+      CharacterHalfHeight: 0.5
+      TurnSpeedDegrees: 180
+    CameraOrbitDistance: 14
+    CameraPitchDegrees: 70
+    CameraLookHeight: 0.75
+    CameraLookAhead: 0.2
+    CameraYawSmoothTime: 0.15
+    CameraPositionSmoothTime: 0.1
+    CameraRotationSmoothTime: 0.08
   _terrainMaterial: {fileID: 0}
   _camera: {fileID: 0}
 --- !u!1660057539 &9223372036854775807

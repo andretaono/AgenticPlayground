@@ -19,6 +19,7 @@ namespace Game.UnityBridge.Presentation
 		private readonly float _heightScale;
 		private readonly float _characterHalfHeight;
 		private readonly Dictionary<EntityId, Transform> _actors = new();
+		private readonly HashSet<EntityId> _polarBears = new();
 
 		public UnityWorldPresenter(
 			Transform actorsRoot,
@@ -57,16 +58,27 @@ namespace Game.UnityBridge.Presentation
 		public bool TryGetTransform(EntityId entityId, out Transform transform) =>
 			_actors.TryGetValue(entityId, out transform);
 
+		public void ConfigurePolarBearVisual(EntityId entityId) => _polarBears.Add(entityId);
+
 		private Transform CreateActorVisual(EntityId entityId)
 		{
 			var actorObject = UnityEngine.GameObject.CreatePrimitive(UnityEngine.PrimitiveType.Capsule);
-			actorObject.name = $"Actor_{entityId.Value}";
+			actorObject.name = _polarBears.Contains(entityId)
+				? $"PolarBear_{entityId.Value}"
+				: $"Actor_{entityId.Value}";
 			actorObject.transform.SetParent(_actorsRoot, worldPositionStays: false);
-			actorObject.transform.localScale = new UnityVector3(0.5f, _characterHalfHeight, 0.5f);
+
+			var isPolarBear = _polarBears.Contains(entityId);
+			var scale = isPolarBear ? 0.85f : 0.5f;
+			actorObject.transform.localScale = new UnityVector3(scale, _characterHalfHeight * (isPolarBear ? 1.2f : 1f), scale);
 
 			var renderer = actorObject.GetComponent<Renderer>();
 			if (renderer != null)
-				renderer.material.color = new UnityEngine.Color(0.9f, 0.25f, 0.2f);
+			{
+				renderer.material.color = isPolarBear
+					? new UnityEngine.Color(0.92f, 0.94f, 0.97f)
+					: new UnityEngine.Color(0.9f, 0.25f, 0.2f);
+			}
 
 			var collider = actorObject.GetComponent<Collider>();
 			if (collider != null)

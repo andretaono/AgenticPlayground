@@ -8,6 +8,7 @@ using Game.Systems.Integration.Actors;
 using Game.Systems.Integration.Combat;
 using Game.Systems.Integration.Enemies.Common.Assembly;
 using Game.Systems.Integration.Enemies.Common.Perception;
+using Game.Systems.Integration.Navigation;
 using Game.Systems.Integration.Resources;
 
 namespace Game.Systems.Integration.Enemies.PolarBear;
@@ -24,10 +25,10 @@ public sealed class PolarBearAgentFactory
 		IBehaviourController behaviourController,
 		IWorldCognitionController cognition,
 		AgentCombatSystem combat,
-		EntityResourceSystem resources)
+		EntityResourceSystem resources,
+		IAgentPathNavigator pathNavigator)
 	{
 		AttachHealth(resources, bear.EntityId, maximum: 150f);
-		combat.Registry.Register(new CombatEntity(playerEntityId));
 
 		var bearCombatEntity = new CombatEntity(bear.EntityId);
 		var meleeAbility = MeleeAttackAbilityFactory.Create(
@@ -44,7 +45,8 @@ public sealed class PolarBearAgentFactory
 			config.CreateAdvantageRules(),
 			behaviourController,
 			resources.Registry,
-			cognition);
+			cognition,
+			pathNavigator);
 
 		return new PolarBearAgentHandle(bear, playerEntityId, perception, config);
 	}

@@ -1,3 +1,4 @@
+using Game.Systems.Domain.AgentMovement.Model;
 using Game.Systems.Foundation.GameMath.Interfaces;
 using Game.Systems.Foundation.Primitives;
 
@@ -7,9 +8,9 @@ public interface IActorRegistry
 {
 	IReadOnlyList<ActorHandle> Actors { get; }
 
-	ActorHandle RegisterActor(IVector3 position);
+	ActorHandle RegisterActor(IVector3 position, AgentMovementConfig? movementConfig = null);
 
-	EntityId RegisterEntity(IVector3 position);
+	EntityId RegisterEntity(IVector3 position, AgentMovementConfig? movementConfig = null);
 
 	bool TryGetActor(EntityId entityId, out ActorHandle handle);
 }

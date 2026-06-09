@@ -3,6 +3,7 @@ using Game.Systems.Domain.AgentBehaviour.Ports;
 using Game.Systems.Foundation.GameMath.Core.Model;
 using Game.Systems.Integration.Enemies.Common.Config;
 using Game.Systems.Integration.Enemies.Common.Perception;
+using Game.Systems.Integration.Navigation;
 
 namespace Game.Systems.Integration.Enemies.Common.Behaviours;
 
@@ -10,11 +11,16 @@ public sealed class TrackTargetBehaviour : IBehaviour
 {
 	private readonly ITargetTrackingState _tracking;
 	private readonly EnemyTacticalConfig _config;
+	private readonly IAgentPathNavigator _navigator;
 
-	public TrackTargetBehaviour(ITargetTrackingState tracking, EnemyTacticalConfig config)
+	public TrackTargetBehaviour(
+		ITargetTrackingState tracking,
+		EnemyTacticalConfig config,
+		IAgentPathNavigator navigator)
 	{
 		_tracking = tracking ?? throw new ArgumentNullException(nameof(tracking));
 		_config = config ?? throw new ArgumentNullException(nameof(config));
+		_navigator = navigator ?? throw new ArgumentNullException(nameof(navigator));
 	}
 
 	public BehaviourId Id => new($"{_config.IdPrefix}-track");
@@ -40,8 +46,7 @@ public sealed class TrackTargetBehaviour : IBehaviour
 	private Vector2 DirectionToTarget(BehaviourContext context)
 	{
 		var target = _tracking.LastKnownTargetPosition;
-		var delta = new Vector2(target.X - context.Position.X, target.Y - context.Position.Y);
-		return delta.Magnitude() <= 1e-6f ? Vector2.Zero : delta.Normalized();
+		return _navigator.GetMoveDirection(context.Agent, context.Position, target);
 	}
 
 	private static float Distance(Vector2 a, Vector2 b)

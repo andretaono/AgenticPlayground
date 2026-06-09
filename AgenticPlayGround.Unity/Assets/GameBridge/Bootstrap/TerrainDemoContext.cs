@@ -15,7 +15,7 @@ namespace Game.UnityBridge.Bootstrap
 			ActorHandle player,
 			UnityWorldPresenter worldPresenter,
 			PlayerFacingController facing,
-			OverShoulderCameraFollow cameraFollow,
+			TopDownRpgCameraFollow cameraFollow,
 			Camera camera)
 		{
 			Runtime = runtime;
@@ -32,7 +32,7 @@ namespace Game.UnityBridge.Bootstrap
 		public ActorHandle Player { get; }
 		public UnityWorldPresenter WorldPresenter { get; }
 		public PlayerFacingController Facing { get; }
-		public OverShoulderCameraFollow CameraFollow { get; }
+		public TopDownRpgCameraFollow CameraFollow { get; }
 		public Camera Camera { get; }
 	}
 }

@@ -1,6 +1,8 @@
 ﻿using Game.Systems.Domain.AgentMovement.Ports;
 using Game.Systems.Domain.World.Model;
 using Game.Systems.Foundation.GameMath.Interfaces;
+using Game.Systems.Foundation.Primitives;
+
 namespace Game.Systems.Integration.Adapters;
 
 public sealed class AgentMovementPolicy : IAgentMovementPolicy
@@ -20,8 +22,9 @@ public sealed class AgentMovementPolicy : IAgentMovementPolicy
 		_map = _worldData.LoadMap();
 	}
 
-	public bool CanMoveTo(IVector3 proposedPosition)
+	public bool CanMoveTo(EntityId entityId, IVector3 proposedPosition)
 	{
+		_ = entityId;
 		var tile = _coordinateConverter.ToTilePosition(proposedPosition.X, proposedPosition.Y, _worldData.TileSize);
 		var tileX = tile.X;
 		var tileY = tile.Y;

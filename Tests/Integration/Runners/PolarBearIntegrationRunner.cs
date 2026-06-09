@@ -16,9 +16,11 @@ using Game.Systems.Integration.Combat;
 using Game.Systems.Integration.Enemies.Common.Context;
 using Game.Systems.Integration.Enemies.Common.Perception;
 using Game.Systems.Integration.Enemies.PolarBear;
+using Game.Systems.Integration.Navigation;
 using Game.Systems.Integration.Resources;
 using Game.Systems.Integration.Runtime;
 using Game.Systems.Integration.Runtime.Interfaces;
+using Game.Tests.Integration.Fixtures;
 
 namespace Game.Tests.Integration.Runners;
 
@@ -31,12 +33,8 @@ public sealed class PolarBearIntegrationRunner
 
 	public PolarBearIntegrationResult Run()
 	{
-		var bearConfig = new PolarBearConfig
-		{
-			ScentDetectionThreshold = 0.2f,
-			StalkMinDistance = 2f,
-			StalkMaxDistance = 48f
-		};
+		var bearConfig = IntegrationTestConfigs.PolarBearBehaviourScenario();
+		var playerMovementConfig = IntegrationTestConfigs.PlayerMovement().ToMovementConfig();
 		var cognitionConfig = new WorldCognitionConfig
 		{
 			GridWidth = bearConfig.CognitionGridWidth,
@@ -56,8 +54,12 @@ public sealed class PolarBearIntegrationRunner
 			new LoggingAbilityExecutor(new AbilityExecutor()));
 
 		var actorRegistry = new ActorRegistry(commandSystem, movement);
-		var player = actorRegistry.RegisterActor(math.Create(64f, 0f, 0f));
-		var bear = actorRegistry.RegisterActor(math.Create(220f, 0f, 0f));
+		var player = actorRegistry.RegisterActor(
+			math.Create(64f, 0f, 0f),
+			playerMovementConfig);
+		var bear = actorRegistry.RegisterActor(
+			math.Create(220f, 0f, 0f),
+			bearConfig.ToMovementConfig());
 
 		var playerHealth = new HealthResource(player.EntityId, maximum: 100f);
 		playerHealth.Attach(resources.Registry, player.EntityId);
@@ -105,7 +107,8 @@ public sealed class PolarBearIntegrationRunner
 			behaviourSystem.Behaviour,
 			cognition.Cognition,
 			combat,
-			resources);
+			resources,
+			new StraightLineNavigator());
 
 		behaviourSystem.Behaviour.AddBehaviour(
 			player.AgentId,

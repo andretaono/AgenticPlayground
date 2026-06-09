@@ -2,6 +2,7 @@ using Game.Systems.Domain.AgentBehaviour.Tests;
 using Game.Systems.Domain.EntityResource.Tests;
 using Game.Systems.Domain.ItemAssembly.Tests;
 using Game.Systems.Domain.TerrainMesh.Tests;
+using Game.Systems.Domain.Navigation.Tests;
 using Game.Systems.Domain.World.Tests;
 using Game.Systems.Domain.WorldCognition.Tests;
 using Game.Systems.Foundation.Testing;
@@ -30,6 +31,7 @@ public static class UnitTestRunner
 		yield return new ItemAssemblyTests();
 		yield return new TerrainMeshTests();
 		yield return new WorldGenerationTests();
+		yield return new NavigationTests();
 		yield return new WorldCognitionTests();
 		yield return new AgentBehaviourTests();
 		yield return new EntityResourceTests();
@@ -47,6 +49,9 @@ public static class UnitTestRunner
 		yield return new WorldCognitionScenarioTests();
 		yield return new WorldTerrainMeshTests();
 		yield return new PolarBearTests();
+		yield return new PolarBearSpawnTests();
+		yield return new PolarBearNavigationTests();
+		yield return new TileOccupancyTests();
 		yield return new AgentCombatTests();
 	}
 

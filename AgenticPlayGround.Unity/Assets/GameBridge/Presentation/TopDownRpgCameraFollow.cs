@@ -4,7 +4,7 @@ using UnityVector3 = UnityEngine.Vector3;
 
 namespace Game.UnityBridge.Presentation
 {
-	public sealed class OverShoulderCameraFollow
+	public sealed class TopDownRpgCameraFollow
 	{
 		private float _cameraYawDegrees;
 		private float _cameraYawVelocity;
@@ -20,7 +20,7 @@ namespace Game.UnityBridge.Presentation
 			_cameraYawDegrees = facingYawDegrees;
 			_cameraYawVelocity = 0f;
 			_positionVelocity = UnityVector3.zero;
-			_pitchDegrees = 0f;
+			_pitchDegrees = Settings.PitchDegrees;
 			_pitchVelocity = 0f;
 			_lookYawVelocity = 0f;
 
@@ -30,8 +30,8 @@ namespace Game.UnityBridge.Presentation
 			player.rotation = UnityQuaternion.Euler(0f, facingYawDegrees, 0f);
 
 			var settings = Settings;
-			var desiredPosition = ComputeCameraPosition(player.position, facingYawDegrees, settings);
 			var lookTarget = ComputeLookTarget(player.position, facingYawDegrees, settings);
+			var desiredPosition = ComputeCameraPosition(lookTarget, facingYawDegrees, settings);
 			var desiredRotation = UnityQuaternion.LookRotation(lookTarget - desiredPosition, UnityVector3.up);
 
 			camera.transform.position = desiredPosition;
@@ -53,14 +53,15 @@ namespace Game.UnityBridge.Presentation
 				ref _cameraYawVelocity,
 				settings.YawSmoothTime);
 
-			var desiredPosition = ComputeCameraPosition(player.position, _cameraYawDegrees, settings);
+			var lookTarget = ComputeLookTarget(player.position, _cameraYawDegrees, settings);
+			var desiredPosition = ComputeCameraPosition(lookTarget, _cameraYawDegrees, settings);
+
 			camera.transform.position = UnityVector3.SmoothDamp(
 				camera.transform.position,
 				desiredPosition,
 				ref _positionVelocity,
 				settings.PositionSmoothTime);
 
-			var lookTarget = ComputeLookTarget(player.position, _cameraYawDegrees, settings);
 			var toTarget = lookTarget - camera.transform.position;
 			if (toTarget.sqrMagnitude <= 1e-6f)
 				return;
@@ -84,41 +85,38 @@ namespace Game.UnityBridge.Presentation
 			camera.transform.rotation = UnityQuaternion.Euler(_pitchDegrees, smoothedLookYaw, 0f);
 		}
 
-		private static UnityVector3 ComputeCameraPosition(UnityVector3 playerPosition, float yawDegrees, SettingsConfig settings)
-		{
-			var yawRadians = yawDegrees * UnityEngine.Mathf.Deg2Rad;
-			var forward = new UnityVector3(UnityEngine.Mathf.Sin(yawRadians), 0f, UnityEngine.Mathf.Cos(yawRadians));
-			var right = UnityVector3.Cross(UnityVector3.up, forward).normalized;
-			return playerPosition
-				+ UnityVector3.up * settings.ShoulderHeight
-				- forward * settings.FollowDistance
-				+ right * settings.ShoulderOffset;
-		}
-
 		private static UnityVector3 ComputeLookTarget(UnityVector3 playerPosition, float yawDegrees, SettingsConfig settings)
 		{
-			var yawRadians = yawDegrees * UnityEngine.Mathf.Deg2Rad;
-			var forward = new UnityVector3(UnityEngine.Mathf.Sin(yawRadians), 0f, UnityEngine.Mathf.Cos(yawRadians));
+			var forward = YawToForward(yawDegrees);
 			return playerPosition
 				+ UnityVector3.up * settings.LookHeight
 				+ forward * settings.LookAhead;
 		}
 
-		private static float NormalizePitch(float pitchDegrees)
+		private static UnityVector3 ComputeCameraPosition(UnityVector3 lookTarget, float yawDegrees, SettingsConfig settings)
 		{
-			return pitchDegrees > 180f ? pitchDegrees - 360f : pitchDegrees;
+			var orbitRotation = UnityQuaternion.Euler(settings.PitchDegrees, yawDegrees, 0f);
+			return lookTarget + orbitRotation * (UnityVector3.back * settings.OrbitDistance);
 		}
+
+		private static UnityVector3 YawToForward(float yawDegrees)
+		{
+			var yawRadians = yawDegrees * UnityEngine.Mathf.Deg2Rad;
+			return new UnityVector3(UnityEngine.Mathf.Sin(yawRadians), 0f, UnityEngine.Mathf.Cos(yawRadians));
+		}
+
+		private static float NormalizePitch(float pitchDegrees) =>
+			pitchDegrees > 180f ? pitchDegrees - 360f : pitchDegrees;
 
 		public sealed class SettingsConfig
 		{
-			public float FollowDistance = 5f;
-			public float ShoulderHeight = 2.2f;
-			public float ShoulderOffset = 0.65f;
-			public float LookHeight = 1.4f;
-			public float LookAhead = 2f;
-			public float YawSmoothTime = 0.18f;
-			public float PositionSmoothTime = 0.12f;
-			public float RotationSmoothTime = 0.1f;
+			public float OrbitDistance = 16f;
+			public float PitchDegrees = 52f;
+			public float LookHeight = 0.75f;
+			public float LookAhead = 0.25f;
+			public float YawSmoothTime = 0.15f;
+			public float PositionSmoothTime = 0.1f;
+			public float RotationSmoothTime = 0.08f;
 
 			public static SettingsConfig Default { get; } = new();
 		}

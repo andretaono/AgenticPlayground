@@ -23,8 +23,8 @@ public sealed class AgentMovementSystem : IAgentMovementSystem
 		var checkedConfig = config ?? new AgentMovementConfig(5f, 3f, 4f);
 		var store = new AgentMovementStateStore();
 
-		Registry = new AgentMovementRegistryController(checkedMath, store);
+		Registry = new AgentMovementRegistryController(checkedMath, store, checkedConfig);
 		Input = new AgentMovementController(checkedMath, store);
-		Simulation = new AgentMovementSimulation(checkedMath, checkedConfig, store, movementPolicy);
+		Simulation = new AgentMovementSimulation(checkedMath, store, movementPolicy);
 	}
 }

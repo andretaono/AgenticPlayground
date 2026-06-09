@@ -1,4 +1,5 @@
 using Game.Tests.Integration.Runners;
+using Game.Tests.Integration.Fixtures;
 using Game.Systems.Foundation.Testing;
 
 namespace Game.Tests.Integration;
@@ -15,6 +16,13 @@ public sealed class AgentMovementTests : ITestSuite
 			TestAssert.Equal(3, result.FramesSimulated);
 			TestAssert.True(result.FinalX > 0f);
 			TestAssert.Equal(0f, result.FinalY);
+		});
+
+		registry.Add(Name, "uses per-entity movement config speeds", () =>
+		{
+			var result = new AgentMovementIntegrationRunner().RunPerEntitySpeed();
+			TestAssert.Equal(IntegrationTestConfigs.PerEntitySpeedTestPlayerGround, result.PlayerDistance);
+			TestAssert.Equal(IntegrationTestConfigs.PerEntitySpeedTestBearGround, result.BearDistance);
 		});
 	}
 }

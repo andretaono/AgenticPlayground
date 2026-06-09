@@ -86,7 +86,7 @@ public sealed class PlayerWorldMovementIntegrationRunner
 		var blockedByWall = positionAfterGround.X < 14f;
 		var movedEast = positionAfterGround.X > StartX;
 
-		var canEnterWater = movementPolicy.CanMoveTo(math.Create(9f, 4.5f, 0f));
+		var canEnterWater = movementPolicy.CanMoveTo(player.EntityId, math.Create(9f, 4.5f, 0f));
 
 		return new PlayerWorldMovementIntegrationResult(
 			StartX: StartX,

@@ -1,5 +1,6 @@
 using Game.Systems.Domain.AgentMovement.Ports;
 using Game.Systems.Foundation.GameMath.Interfaces;
+using Game.Systems.Foundation.Primitives;
 
 namespace Game.Systems.Integration.Adapters;
 
@@ -8,5 +9,5 @@ namespace Game.Systems.Integration.Adapters;
 /// </summary>
 public sealed class PermissiveMovementPolicy : IAgentMovementPolicy
 {
-	public bool CanMoveTo(IVector3 proposedPosition) => true;
+	public bool CanMoveTo(EntityId entityId, IVector3 proposedPosition) => true;
 }
