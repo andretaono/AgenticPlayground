@@ -1,6 +1,7 @@
 using Game.Systems.Domain.World.Generation.Model;
-using Game.Systems.Integration.Actors;
+using Game.Systems.Integration.Combat;
 using Game.Systems.Integration.Runtime;
+using Game.Systems.Integration.Actors;
 using Game.UnityBridge.Input;
 using Game.UnityBridge.Presentation;
 using UnityEngine;
@@ -16,7 +17,9 @@ namespace Game.UnityBridge.Bootstrap
 			UnityWorldPresenter worldPresenter,
 			PlayerFacingController facing,
 			TopDownRpgCameraFollow cameraFollow,
-			Camera camera)
+			Camera camera,
+			GameSessionState sessionState,
+			CombatRuntimeServices combatServices)
 		{
 			Runtime = runtime;
 			Map = map;
@@ -25,6 +28,8 @@ namespace Game.UnityBridge.Bootstrap
 			Facing = facing;
 			CameraFollow = cameraFollow;
 			Camera = camera;
+			SessionState = sessionState;
+			CombatServices = combatServices;
 		}
 
 		public GameRuntime Runtime { get; }
@@ -34,5 +39,7 @@ namespace Game.UnityBridge.Bootstrap
 		public PlayerFacingController Facing { get; }
 		public TopDownRpgCameraFollow CameraFollow { get; }
 		public Camera Camera { get; }
+		public GameSessionState SessionState { get; }
+		public CombatRuntimeServices CombatServices { get; }
 	}
 }

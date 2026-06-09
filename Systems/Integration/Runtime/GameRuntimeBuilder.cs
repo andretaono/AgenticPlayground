@@ -13,6 +13,7 @@ using Game.Systems.Foundation.GameMath.Interfaces;
 using Game.Systems.Foundation.Primitives;
 using Game.Systems.Integration.Actors;
 using Game.Systems.Integration.Adapters;
+using Game.Systems.Integration.Combat;
 using Game.Systems.Integration.Presentation;
 using Game.Systems.Integration.Presentation.Ports;
 using Game.Systems.Integration.Runtime.Core;
@@ -34,8 +35,16 @@ public sealed class GameRuntimeBuilder
 	private IReadOnlyList<AgentId> _intentAgentIds = Array.Empty<AgentId>();
 	private IInputSource? _inputSource;
 	private AgentId? _inputAgentId;
+	private EntityId? _inputEntityId;
 	private IWorldPresenter? _presenter;
 	private IActorRegistry? _actorRegistry;
+	private CombatRuntimeServices? _combatServices;
+	private GameSessionState? _sessionState;
+	private ArcAttackAbilityDefinition? _playerAttackAbility;
+	private IAgentFacingProvider? _facingProvider;
+	private IReadOnlyDictionary<EntityId, EntityId>? _faceTargetByEntity;
+	private VitalityCleanupServices? _vitalityCleanup;
+	private float _worldUnitsPerTile = 1f;
 
 	public GameRuntimeBuilder(IGameMath math)
 	{
@@ -116,17 +125,59 @@ public sealed class GameRuntimeBuilder
 		return this;
 	}
 
-	public GameRuntimeBuilder WithInput(IInputSource inputSource, AgentId agentId)
+	public GameRuntimeBuilder WithInput(IInputSource inputSource, AgentId agentId, EntityId entityId)
 	{
 		_inputSource = inputSource ?? throw new ArgumentNullException(nameof(inputSource));
 		_inputAgentId = agentId;
+		_inputEntityId = entityId;
 		return this;
 	}
 
-	public GameRuntimeBuilder WithPresenter(IWorldPresenter presenter, IActorRegistry actorRegistry)
+	public GameRuntimeBuilder WithPresenter(
+		IWorldPresenter presenter,
+		IActorRegistry actorRegistry,
+		float worldUnitsPerTile = 1f)
 	{
 		_presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
 		_actorRegistry = actorRegistry ?? throw new ArgumentNullException(nameof(actorRegistry));
+		_worldUnitsPerTile = worldUnitsPerTile;
+		return this;
+	}
+
+	public GameRuntimeBuilder WithCombatRuntime(CombatRuntimeServices combatServices)
+	{
+		_combatServices = combatServices ?? throw new ArgumentNullException(nameof(combatServices));
+		return this;
+	}
+
+	public GameRuntimeBuilder WithSessionState(GameSessionState sessionState)
+	{
+		_sessionState = sessionState ?? throw new ArgumentNullException(nameof(sessionState));
+		return this;
+	}
+
+	public GameRuntimeBuilder WithPlayerAttackAbility(ArcAttackAbilityDefinition attackAbility)
+	{
+		_playerAttackAbility = attackAbility ?? throw new ArgumentNullException(nameof(attackAbility));
+		return this;
+	}
+
+	public GameRuntimeBuilder WithFacingProvider(IAgentFacingProvider facingProvider)
+	{
+		_facingProvider = facingProvider ?? throw new ArgumentNullException(nameof(facingProvider));
+		return this;
+	}
+
+	public GameRuntimeBuilder WithFaceTargets(IReadOnlyDictionary<EntityId, EntityId> faceTargetByEntity)
+	{
+		_faceTargetByEntity = faceTargetByEntity ??
+		                       throw new ArgumentNullException(nameof(faceTargetByEntity));
+		return this;
+	}
+
+	public GameRuntimeBuilder WithVitalityCleanup(VitalityCleanupServices vitalityCleanup)
+	{
+		_vitalityCleanup = vitalityCleanup ?? throw new ArgumentNullException(nameof(vitalityCleanup));
 		return this;
 	}
 
@@ -144,6 +195,9 @@ public sealed class GameRuntimeBuilder
 			throw new InvalidOperationException("Command is required. Call WithCommand().");
 
 		var entries = new List<TickEntry>(_extraTickables);
+
+		if (_combatServices is not null)
+			entries.Add(new TickEntry(new CombatClockAdapter(_combatServices), StandardTickOrder.PreCognition));
 
 		if (_cognition is not null)
 		{
@@ -167,10 +221,32 @@ public sealed class GameRuntimeBuilder
 			}
 		}
 
-		if (_inputSource is not null && _inputAgentId is not null)
+		if (_combatServices is not null &&
+		    _actorRegistry is not null &&
+		    _movement is not null)
 		{
 			entries.Add(new TickEntry(
-				new InputToCommandAdapter(_inputSource, _command, _inputAgentId.Value),
+				new AgentOrientationSyncAdapter(
+					_combatServices.Orientation,
+					_movement,
+					_actorRegistry,
+					_facingProvider,
+					_faceTargetByEntity),
+				StandardTickOrder.AgentOrientation));
+		}
+
+		if (_inputSource is not null && _inputAgentId is not null && _inputEntityId is not null)
+		{
+			entries.Add(new TickEntry(
+				new InputToCommandAdapter(
+					_inputSource,
+					_command,
+					_inputAgentId.Value,
+					_inputEntityId.Value,
+					_sessionState,
+					_combatServices?.CooldownTracker,
+					_playerAttackAbility ?? ArcAttackAbilityDefinition.Default,
+					_combatServices),
 				StandardTickOrder.Input));
 		}
 
@@ -189,6 +265,20 @@ public sealed class GameRuntimeBuilder
 				StandardTickOrder.AgentCombat));
 		}
 
+		if (_resources is not null &&
+		    _sessionState is not null &&
+		    _actorRegistry is not null)
+		{
+			entries.Add(new TickEntry(
+				new VitalityMonitorAdapter(
+					_resources,
+					_sessionState,
+					_inputEntityId ?? default,
+					_actorRegistry,
+					_vitalityCleanup),
+				StandardTickOrder.Vitality));
+		}
+
 		entries.Add(new TickEntry(
 			new AgentMovementSimulationAdapter(_movement.Simulation),
 			StandardTickOrder.AgentMovement));
@@ -196,8 +286,25 @@ public sealed class GameRuntimeBuilder
 		if (_presenter is not null && _actorRegistry is not null)
 		{
 			entries.Add(new TickEntry(
-				new WorldPresentationAdapter(_presenter, _actorRegistry, _movement),
+				new WorldPresentationAdapter(
+					_presenter,
+					_actorRegistry,
+					_movement,
+					_sessionState),
 				StandardTickOrder.WorldPresentation));
+
+			if (_resources is not null && _combatServices is not null && _sessionState is not null)
+			{
+				entries.Add(new TickEntry(
+					new CombatPresentationAdapter(
+						_presenter,
+						_actorRegistry,
+						_resources,
+						_combatServices,
+						_sessionState,
+						_worldUnitsPerTile),
+					StandardTickOrder.CombatPresentation));
+			}
 		}
 
 		if (_resources is not null)

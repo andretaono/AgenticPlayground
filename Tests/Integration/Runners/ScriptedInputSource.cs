@@ -31,4 +31,6 @@ public sealed class ScriptedInputSource : IInputSource
 		_pollCount++;
 		return _directionFactory(_pollCount);
 	}
+
+	public bool PollAttackInput(AgentId agentId) => false;
 }

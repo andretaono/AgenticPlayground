@@ -67,6 +67,11 @@ public sealed class PolarBearNavigationIntegrationRunner
 		var resources = new Game.Systems.Domain.EntityResource.EntityResourceSystem();
 		var cognition = new WorldCognitionSystem(cognitionConfig);
 		var combat = new Game.Systems.Domain.AgentCombat.AgentCombatSystem(new AbilityExecutor());
+		var combatServices = new CombatRuntimeServices(
+			new AgentOrientationStore(),
+			new AttackCooldownTracker(),
+			new CombatFeedbackStore(),
+			new GameSessionState());
 
 		var actorRegistry = new ActorRegistry(commandSystem, movement);
 		movementPolicy.SetOccupancyQuery(new MovementTileOccupancyQuery(actorRegistry, movement));
@@ -102,7 +107,7 @@ public sealed class PolarBearNavigationIntegrationRunner
 			cognition.Cognition,
 			perception,
 			bearConfig.ToPerceptionConfig(),
-			bearConfig.ToTacticalConfig());
+			ArcAttackAbilityDefinition.Default);
 
 		var behaviourSystem = new AgentBehaviourSystem(bearContext, new IdleBehaviour());
 
@@ -115,7 +120,9 @@ public sealed class PolarBearNavigationIntegrationRunner
 			cognition.Cognition,
 			combat,
 			resources,
-			pathNavigator);
+			combatServices,
+			pathNavigator,
+			GetPosition);
 
 		var playerPresence = new PlayerPresenceAdapter(
 			cognition.Cognition,

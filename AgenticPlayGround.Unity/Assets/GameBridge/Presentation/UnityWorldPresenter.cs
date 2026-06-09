@@ -18,7 +18,7 @@ namespace Game.UnityBridge.Presentation
 		private readonly float _heightScale;
 		private readonly float _characterHalfHeight;
 		private readonly float _characterRadius;
-		private readonly Dictionary<EntityId, Transform> _actors = new();
+		private readonly Dictionary<EntityId, ActorVisual> _actors = new();
 		private readonly HashSet<EntityId> _polarBears = new();
 		private readonly Dictionary<EntityId, float> _actorVisualRadii = new();
 
@@ -43,12 +43,7 @@ namespace Game.UnityBridge.Presentation
 
 		public void SyncActorPosition(EntityId entityId, GameVector2 position)
 		{
-			if (!_actors.TryGetValue(entityId, out var actorTransform))
-			{
-				actorTransform = CreateActorVisual(entityId);
-				_actors[entityId] = actorTransform;
-			}
-
+			var visual = GetOrCreateVisual(entityId);
 			var worldX = position.X * _worldUnitsPerTile;
 			var worldZ = position.Y * _worldUnitsPerTile;
 			var surfaceHeight = _surfaceHeightSampler.Sample(
@@ -57,14 +52,63 @@ namespace Game.UnityBridge.Presentation
 				position.Y,
 				_heightScale);
 
-			actorTransform.position = new UnityVector3(
+			visual.Root.position = new UnityVector3(
 				worldX,
 				surfaceHeight + _characterHalfHeight,
 				worldZ);
 		}
 
-		public bool TryGetTransform(EntityId entityId, out Transform transform) =>
-			_actors.TryGetValue(entityId, out transform);
+		public void SyncActorHealth(EntityId entityId, float current, float maximum)
+		{
+			var visual = GetOrCreateVisual(entityId);
+			visual.HealthBar.SetFill(current, maximum);
+		}
+
+		public void SyncActorFacing(EntityId entityId, float yawDegrees)
+		{
+			if (!_actors.TryGetValue(entityId, out var visual))
+				return;
+
+			visual.Root.rotation = Quaternion.Euler(0f, yawDegrees, 0f);
+		}
+
+		public void ShowAttackArc(
+			EntityId entityId,
+			GameVector2 forward,
+			float range,
+			float arcDegrees,
+			float durationSeconds)
+		{
+			if (!_actors.TryGetValue(entityId, out var visual))
+				return;
+
+			visual.ArcVisualizer.Show(
+				forward,
+				range * _worldUnitsPerTile,
+				arcDegrees,
+				durationSeconds);
+		}
+
+		public void RemoveActor(EntityId entityId)
+		{
+			if (!_actors.TryGetValue(entityId, out var visual))
+				return;
+
+			Object.Destroy(visual.Root.gameObject);
+			_actors.Remove(entityId);
+		}
+
+		public bool TryGetTransform(EntityId entityId, out Transform transform)
+		{
+			if (_actors.TryGetValue(entityId, out var visual))
+			{
+				transform = visual.Root;
+				return true;
+			}
+
+			transform = null!;
+			return false;
+		}
 
 		public void ConfigurePolarBearVisual(EntityId entityId, float bodyRadius)
 		{
@@ -72,11 +116,21 @@ namespace Game.UnityBridge.Presentation
 			_actorVisualRadii[entityId] = bodyRadius;
 		}
 
-		private Transform CreateActorVisual(EntityId entityId)
+		private ActorVisual GetOrCreateVisual(EntityId entityId)
+		{
+			if (_actors.TryGetValue(entityId, out var visual))
+				return visual;
+
+			visual = CreateActorVisual(entityId);
+			_actors[entityId] = visual;
+			return visual;
+		}
+
+		private ActorVisual CreateActorVisual(EntityId entityId)
 		{
 			const float unityCapsuleMeshRadius = 0.5f;
 
-			var actorObject = UnityEngine.GameObject.CreatePrimitive(UnityEngine.PrimitiveType.Capsule);
+			var actorObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
 			actorObject.name = _polarBears.Contains(entityId)
 				? $"PolarBear_{entityId.Value}"
 				: $"Actor_{entityId.Value}";
@@ -95,18 +149,35 @@ namespace Game.UnityBridge.Presentation
 			if (renderer != null)
 			{
 				renderer.material.color = isPolarBear
-					? new UnityEngine.Color(0.92f, 0.94f, 0.97f)
-					: new UnityEngine.Color(0.9f, 0.25f, 0.2f);
+					? new Color(0.92f, 0.94f, 0.97f)
+					: new Color(0.9f, 0.25f, 0.2f);
 			}
 
 			var collider = actorObject.GetComponent<Collider>();
 			if (collider != null)
-				UnityEngine.Object.Destroy(collider);
+				Object.Destroy(collider);
 
-			return actorObject.transform;
+			var healthBar = ActorHealthBarView.Create(actorObject.transform, _characterHalfHeight);
+			var arcVisualizer = AttackArcVisualizer.Create(actorObject.transform);
+
+			return new ActorVisual(actorObject.transform, healthBar, arcVisualizer);
 		}
 
 		private float ResolveVisualRadius(EntityId entityId) =>
 			_actorVisualRadii.TryGetValue(entityId, out var radius) ? radius : _characterRadius;
+
+		private sealed class ActorVisual
+		{
+			public ActorVisual(Transform root, ActorHealthBarView healthBar, AttackArcVisualizer arcVisualizer)
+			{
+				Root = root;
+				HealthBar = healthBar;
+				ArcVisualizer = arcVisualizer;
+			}
+
+			public Transform Root { get; }
+			public ActorHealthBarView HealthBar { get; }
+			public AttackArcVisualizer ArcVisualizer { get; }
+		}
 	}
 }

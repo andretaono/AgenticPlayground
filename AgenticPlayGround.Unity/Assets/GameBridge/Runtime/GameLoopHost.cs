@@ -16,7 +16,7 @@ namespace Game.UnityBridge.Runtime
 
 		private void Update()
 		{
-			if (_context == null)
+			if (_context == null || _context.SessionState.PlayerIsDead)
 				return;
 
 			_context.Facing.ApplyTurnInput(

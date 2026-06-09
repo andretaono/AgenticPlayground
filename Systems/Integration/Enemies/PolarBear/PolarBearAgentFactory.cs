@@ -1,15 +1,14 @@
 using Game.Systems.Domain.AgentBehaviour.Ports;
 using Game.Systems.Domain.AgentCombat;
-using Game.Systems.Domain.AgentCombat.Model;
 using Game.Systems.Domain.EntityResource;
 using Game.Systems.Domain.WorldCognition.Ports;
+using Game.Systems.Foundation.GameMath.Core.Model;
 using Game.Systems.Foundation.Primitives;
 using Game.Systems.Integration.Actors;
 using Game.Systems.Integration.Combat;
 using Game.Systems.Integration.Enemies.Common.Assembly;
 using Game.Systems.Integration.Enemies.Common.Perception;
 using Game.Systems.Integration.Navigation;
-using Game.Systems.Integration.Resources;
 
 namespace Game.Systems.Integration.Enemies.PolarBear;
 
@@ -26,17 +25,18 @@ public sealed class PolarBearAgentFactory
 		IWorldCognitionController cognition,
 		AgentCombatSystem combat,
 		EntityResourceSystem resources,
-		IAgentPathNavigator pathNavigator)
+		CombatRuntimeServices combatServices,
+		IAgentPathNavigator pathNavigator,
+		Func<EntityId, Vector2> getPosition)
 	{
-		AttachHealth(resources, bear.EntityId, maximum: 150f);
-
-		var bearCombatEntity = new CombatEntity(bear.EntityId);
-		var meleeAbility = MeleeAttackAbilityFactory.Create(
-			combat.Registry,
-			resources.Registry,
-			basePower: config.MeleeBasePower);
-		bearCombatEntity.AddAbilityTrigger(new PendingTargetTrigger(meleeAbility, bearCombatEntity));
-		combat.Registry.Register(bearCombatEntity);
+		CombatEntityRegistrar.RegisterArcAttacker(
+			combat,
+			resources,
+			combatServices,
+			bear.EntityId,
+			ArcAttackAbilityDefinition.Default,
+			maxHealth: config.MaxHealth,
+			getPosition);
 
 		_assembler.RegisterPredatorPipeline(
 			bear.AgentId,
@@ -49,12 +49,6 @@ public sealed class PolarBearAgentFactory
 			pathNavigator);
 
 		return new PolarBearAgentHandle(bear, playerEntityId, perception, config);
-	}
-
-	private static void AttachHealth(EntityResourceSystem resources, EntityId entityId, float maximum)
-	{
-		var health = new HealthResource(entityId, maximum);
-		health.Attach(resources.Registry, entityId);
 	}
 }
 

@@ -11,4 +11,28 @@ public sealed class NullWorldPresenter : IWorldPresenter
 		_ = entityId;
 		_ = position;
 	}
+
+	public void SyncActorHealth(EntityId entityId, float current, float maximum)
+	{
+		_ = entityId;
+		_ = current;
+		_ = maximum;
+	}
+
+	public void SyncActorFacing(EntityId entityId, float yawDegrees)
+	{
+		_ = entityId;
+		_ = yawDegrees;
+	}
+
+	public void ShowAttackArc(EntityId entityId, Vector2 forward, float range, float arcDegrees, float durationSeconds)
+	{
+		_ = entityId;
+		_ = forward;
+		_ = range;
+		_ = arcDegrees;
+		_ = durationSeconds;
+	}
+
+	public void RemoveActor(EntityId entityId) => _ = entityId;
 }

@@ -25,7 +25,7 @@ public sealed class InputIntegrationRunner
 		var runtime = new GameRuntimeBuilder(math)
 			.WithExistingMovement(movement)
 			.WithExistingCommand(commandSystem)
-			.WithInput(inputSource, player.AgentId)
+			.WithInput(inputSource, player.AgentId, player.EntityId)
 			.Build();
 
 		for (var i = 0; i < TotalTicks; i++)

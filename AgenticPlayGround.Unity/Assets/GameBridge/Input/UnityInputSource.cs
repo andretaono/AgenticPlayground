@@ -30,5 +30,14 @@ namespace Game.UnityBridge.Input
 
 			return direction.Normalized();
 		}
+
+		public bool PollAttackInput(AgentId agentId)
+		{
+			if (!agentId.Equals(_boundAgentId))
+				return false;
+
+			return UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Space) ||
+			       UnityEngine.Input.GetMouseButtonDown(0);
+		}
 	}
 }

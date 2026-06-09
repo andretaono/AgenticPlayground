@@ -2,10 +2,8 @@ using Game.Systems.Domain.AgentBehaviour;
 using Game.Systems.Domain.AgentBehaviour.Model;
 using Game.Systems.Domain.AgentBehaviour.Ports;
 using Game.Systems.Domain.AgentCombat;
-using Game.Systems.Domain.AgentCombat.Controller;
-using Game.Systems.Domain.AgentCombat.Model;
-using Game.Systems.Domain.AgentMovement;
 using Game.Systems.Domain.EntityResource;
+using Game.Systems.Domain.AgentMovement;
 using Game.Systems.Domain.World.Generation.Model;
 using Game.Systems.Domain.World.Model;
 using Game.Systems.Domain.WorldCognition;
@@ -20,7 +18,6 @@ using Game.Systems.Integration.Combat;
 using Game.Systems.Integration.Enemies.Common.Context;
 using Game.Systems.Integration.Enemies.Common.Perception;
 using Game.Systems.Integration.Navigation;
-using Game.Systems.Integration.Resources;
 using Game.Systems.Integration.Runtime.Interfaces;
 
 namespace Game.Systems.Integration.Enemies.PolarBear;
@@ -35,7 +32,10 @@ public sealed class PolarBearTerrainDemoSetup
 		ActorRegistry actorRegistry,
 		IGameMath math,
 		AgentMovementSystem movement,
-		IAgentPathNavigator pathNavigator)
+		IAgentPathNavigator pathNavigator,
+		AgentCombatSystem combat,
+		EntityResourceSystem resources,
+		CombatRuntimeServices combatServices)
 	{
 		if (map is null)
 			throw new ArgumentNullException(nameof(map));
@@ -47,6 +47,12 @@ public sealed class PolarBearTerrainDemoSetup
 			throw new ArgumentNullException(nameof(movement));
 		if (pathNavigator is null)
 			throw new ArgumentNullException(nameof(pathNavigator));
+		if (combat is null)
+			throw new ArgumentNullException(nameof(combat));
+		if (resources is null)
+			throw new ArgumentNullException(nameof(resources));
+		if (combatServices is null)
+			throw new ArgumentNullException(nameof(combatServices));
 
 		var spawnTiles = PolarBearSpawnPlacer.Place(
 			map.GroundLayer,
@@ -68,9 +74,7 @@ public sealed class PolarBearTerrainDemoSetup
 			QueryRadiusCells = 2
 		};
 
-		var resources = new EntityResourceSystem();
 		var cognition = new WorldCognitionSystem(cognitionConfig);
-		var combat = new AgentCombatSystem(new AbilityExecutor());
 
 		Vector2 GetPosition(EntityId entityId)
 		{
@@ -78,14 +82,11 @@ public sealed class PolarBearTerrainDemoSetup
 			return new Vector2(pos.X, pos.Y);
 		}
 
-		var playerHealth = new HealthResource(player.EntityId, maximum: 100f);
-		playerHealth.Attach(resources.Registry, player.EntityId);
-		combat.Registry.Register(new CombatEntity(player.EntityId));
-
 		var bears = new List<ActorHandle>(spawnTiles.Count);
 		var bearAgentIds = new List<AgentId>(spawnTiles.Count);
 		var contextProviders = new List<KeyValuePair<AgentId, IBehaviourContextProvider>>(spawnTiles.Count);
 		var perceptions = new List<EcologicalTargetPerception>(spawnTiles.Count);
+		var faceTargetByEntity = new Dictionary<EntityId, EntityId>();
 
 		foreach (var tile in spawnTiles)
 		{
@@ -101,12 +102,13 @@ public sealed class PolarBearTerrainDemoSetup
 				cognition.Cognition,
 				perception,
 				bearConfig.ToPerceptionConfig(),
-				bearConfig.ToTacticalConfig());
+				ArcAttackAbilityDefinition.Default);
 
 			bears.Add(bear);
 			bearAgentIds.Add(bear.AgentId);
 			perceptions.Add(perception);
 			contextProviders.Add(new KeyValuePair<AgentId, IBehaviourContextProvider>(bear.AgentId, bearContext));
+			faceTargetByEntity[bear.EntityId] = player.EntityId;
 		}
 
 		var behaviourSystem = new AgentBehaviourSystem(
@@ -125,7 +127,9 @@ public sealed class PolarBearTerrainDemoSetup
 				cognition.Cognition,
 				combat,
 				resources,
-				pathNavigator);
+				combatServices,
+				pathNavigator,
+				GetPosition);
 		}
 
 		var playerPresence = new PlayerPresenceAdapter(
@@ -139,10 +143,9 @@ public sealed class PolarBearTerrainDemoSetup
 			bears,
 			bearAgentIds,
 			behaviourSystem,
-			combat,
-			resources,
 			cognition,
-			playerPresence);
+			playerPresence,
+			faceTargetByEntity);
 	}
 }
 
@@ -153,27 +156,24 @@ public sealed class PolarBearTerrainDemoSetupResult
 		IReadOnlyList<ActorHandle> bears,
 		IReadOnlyList<AgentId> bearAgentIds,
 		AgentBehaviourSystem behaviourSystem,
-		AgentCombatSystem combat,
-		EntityResourceSystem resources,
 		WorldCognitionSystem cognition,
-		ITickable playerPresence)
+		ITickable playerPresence,
+		IReadOnlyDictionary<EntityId, EntityId> faceTargetByEntity)
 	{
 		SpawnTiles = spawnTiles;
 		Bears = bears;
 		BearAgentIds = bearAgentIds;
 		BehaviourSystem = behaviourSystem;
-		Combat = combat;
-		Resources = resources;
 		Cognition = cognition;
 		PlayerPresence = playerPresence;
+		FaceTargetByEntity = faceTargetByEntity;
 	}
 
 	public IReadOnlyList<WorldPosition> SpawnTiles { get; }
 	public IReadOnlyList<ActorHandle> Bears { get; }
 	public IReadOnlyList<AgentId> BearAgentIds { get; }
 	public AgentBehaviourSystem BehaviourSystem { get; }
-	public AgentCombatSystem Combat { get; }
-	public EntityResourceSystem Resources { get; }
 	public WorldCognitionSystem Cognition { get; }
 	public ITickable PlayerPresence { get; }
+	public IReadOnlyDictionary<EntityId, EntityId> FaceTargetByEntity { get; }
 }

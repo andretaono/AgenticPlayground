@@ -3,8 +3,7 @@ using Game.Systems.Foundation.Primitives;
 
 namespace Game.Systems.Integration.Presentation.Ports;
 
-public interface IInputSource
+public interface IAgentFacingProvider
 {
-	Vector2 PollMovementInput(AgentId agentId);
-	bool PollAttackInput(AgentId agentId);
+	bool TryGetForward(EntityId entityId, out Vector2 forward);
 }

@@ -57,4 +57,6 @@ public sealed class ActorRegistry : IActorRegistry
 		handle = default;
 		return false;
 	}
+
+	public bool RemoveActor(ActorHandle actor) => _actors.Remove(actor);
 }

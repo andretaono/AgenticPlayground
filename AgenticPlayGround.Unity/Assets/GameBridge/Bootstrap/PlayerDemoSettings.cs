@@ -13,12 +13,14 @@ namespace Game.UnityBridge.Bootstrap
 		[Tooltip("Horizontal collision radius in tile units.")]
 		public float CharacterRadius = 0.4f;
 		public float TurnSpeedDegrees = 180f;
+		public float MaxHealth = 100f;
 
 		public PlayerConfig ToPlayerConfig() => new()
 		{
 			GroundSpeed = GroundSpeed,
 			SwimSpeed = SwimSpeed,
-			BodyRadius = CharacterRadius
+			BodyRadius = CharacterRadius,
+			MaxHealth = MaxHealth
 		};
 	}
 }

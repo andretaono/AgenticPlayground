@@ -11,7 +11,6 @@ namespace Game.Systems.Integration.Enemies.PolarBear;
 /// </summary>
 public sealed class PolarBearConfig
 {
-	public float AttackRange { get; init; } = 2.5f;
 	public float DirectSightRange { get; init; } = 96f;
 	public float LongRangeScentRadius { get; init; } = 480f;
 	public float ScentDetectionThreshold { get; init; } = 0.5f;
@@ -22,9 +21,9 @@ public sealed class PolarBearConfig
 	public float CognitionCellSize { get; init; } = 32f;
 	public int CognitionGridWidth { get; init; } = 64;
 	public int CognitionGridHeight { get; init; } = 64;
-	public float MeleeBasePower { get; init; } = 35f;
 	public float GroundSpeed { get; init; } = 1.5f;
 	public float SwimSpeed { get; init; } = 1.0f;
+	public float MaxHealth { get; init; } = 50f;
 
 	public AgentMovementConfig ToMovementConfig() =>
 		new(GroundSpeed, SwimSpeed, GroundSpeed, BodyRadius: 0.25f);
@@ -42,7 +41,6 @@ public sealed class PolarBearConfig
 	public EnemyTacticalConfig ToTacticalConfig() => new()
 	{
 		IdPrefix = "polar-bear",
-		AttackRange = AttackRange,
 		StalkMinDistance = StalkMinDistance,
 		StalkMaxDistance = StalkMaxDistance
 	};

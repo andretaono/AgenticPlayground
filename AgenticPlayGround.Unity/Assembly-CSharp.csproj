@@ -61,6 +61,7 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.0.47f1\Editor\Data\Tools\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\GameBridge\Presentation\AttackArcVisualizer.cs" />
     <Compile Include="Assets\GameBridge\Debug\WorldLayerDebugOverlay.cs" />
     <Compile Include="Assets\GameBridge\Terrain\UnityTerrainPresenter.cs" />
     <Compile Include="Assets\GameBridge\Debug\GroundLayerTextDumper.cs" />
@@ -71,10 +72,13 @@
     <Compile Include="Assets\GameBridge\Debug\WorldLayerDebugMode.cs" />
     <Compile Include="Assets\GameBridge\Terrain\TerrainMaterialFactory.cs" />
     <Compile Include="Assets\GameBridge\Input\UnityInputSource.cs" />
+    <Compile Include="Assets\GameBridge\Runtime\GameOverHost.cs" />
     <Compile Include="Assets\GameBridge\Presentation\UnityWorldPresenter.cs" />
+    <Compile Include="Assets\GameBridge\Presentation\PlayerFacingProvider.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoSettings.cs" />
     <Compile Include="Assets\GameBridge\Input\PlayerFacingController.cs" />
     <Compile Include="Assets\GameBridge\Terrain\CaveCeilingVisibility.cs" />
+    <Compile Include="Assets\GameBridge\Presentation\ActorHealthBarView.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\PlayerDemoSettings.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoComposition.cs" />
     <Compile Include="Assets\GameBridge\Runtime\CameraFollowHost.cs" />

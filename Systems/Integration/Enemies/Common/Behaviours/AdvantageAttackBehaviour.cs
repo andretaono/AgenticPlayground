@@ -36,7 +36,20 @@ public sealed class AdvantageAttackBehaviour : IBehaviour
 	public bool CanExecute(BehaviourContext context) =>
 		context.HasTarget &&
 		context.TargetInAttackRange &&
+		TargetIsAlive(context) &&
 		HasAdvantageousOpportunity(context);
+
+	private bool TargetIsAlive(BehaviourContext context)
+	{
+		if (!context.TargetEntity.HasValue)
+			return false;
+
+		var health = _resources.TryGetDefinition<IHealthResourceDefinition>(context.TargetEntity.Value);
+		if (health is null)
+			return true;
+
+		return !health.IsDepleted;
+	}
 
 	public IReadOnlyList<IBehaviourIntent> Execute(BehaviourContext context) =>
 		new IBehaviourIntent[] { new AttackBehaviourIntent(context.Agent, context.TargetEntity!.Value) };

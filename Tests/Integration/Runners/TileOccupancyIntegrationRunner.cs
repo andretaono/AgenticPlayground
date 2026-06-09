@@ -40,7 +40,7 @@ public sealed class TileOccupancyIntegrationRunner
 		var runtime = new GameRuntimeBuilder(new GameMathSystem())
 			.WithExistingMovement(movement)
 			.WithExistingCommand(commandSystem)
-			.WithInput(inputSource, mover.AgentId)
+			.WithInput(inputSource, mover.AgentId, mover.EntityId)
 			.Build();
 
 		for (var i = 0; i < 120; i++)

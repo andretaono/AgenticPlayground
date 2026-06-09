@@ -38,6 +38,8 @@ public sealed class ConsoleInputSource : IInputSource
 		}
 	}
 
+	public bool PollAttackInput(AgentId agentId) => false;
+
 	public void OnKey(ConsoleKey key)
 	{
 		_lastDirection = KeyToDirection(key);

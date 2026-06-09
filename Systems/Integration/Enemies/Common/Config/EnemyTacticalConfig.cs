@@ -2,12 +2,11 @@ namespace Game.Systems.Integration.Enemies.Common.Config;
 
 /// <summary>
 /// Distance bands and behaviour priorities for predator-style enemies.
-/// For melee predators, StalkMinDistance should be less than or equal to AttackRange.
+/// Attack reach comes from the combat ability targeting rule, not this config.
 /// </summary>
 public sealed class EnemyTacticalConfig
 {
 	public string IdPrefix { get; init; } = "enemy";
-	public float AttackRange { get; init; } = 2.5f;
 	public float StalkMinDistance { get; init; } = 12f;
 	public float StalkMaxDistance { get; init; } = 48f;
 	public float PatrolTurnDistance { get; init; } = 48f;

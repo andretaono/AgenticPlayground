@@ -13,4 +13,6 @@ public interface IActorRegistry
 	EntityId RegisterEntity(IVector3 position, AgentMovementConfig? movementConfig = null);
 
 	bool TryGetActor(EntityId entityId, out ActorHandle handle);
+
+	bool RemoveActor(ActorHandle actor);
 }

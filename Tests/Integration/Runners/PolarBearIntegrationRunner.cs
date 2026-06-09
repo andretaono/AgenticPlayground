@@ -52,6 +52,11 @@ public sealed class PolarBearIntegrationRunner
 		var cognition = new WorldCognitionSystem(cognitionConfig);
 		var combat = new Game.Systems.Domain.AgentCombat.AgentCombatSystem(
 			new LoggingAbilityExecutor(new AbilityExecutor()));
+		var combatServices = new CombatRuntimeServices(
+			new AgentOrientationStore(),
+			new AttackCooldownTracker(),
+			new CombatFeedbackStore(),
+			new GameSessionState());
 
 		var actorRegistry = new ActorRegistry(commandSystem, movement);
 		var player = actorRegistry.RegisterActor(
@@ -83,7 +88,7 @@ public sealed class PolarBearIntegrationRunner
 			cognition.Cognition,
 			perception,
 			bearConfig.ToPerceptionConfig(),
-			bearConfig.ToTacticalConfig());
+			ArcAttackAbilityDefinition.Default);
 
 		var playerDirection = new Vector2(1f, 0f);
 		var playerContextProvider = new PolarBearDemoContextProvider(
@@ -108,7 +113,9 @@ public sealed class PolarBearIntegrationRunner
 			cognition.Cognition,
 			combat,
 			resources,
-			new StraightLineNavigator());
+			combatServices,
+			new StraightLineNavigator(),
+			GetPosition);
 
 		behaviourSystem.Behaviour.AddBehaviour(
 			player.AgentId,
@@ -128,6 +135,16 @@ public sealed class PolarBearIntegrationRunner
 			.WithExistingCognition(cognition)
 			.WithIntentAgents(player.AgentId, bear.AgentId)
 			.WithExtraTickable(playerCognition, StandardTickOrder.PreCognition)
+			.WithExtraTickable(
+				new AgentOrientationSyncAdapter(
+					combatServices.Orientation,
+					movement,
+					actorRegistry,
+					faceTargetByEntity: new Dictionary<Game.Systems.Foundation.Primitives.EntityId, Game.Systems.Foundation.Primitives.EntityId>
+					{
+						[bear.EntityId] = player.EntityId
+					}),
+				StandardTickOrder.AgentOrientation)
 			.Build();
 
 		var restingPhaseStarted = false;
@@ -199,7 +216,7 @@ public sealed class PolarBearIntegrationRunner
 		PolarBearConfig config,
 		float distance)
 	{
-		var inAttackRange = distance <= config.AttackRange;
+		var inAttackRange = distance <= ArcAttackAbilityDefinition.Default.Range;
 		var lowHealth = playerHealth.CurrentAmount <= config.VulnerableHealthThreshold;
 		var playerCell = cognition.GetCell(playerPosition);
 		var highPresence = playerCell.Presence >= config.VulnerablePresenceThreshold;

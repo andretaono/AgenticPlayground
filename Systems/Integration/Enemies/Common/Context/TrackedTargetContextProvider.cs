@@ -3,7 +3,7 @@ using Game.Systems.Domain.AgentBehaviour.Ports;
 using Game.Systems.Domain.WorldCognition.Ports;
 using Game.Systems.Foundation.GameMath.Core.Model;
 using Game.Systems.Foundation.Primitives;
-using Game.Systems.Integration.Enemies.Common.Config;
+using Game.Systems.Integration.Combat;
 using Game.Systems.Integration.Enemies.Common.Perception;
 
 namespace Game.Systems.Integration.Enemies.Common.Context;
@@ -17,7 +17,7 @@ public sealed class TrackedTargetContextProvider : IBehaviourContextProvider
 	private readonly IWorldCognitionController _cognition;
 	private readonly EcologicalTargetPerception _perception;
 	private readonly PerceptionConfig _perceptionConfig;
-	private readonly EnemyTacticalConfig _tacticalConfig;
+	private readonly float _attackRange;
 
 	public EcologicalTargetPerception Perception => _perception;
 
@@ -29,7 +29,7 @@ public sealed class TrackedTargetContextProvider : IBehaviourContextProvider
 		IWorldCognitionController cognition,
 		EcologicalTargetPerception perception,
 		PerceptionConfig perceptionConfig,
-		EnemyTacticalConfig tacticalConfig)
+		ArcAttackAbilityDefinition attackAbility)
 	{
 		_agentId = agentId;
 		_entityId = entityId;
@@ -38,7 +38,7 @@ public sealed class TrackedTargetContextProvider : IBehaviourContextProvider
 		_cognition = cognition ?? throw new ArgumentNullException(nameof(cognition));
 		_perception = perception ?? throw new ArgumentNullException(nameof(perception));
 		_perceptionConfig = perceptionConfig ?? throw new ArgumentNullException(nameof(perceptionConfig));
-		_tacticalConfig = tacticalConfig ?? throw new ArgumentNullException(nameof(tacticalConfig));
+		_attackRange = (attackAbility ?? throw new ArgumentNullException(nameof(attackAbility))).Range;
 	}
 
 	public BehaviourContext GetContext(AgentId agentId)
@@ -61,7 +61,7 @@ public sealed class TrackedTargetContextProvider : IBehaviourContextProvider
 			Position = agentPosition,
 			TargetEntity = hasTarget ? _targetEntityId : null,
 			TargetDirection = distance <= 1e-6f ? Vector2.Zero : delta.Normalized(),
-			TargetInAttackRange = hasTarget && distance <= _tacticalConfig.AttackRange
+			TargetInAttackRange = hasTarget && distance <= _attackRange
 		};
 	}
 }

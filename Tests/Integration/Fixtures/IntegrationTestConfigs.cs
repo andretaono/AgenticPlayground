@@ -25,7 +25,6 @@ internal static class IntegrationTestConfigs
 
 	public static PolarBearConfig PolarBearBehaviourScenario() => new()
 	{
-		AttackRange = 2.5f,
 		DirectSightRange = 96f,
 		LongRangeScentRadius = 480f,
 		ScentDetectionThreshold = 0.2f,
@@ -36,7 +35,6 @@ internal static class IntegrationTestConfigs
 		CognitionCellSize = 32f,
 		CognitionGridWidth = 64,
 		CognitionGridHeight = 64,
-		MeleeBasePower = 35f,
 		GroundSpeed = BearGroundSpeed,
 		SwimSpeed = BearSwimSpeed
 	};
@@ -48,7 +46,6 @@ internal static class IntegrationTestConfigs
 		LongRangeScentRadius = 96f,
 		StalkMinDistance = 2f,
 		StalkMaxDistance = 48f,
-		AttackRange = 2.5f,
 		GroundSpeed = BearGroundSpeed,
 		SwimSpeed = BearSwimSpeed
 	};

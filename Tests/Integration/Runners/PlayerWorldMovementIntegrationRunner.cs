@@ -81,7 +81,7 @@ public sealed class PlayerWorldMovementIntegrationRunner
 		var runtime = new GameRuntimeBuilder(math)
 			.WithExistingMovement(movement)
 			.WithExistingCommand(commandSystem)
-			.WithInput(inputSource, player.AgentId)
+			.WithInput(inputSource, player.AgentId, player.EntityId)
 			.Build();
 
 		var positionAfterGround = SimulateTicks(runtime, movement, player.EntityId, ticks: 30);
@@ -130,7 +130,7 @@ public sealed class PlayerWorldMovementIntegrationRunner
 		var runtime = new GameRuntimeBuilder(math)
 			.WithExistingMovement(movement)
 			.WithExistingCommand(commandSystem)
-			.WithInput(inputSource, player.AgentId)
+			.WithInput(inputSource, player.AgentId, player.EntityId)
 			.WithExtraTickable(stateAdapter, StandardTickOrder.MovementState)
 			.Build();
 
@@ -279,7 +279,7 @@ public sealed class PlayerWorldMovementIntegrationRunner
 		var runtime = new GameRuntimeBuilder(math)
 			.WithExistingMovement(movement)
 			.WithExistingCommand(commandSystem)
-			.WithInput(inputSource, player.AgentId)
+			.WithInput(inputSource, player.AgentId, player.EntityId)
 			.WithExtraTickable(stateAdapter, StandardTickOrder.MovementState)
 			.Build();
 

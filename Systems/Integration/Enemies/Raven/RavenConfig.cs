@@ -28,7 +28,6 @@ public sealed class RavenConfig
 	public EnemyTacticalConfig ToTacticalConfig() => new()
 	{
 		IdPrefix = "raven",
-		AttackRange = 0f,
 		StalkMinDistance = ObserveDistance,
 		StalkMaxDistance = ObserveDistance,
 		PatrolPriority = PatrolPriority

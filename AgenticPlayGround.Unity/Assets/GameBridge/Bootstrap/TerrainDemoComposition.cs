@@ -1,7 +1,10 @@
 using System.Linq;
 using Game.Systems.Domain.AgentCommand;
+using Game.Systems.Domain.AgentCombat;
+using Game.Systems.Domain.AgentCombat.Controller;
 using Game.Systems.Domain.AgentMovement;
 using Game.Systems.Domain.AgentMovement.Model;
+using Game.Systems.Domain.EntityResource;
 using Game.Systems.Domain.TerrainMesh;
 using Game.Systems.Domain.TerrainMesh.Model;
 using Game.Systems.Domain.World.Generation;
@@ -10,6 +13,7 @@ using Game.Systems.Domain.World.Model;
 using Game.Systems.Foundation.GameMath.Core;
 using Game.Systems.Integration.Actors;
 using Game.Systems.Integration.Adapters;
+using Game.Systems.Integration.Combat;
 using Game.Systems.Domain.Navigation.Controller;
 using Game.Systems.Integration.Enemies.PolarBear;
 using Game.Systems.Integration.Navigation;
@@ -105,6 +109,39 @@ namespace Game.UnityBridge.Bootstrap
 				new AStarGridPathfinder(),
 				occupancy: tileOccupancy);
 
+			var sessionState = new GameSessionState();
+			var combatServices = new CombatRuntimeServices(
+				new AgentOrientationStore(),
+				new AttackCooldownTracker(),
+				new CombatFeedbackStore(),
+				sessionState);
+			var resources = new EntityResourceSystem();
+			var combat = new AgentCombatSystem(
+				new CooldownRecordingAbilityExecutor(new AbilityExecutor(), combatServices));
+
+			GameVector2 GetPosition(Game.Systems.Foundation.Primitives.EntityId entityId)
+			{
+				var pos = movement.Input.GetPosition(entityId);
+				return new GameVector2(pos.X, pos.Y);
+			}
+
+			CombatEntityRegistrar.RegisterArcAttacker(
+				combat,
+				resources,
+				combatServices,
+				player.EntityId,
+				ArcAttackAbilityDefinition.Default,
+				playerConfig.MaxHealth,
+				entityId => GetPosition(entityId));
+
+			var vitalityCleanup = new VitalityCleanupServices(
+				actorRegistry,
+				movement,
+				commandSystem,
+				combat.Registry,
+				worldPresenter);
+			var facingProvider = new PlayerFacingProvider(facing, player.EntityId);
+
 			var polarBearSetup = new PolarBearTerrainDemoSetup().TryBuild(
 				map,
 				settings.MinPolarBearCount,
@@ -113,13 +150,22 @@ namespace Game.UnityBridge.Bootstrap
 				actorRegistry,
 				math,
 				movement,
-				pathNavigator);
+				pathNavigator,
+				combat,
+				resources,
+				combatServices);
 
 			var runtimeBuilder = new GameRuntimeBuilder(math)
 				.WithExistingMovement(movement)
 				.WithExistingCommand(commandSystem)
-				.WithInput(inputSource, player.AgentId)
-				.WithPresenter(worldPresenter, actorRegistry)
+				.WithExistingCombat(combat)
+				.WithExistingResources(resources)
+				.WithInput(inputSource, player.AgentId, player.EntityId)
+				.WithPresenter(worldPresenter, actorRegistry, settings.WorldUnitsPerTile)
+				.WithCombatRuntime(combatServices)
+				.WithSessionState(sessionState)
+				.WithFacingProvider(facingProvider)
+				.WithVitalityCleanup(vitalityCleanup)
 				.WithExtraTickable(movementStateAdapter, StandardTickOrder.MovementState);
 
 			if (polarBearSetup is not null)
@@ -129,10 +175,9 @@ namespace Game.UnityBridge.Bootstrap
 
 				runtimeBuilder
 					.WithBehaviour(polarBearSetup.BehaviourSystem)
-					.WithExistingCombat(polarBearSetup.Combat)
-					.WithExistingResources(polarBearSetup.Resources)
 					.WithExistingCognition(polarBearSetup.Cognition)
 					.WithIntentAgents(polarBearSetup.BearAgentIds.ToArray())
+					.WithFaceTargets(polarBearSetup.FaceTargetByEntity)
 					.WithExtraTickable(polarBearSetup.PlayerPresence, StandardTickOrder.PreCognition);
 			}
 
@@ -164,7 +209,9 @@ namespace Game.UnityBridge.Bootstrap
 				worldPresenter,
 				facing,
 				cameraFollow,
-				resolvedCamera);
+				resolvedCamera,
+				sessionState,
+				combatServices);
 
 			SnapCamera(context);
 			AttachHosts(sessionRoot.gameObject, context, settings, terrainRoot, terrainPresenter.CaveCeilingVisibility);
@@ -177,7 +224,7 @@ namespace Game.UnityBridge.Bootstrap
 				$"Terrain demo ready. Seed={map.SeedUsed}, Start=({map.Start.X},{map.Start.Y}), " +
 				$"Goal=({map.Goal.X},{map.Goal.Y}), Ground={groundTiles}, Wall={wallTiles}, Water={waterTiles}, " +
 				$"PolarBears={polarBearCount}. " +
-				"W/S move forward/back, A/D turn, top-down camera follows. Key 1=ground tile overlay.");
+				"W/S move forward/back, A/D turn, Space or click to attack, top-down camera follows. Key 1=ground tile overlay.");
 
 			return context;
 		}
@@ -307,6 +354,7 @@ namespace Game.UnityBridge.Bootstrap
 		{
 			sessionObject.AddComponent<GameLoopHost>().Initialize(context, settings.Player.TurnSpeedDegrees);
 			sessionObject.AddComponent<CameraFollowHost>().Initialize(context);
+			sessionObject.AddComponent<GameOverHost>().Initialize(context);
 			sessionObject.AddComponent<CaveCeilingVisibilityHost>()
 				.Initialize(context, caveCeilingVisibility);
 
