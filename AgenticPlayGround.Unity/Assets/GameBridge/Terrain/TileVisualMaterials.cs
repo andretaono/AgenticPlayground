@@ -8,6 +8,7 @@ namespace Game.UnityBridge.Terrain
 		private static Material _groundMaterial;
 		private static Material _wallMaterial;
 		private static Material _waterMaterial;
+		private static Material _ceilingMaterial;
 
 		public static Material GetGroundMaterial() =>
 			_groundMaterial ??= CreateMaterial(new Color(0.76f, 0.70f, 0.50f));
@@ -17,6 +18,9 @@ namespace Game.UnityBridge.Terrain
 
 		public static Material GetWaterMaterial() =>
 			_waterMaterial ??= CreateMaterial(new Color(0.20f, 0.40f, 0.80f));
+
+		public static Material GetCeilingMaterial() =>
+			_ceilingMaterial ??= CreateMaterial(new Color(0.52f, 0.52f, 0.56f));
 
 		private static Material CreateMaterial(Color color)
 		{

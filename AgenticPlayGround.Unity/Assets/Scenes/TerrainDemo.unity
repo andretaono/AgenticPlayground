@@ -452,12 +452,27 @@ MonoBehaviour:
   _settings:
     MapWidth: 64
     MapHeight: 48
-    Seed: 454
-    FillProbability: 0.55
+    Seed: 42
+    FillProbability: 0.6
     CellularAutomataIterations: 5
     MaxAttempts: 50
     WaterPoolAttempts: 12
-    WaterPoolMaxSize: 10
+    WaterPoolMaxSize: 5
+    EnableCeilingLayer: 1
+    MinWallBlobSize: 25
+    MinCaveAreaSize: 3
+    MaxCaveAreaSize: 49
+    MinCaveEntrances: 1
+    MaxCaveEntrances: 2
+    MinEntranceWidth: 1
+    MaxEntranceWidth: 3
+    MinEntranceDepth: 1
+    MaxEntranceDepth: 8
+    MaxCaveCount: 4
+    ExtraWallStackChance: 0
+    ExtraWallStackClusterChance: 0.75
+    ExtraWallStackGrowPasses: 4
+    StartCeilingClearanceRadius: 4
     WorldUnitsPerTile: 1
     HeightScale: 1
     GroundHeight: 0
@@ -479,7 +494,7 @@ MonoBehaviour:
     CameraPositionSmoothTime: 0.12
     CameraRotationSmoothTime: 0.1
   _terrainMaterial: {fileID: 0}
-  _camera: {fileID: 963194227}
+  _camera: {fileID: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

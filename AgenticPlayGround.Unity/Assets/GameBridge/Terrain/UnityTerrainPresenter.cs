@@ -1,5 +1,6 @@
 using System;
 using Game.Systems.Domain.World.Generation.Model;
+using Game.Systems.Domain.World.Model;
 using Game.Systems.Integration.Adapters;
 using Game.Systems.Integration.Presentation.Ports;
 using Game.Systems.Integration.TerrainMesh;
@@ -77,6 +78,51 @@ namespace Game.UnityBridge.Terrain
 				{
 					PlaceGroundCube(x, y, centerX, centerZ, cellSize, cubeHeight, settings);
 				}
+			}
+
+			var groundTopY = settings.GroundHeight * _heightScale;
+			var ceilingCenterY = groundTopY + cubeHeight * 1.5f;
+
+			for (var y = 0; y < map.Height; y++)
+			for (var x = 0; x < map.Width; x++)
+			{
+				if (map.CeilingLayer[x, y] != CeilingLayerTileIds.Solid)
+					continue;
+
+				if (map.GroundLayer[x, y] != TileIds.Wall)
+					continue;
+
+				var centerX = (x + 0.5f) * cellSize;
+				var centerZ = (y + 0.5f) * cellSize;
+				CreateTileCube(
+					$"CeilingStack_{x}_{y}",
+					centerX,
+					ceilingCenterY,
+					centerZ,
+					cellSize,
+					cubeHeight,
+					TileVisualMaterials.GetCeilingMaterial());
+			}
+
+			for (var y = 0; y < map.Height; y++)
+			for (var x = 0; x < map.Width; x++)
+			{
+				if (map.CeilingLayer[x, y] != CeilingLayerTileIds.Solid)
+					continue;
+
+				if (map.GroundLayer[x, y] == TileIds.Wall)
+					continue;
+
+				var centerX = (x + 0.5f) * cellSize;
+				var centerZ = (y + 0.5f) * cellSize;
+				CreateTileCube(
+					$"CeilingCap_{x}_{y}",
+					centerX,
+					ceilingCenterY,
+					centerZ,
+					cellSize,
+					cubeHeight,
+					TileVisualMaterials.GetCeilingMaterial());
 			}
 		}
 

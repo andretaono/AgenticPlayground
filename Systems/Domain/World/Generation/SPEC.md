@@ -23,7 +23,9 @@ Procedural cave-style world map generation. Produces tile grids consumed by `IWo
 4. **Place spawns** — Start = ground cell with minimum `x + y`; Goal = ground cell with maximum `x + y`.
 5. **Validate** — BFS from Start through 4-connected `ground` cells only; accept iff Goal is reached.
 6. **Water** — carve small water pools without breaking the start→goal path.
-7. **Retry** — on rejection, try `Seed + attempt` up to `MaxAttempts` (ground/path validation only).
+7. **Cave carving** — find wall blobs (including border-touching blobs), shuffle eligible blobs, carve up to `MaxCaveCount` (backfill on failure): hollow a connected interior subset capped by `MaxCaveAreaSize` (default 49), leave map border tiles as wall, bore entrance tunnels through blob walls (`MinEntranceDepth`–`MaxEntranceDepth`, default 8; `MinEntranceWidth`–`MaxEntranceWidth` for parallel mouth width) to start-reachable ground, mark carved floor in `CaveRegionIndex`; reject carves where any marked floor is not start-reachable.
+8. **Ceiling** — place `ceiling-solid` on carved cave floor (`CaveRegionIndex >= 0`); add clustered extra wall stacks on wall runs.
+9. **Retry** — on rejection, try `Seed + attempt` up to `MaxAttempts` (ground/path validation only).
 
 ## Tile representation
 
@@ -36,6 +38,7 @@ Procedural cave-style world map generation. Produces tile grids consumed by `IWo
 - Every accepted map has `Tiles[Start] == Ground` and `Tiles[Goal] == Ground`.
 - Every accepted map has a verified ground-only path from Start to Goal.
 - Border cells are always `wall`.
+- Every carved cave floor cell is reachable from Start via ground.
 
 ## Integration
 

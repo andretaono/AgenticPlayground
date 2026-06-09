@@ -11,6 +11,7 @@ using Game.Systems.Integration.Actors;
 using Game.Systems.Integration.Adapters;
 using Game.Systems.Integration.Runtime;
 using Game.Systems.Integration.TerrainMesh;
+using Game.UnityBridge.Debug;
 using Game.UnityBridge.Input;
 using Game.UnityBridge.Presentation;
 using Game.UnityBridge.Runtime;
@@ -31,6 +32,8 @@ namespace Game.UnityBridge.Bootstrap
 			_ = terrainMaterial;
 
 			var map = GenerateMap(settings);
+			LogCaveGeneration(map.CaveCarveDiagnostic);
+			GroundLayerTextDumper.LogToConsole(map);
 			var modifierSettings = CreateModifierSettings(settings);
 			var buildResult = ComposeTerrain(settings, map, modifierSettings);
 			var resolvedCamera = camera != null ? camera : UnityEngine.Camera.main;
@@ -139,10 +142,40 @@ namespace Game.UnityBridge.Bootstrap
 				CellularAutomataIterations = settings.CellularAutomataIterations,
 				MaxAttempts = settings.MaxAttempts,
 				WaterPoolAttempts = settings.WaterPoolAttempts,
-				WaterPoolMaxSize = settings.WaterPoolMaxSize
+				WaterPoolMaxSize = settings.WaterPoolMaxSize,
+				EnableCeilingLayer = settings.EnableCeilingLayer,
+				MinWallBlobSize = settings.MinWallBlobSize,
+				MinCaveAreaSize = settings.MinCaveAreaSize,
+				MaxCaveAreaSize = settings.MaxCaveAreaSize,
+				MinCaveEntrances = settings.MinCaveEntrances,
+				MaxCaveEntrances = settings.MaxCaveEntrances,
+				MinEntranceWidth = settings.MinEntranceWidth,
+				MaxEntranceWidth = settings.MaxEntranceWidth,
+				MinEntranceDepth = settings.MinEntranceDepth,
+				MaxEntranceDepth = settings.MaxEntranceDepth,
+				MaxCaveCount = settings.MaxCaveCount,
+				ExtraWallStackChance = settings.ExtraWallStackChance,
+				ExtraWallStackClusterChance = settings.ExtraWallStackClusterChance,
+				ExtraWallStackGrowPasses = settings.ExtraWallStackGrowPasses,
+				StartCeilingClearanceRadius = settings.StartCeilingClearanceRadius
 			};
 
 			return new WorldGenerationSystem().Generator.Generate(generationConfig);
+		}
+
+		private static void LogCaveGeneration(CaveCarveDiagnostic diagnostic)
+		{
+			UnityEngine.Debug.Log(
+				$"[CaveGeneration] Attempted={diagnostic.AttemptedCount}, Created={diagnostic.CreatedCount}");
+
+			for (var i = 0; i < diagnostic.Caves.Count; i++)
+			{
+				var cave = diagnostic.Caves[i];
+				UnityEngine.Debug.Log(
+					$"[CaveGeneration] Cave {i + 1}/{diagnostic.CreatedCount}: " +
+					$"region={cave.RegionId}, size={cave.FloorSize}, " +
+					$"outerEntrance=({cave.OutermostEntrance.X},{cave.OutermostEntrance.Y})");
+			}
 		}
 
 		private static TileHeightModifierSettings CreateModifierSettings(TerrainDemoSettings settings) =>

@@ -1,5 +1,6 @@
 using Game.Systems.Domain.World.Generation.Model;
 using Game.Systems.Domain.World.Generation.Ports;
+using Game.Systems.Domain.World.Model;
 
 namespace Game.Systems.Domain.World.Generation.Controller;
 
@@ -45,10 +46,38 @@ internal sealed class WorldGeneratorController : IWorldGenerator
 			if (!GroundConnectivity.HasGroundPath(tiles, start, goal))
 				continue;
 
-			return new GeneratedWorldMap(tiles, start, goal, seed);
+			var caveRegionIndex = CreateEmptyRegionIndex(config.Width, config.Height);
+			var caveCarveDiagnostic = WallBlobCaveCarver.Apply(tiles, start, goal, seed, config, caveRegionIndex);
+
+			if (!GroundConnectivity.HasGroundPath(tiles, start, goal))
+				continue;
+
+			var ceilingPlacement = config.EnableCeilingLayer
+				? CeilingLayerPlacer.Place(tiles, start, seed, config, caveRegionIndex)
+				: null;
+
+			return new GeneratedWorldMap(
+				tiles,
+				start,
+				goal,
+				seed,
+				ceilingPlacement?.CeilingLayer,
+				ceilingPlacement?.CaveRegionIndex ?? caveRegionIndex,
+				caveCarveDiagnostic);
 		}
 
 		throw new InvalidOperationException(
 			$"Failed to generate a playable world after {config.MaxAttempts} attempt(s).");
+	}
+
+	private static int[,] CreateEmptyRegionIndex(int width, int height)
+	{
+		var index = new int[width, height];
+
+		for (var y = 0; y < height; y++)
+		for (var x = 0; x < width; x++)
+			index[x, y] = -1;
+
+		return index;
 	}
 }

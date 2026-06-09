@@ -203,8 +203,8 @@
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@50ac96531b63\Editor\Configuration\CloudEdition\Welcome\WaitingSignInPanel.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@50ac96531b63\Editor\AssetOverlays\Cache\AssetStatusCache.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@50ac96531b63\Editor\_Deprecated\CollabMigration\MigrateCollabProject.cs" />
-    <Compile Include="Library\PackageCache\com.unity.collab-proxy@50ac96531b63\Editor\Views\Changesets\ChangesetsListHeaderState.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@50ac96531b63\Editor\Views\Diff\DiffSelection.cs" />
+    <Compile Include="Library\PackageCache\com.unity.collab-proxy@50ac96531b63\Editor\Views\Changesets\ChangesetsListHeaderState.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@50ac96531b63\Editor\Views\CreateWorkspace\Dialogs\RepositoriesListHeaderState.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@50ac96531b63\Editor\Gluon\UpdateReport\ErrorListViewItem.cs" />
     <Compile Include="Library\PackageCache\com.unity.collab-proxy@50ac96531b63\Editor\Views\CreateWorkspace\Dialogs\RepositoryExplorerDialog.cs" />

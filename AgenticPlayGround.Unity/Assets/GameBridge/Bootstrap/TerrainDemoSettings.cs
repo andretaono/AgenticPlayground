@@ -15,6 +15,21 @@ namespace Game.UnityBridge.Bootstrap
 		public int MaxAttempts = 50;
 		public int WaterPoolAttempts = 12;
 		public int WaterPoolMaxSize = 5;
+		public bool EnableCeilingLayer = true;
+		public int MinWallBlobSize = 25;
+		public int MinCaveAreaSize = 3;
+		public int MaxCaveAreaSize = 49;
+		public int MinCaveEntrances = 1;
+		public int MaxCaveEntrances = 2;
+		public int MinEntranceWidth = 1;
+		public int MaxEntranceWidth = 3;
+		public int MinEntranceDepth = 1;
+		public int MaxEntranceDepth = 8;
+		public int MaxCaveCount = 4;
+		[Range(0f, 1f)] public float ExtraWallStackChance = 0.15f;
+		[Range(0f, 1f)] public float ExtraWallStackClusterChance = 0.75f;
+		public int ExtraWallStackGrowPasses = 4;
+		public int StartCeilingClearanceRadius = 4;
 
 		[Header("Terrain")]
 		public float WorldUnitsPerTile = 1f;

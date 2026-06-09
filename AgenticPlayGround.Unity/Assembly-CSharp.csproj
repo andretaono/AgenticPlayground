@@ -63,6 +63,7 @@
   <ItemGroup>
     <Compile Include="Assets\GameBridge\Debug\WorldLayerDebugOverlay.cs" />
     <Compile Include="Assets\GameBridge\Terrain\UnityTerrainPresenter.cs" />
+    <Compile Include="Assets\GameBridge\Debug\GroundLayerTextDumper.cs" />
     <Compile Include="Assets\GameBridge\Terrain\TileVisualMaterials.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoBootstrap.cs" />
     <Compile Include="Assets\GameBridge\Runtime\GameLoopHost.cs" />
