@@ -504,6 +504,8 @@ internal static class WallBlobCaveCarver
 				    chamberAnchor,
 				    (chamberIndex * 10) + entranceIndex,
 				    groundLayer,
+				    caveRegionIndex,
+				    regionId,
 				    width,
 				    height,
 				    out var placedOuterCells))
@@ -806,6 +808,8 @@ internal static class WallBlobCaveCarver
 		WorldPosition anchor,
 		int entranceIndex,
 		TileId[,] groundLayer,
+		int[,] caveRegionIndex,
+		int regionId,
 		int width,
 		int height,
 		out IReadOnlyList<WorldPosition> outerEntranceCells)
@@ -857,6 +861,7 @@ internal static class WallBlobCaveCarver
 				return false;
 
 			groundLayer[cell.X, cell.Y] = TileIds.Ground;
+			caveRegionIndex[cell.X, cell.Y] = regionId;
 			usedEntrances.Add(cell);
 		}
 

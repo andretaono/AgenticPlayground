@@ -41,7 +41,7 @@ public sealed class WorldGenerationTests : ITestSuite
 		registry.Add(Name, "thick wall tunnel connects cave to exterior", ThickWallTunnelConnectsCaveToExterior);
 		registry.Add(Name, "border blob uses tunnel without removing border", BorderBlobUsesTunnelWithoutRemovingBorder);
 		registry.Add(Name, "entrance depth limit rejects unreachable cave", EntranceDepthLimitRejectsUnreachableCave);
-		registry.Add(Name, "tunnel throat cells are not cave floor", TunnelThroatCellsAreNotCaveFloor);
+		registry.Add(Name, "tunnel entrance cells are marked as cave floor", TunnelEntranceCellsAreMarkedAsCaveFloor);
 	}
 
 	private static WorldGenerationSystem CreateSystem() => new();
@@ -719,8 +719,11 @@ public sealed class WorldGenerationTests : ITestSuite
 			ExtraWallStackChance = 0f
 		};
 		var caveRegionIndex = ApplyCarver(groundLayer, config, seed: 8888);
+		var carvedCells = CountCarvedCaveCells(caveRegionIndex);
+		var maxTunnelCells = config.MaxEntranceDepth * config.MaxEntranceWidth * config.MaxCaveEntrances;
 
-		TestAssert.Equal(49, CountCarvedCaveCells(caveRegionIndex));
+		TestAssert.True(carvedCells >= config.MaxCaveAreaSize);
+		TestAssert.True(carvedCells <= config.MaxCaveAreaSize + maxTunnelCells);
 	}
 
 	private static void AllCarvedCaveFloorReachableFromStart()
@@ -848,7 +851,10 @@ public sealed class WorldGenerationTests : ITestSuite
 		return tiles;
 	}
 
-	private static int CountGroundThroatCells(TileId[,] groundLayer, int[,] caveRegionIndex)
+	private static int CountMarkedCaveGroundCellsInRegion(
+		TileId[,] groundLayer,
+		int[,] caveRegionIndex,
+		int regionId)
 	{
 		var count = 0;
 		for (var y = 0; y < groundLayer.GetLength(1); y++)
@@ -857,7 +863,7 @@ public sealed class WorldGenerationTests : ITestSuite
 			if (groundLayer[x, y] != TileIds.Ground)
 				continue;
 
-			if (caveRegionIndex[x, y] >= 0)
+			if (caveRegionIndex[x, y] != regionId)
 				continue;
 
 			count++;
@@ -957,7 +963,7 @@ public sealed class WorldGenerationTests : ITestSuite
 		TestAssert.Equal(0, CountCarvedCaveCells(caveRegionIndex));
 	}
 
-	private static void TunnelThroatCellsAreNotCaveFloor()
+	private static void TunnelEntranceCellsAreMarkedAsCaveFloor()
 	{
 		var groundLayer = CreateMapWithThickWallBlob();
 		var config = new WorldGenerationConfig
@@ -975,9 +981,20 @@ public sealed class WorldGenerationTests : ITestSuite
 			ExtraWallStackChance = 0f
 		};
 		var caveRegionIndex = ApplyCarver(groundLayer, config, seed: 4242);
+		var ceilingLayer = PlaceSyntheticCeiling(groundLayer, caveRegionIndex, config);
+		var regionId = 0;
 
-		TestAssert.True(CountGroundThroatCells(groundLayer, caveRegionIndex) > 0);
 		TestAssert.True(CountCarvedCaveCells(caveRegionIndex) > 0);
+		TestAssert.True(CountMarkedCaveGroundCellsInRegion(groundLayer, caveRegionIndex, regionId) > 0);
+
+		for (var y = 0; y < groundLayer.GetLength(1); y++)
+		for (var x = 0; x < groundLayer.GetLength(0); x++)
+		{
+			if (caveRegionIndex[x, y] != regionId)
+				continue;
+
+			TestAssert.Equal(CeilingLayerTileIds.Solid.Id, ceilingLayer[x, y].Id);
+		}
 	}
 
 	private static TileId[,] CreateMapWithLargeWallBlob()

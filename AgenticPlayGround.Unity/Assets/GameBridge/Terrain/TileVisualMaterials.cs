@@ -6,12 +6,16 @@ namespace Game.UnityBridge.Terrain
 	public static class TileVisualMaterials
 	{
 		private static Material _groundMaterial;
+		private static Material _caveGroundMaterial;
 		private static Material _wallMaterial;
 		private static Material _waterMaterial;
 		private static Material _ceilingMaterial;
 
 		public static Material GetGroundMaterial() =>
 			_groundMaterial ??= CreateMaterial(new Color(0.76f, 0.70f, 0.50f));
+
+		public static Material GetCaveGroundMaterial() =>
+			_caveGroundMaterial ??= CreateMaterial(new Color(0.55f, 0.5f, 0.3f));
 
 		public static Material GetWallMaterial() =>
 			_wallMaterial ??= CreateMaterial(new Color(0.40f, 0.40f, 0.45f));

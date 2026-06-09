@@ -452,7 +452,7 @@ MonoBehaviour:
   _settings:
     MapWidth: 32
     MapHeight: 32
-    Seed: 1000
+    Seed: 7876554
     FillProbability: 0.6
     CellularAutomataIterations: 5
     MaxAttempts: 50
@@ -470,7 +470,7 @@ MonoBehaviour:
     MaxEntranceDepth: 8
     MaxCaveCount: 4
     MaxCavesPerBlob: 3
-    ExtraWallStackChance: 0.15
+    ExtraWallStackChance: 0
     ExtraWallStackClusterChance: 0.75
     ExtraWallStackGrowPasses: 4
     StartCeilingClearanceRadius: 4

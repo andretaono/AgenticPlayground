@@ -66,6 +66,7 @@
     <Compile Include="Assets\GameBridge\Debug\GroundLayerTextDumper.cs" />
     <Compile Include="Assets\GameBridge\Terrain\TileVisualMaterials.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoBootstrap.cs" />
+    <Compile Include="Assets\GameBridge\Runtime\CaveCeilingVisibilityHost.cs" />
     <Compile Include="Assets\GameBridge\Runtime\GameLoopHost.cs" />
     <Compile Include="Assets\GameBridge\Debug\WorldLayerDebugMode.cs" />
     <Compile Include="Assets\GameBridge\Terrain\TerrainMaterialFactory.cs" />
@@ -73,6 +74,7 @@
     <Compile Include="Assets\GameBridge\Presentation\UnityWorldPresenter.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoSettings.cs" />
     <Compile Include="Assets\GameBridge\Input\PlayerFacingController.cs" />
+    <Compile Include="Assets\GameBridge\Terrain\CaveCeilingVisibility.cs" />
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoComposition.cs" />
     <Compile Include="Assets\GameBridge\Runtime\CameraFollowHost.cs" />
     <Compile Include="Assets\GameBridge\Presentation\OverShoulderCameraFollow.cs" />

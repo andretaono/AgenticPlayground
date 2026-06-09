@@ -118,7 +118,7 @@ namespace Game.UnityBridge.Bootstrap
 				resolvedCamera);
 
 			SnapCamera(context);
-			AttachHosts(sessionRoot.gameObject, context, settings, terrainRoot);
+			AttachHosts(sessionRoot.gameObject, context, settings, terrainRoot, terrainPresenter.CaveCeilingVisibility);
 
 			var groundTiles = CountTiles(map.GroundLayer, TileIds.Ground);
 			var wallTiles = CountTiles(map.GroundLayer, TileIds.Wall);
@@ -234,10 +234,13 @@ namespace Game.UnityBridge.Bootstrap
 			GameObject sessionObject,
 			TerrainDemoContext context,
 			TerrainDemoSettings settings,
-			Transform terrainRoot)
+			Transform terrainRoot,
+			CaveCeilingVisibility caveCeilingVisibility)
 		{
 			sessionObject.AddComponent<GameLoopHost>().Initialize(context, settings.TurnSpeedDegrees);
 			sessionObject.AddComponent<CameraFollowHost>().Initialize(context);
+			sessionObject.AddComponent<CaveCeilingVisibilityHost>()
+				.Initialize(context, caveCeilingVisibility);
 
 			if (settings.EnableLayerDebug)
 				sessionObject.AddComponent<WorldLayerDebugHost>().Initialize(context, settings, terrainRoot);

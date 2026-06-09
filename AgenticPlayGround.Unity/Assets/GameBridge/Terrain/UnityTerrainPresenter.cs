@@ -22,7 +22,10 @@ namespace Game.UnityBridge.Terrain
 			_terrainRoot = terrainRoot ?? throw new ArgumentNullException(nameof(terrainRoot));
 			_heightScale = heightScale;
 			_tileRules = tileRules ?? new DefaultTileRulesProvider();
+			CaveCeilingVisibility = new CaveCeilingVisibility();
 		}
+
+		public CaveCeilingVisibility CaveCeilingVisibility { get; }
 
 		public void SyncTerrain(
 			GeneratedWorldMap map,
@@ -63,7 +66,7 @@ namespace Game.UnityBridge.Terrain
 
 				if (rules.HasFlag(TileRules.BlocksMovement))
 				{
-					PlaceGroundCube(x, y, centerX, centerZ, cellSize, cubeHeight, settings);
+					PlaceGroundCube(map, x, y, centerX, centerZ, cellSize, cubeHeight, settings);
 					var wallCenterY = settings.WallHeight * _heightScale * 0.5f;
 					CreateTileCube(
 						$"Wall_{x}_{y}",
@@ -76,7 +79,7 @@ namespace Game.UnityBridge.Terrain
 				}
 				else
 				{
-					PlaceGroundCube(x, y, centerX, centerZ, cellSize, cubeHeight, settings);
+					PlaceGroundCube(map, x, y, centerX, centerZ, cellSize, cubeHeight, settings);
 				}
 			}
 
@@ -115,7 +118,7 @@ namespace Game.UnityBridge.Terrain
 
 				var centerX = (x + 0.5f) * cellSize;
 				var centerZ = (y + 0.5f) * cellSize;
-				CreateTileCube(
+				var ceilingCap = CreateTileCube(
 					$"CeilingCap_{x}_{y}",
 					centerX,
 					ceilingCenterY,
@@ -123,10 +126,18 @@ namespace Game.UnityBridge.Terrain
 					cellSize,
 					cubeHeight,
 					TileVisualMaterials.GetCeilingMaterial());
+
+				var caveRegionId = map.CaveRegionIndex[x, y];
+				if (caveRegionId >= 0 &&
+				    ceilingCap.TryGetComponent<Renderer>(out var ceilingRenderer))
+				{
+					CaveCeilingVisibility.Register(caveRegionId, ceilingRenderer);
+				}
 			}
 		}
 
 		private void PlaceGroundCube(
+			GeneratedWorldMap map,
 			int x,
 			int y,
 			float centerX,
@@ -137,6 +148,9 @@ namespace Game.UnityBridge.Terrain
 		{
 			var groundTopY = settings.GroundHeight * _heightScale;
 			var groundCenterY = groundTopY - cubeHeight * 0.5f;
+			var material = map.CaveRegionIndex[x, y] >= 0
+				? TileVisualMaterials.GetCaveGroundMaterial()
+				: TileVisualMaterials.GetGroundMaterial();
 			CreateTileCube(
 				$"Ground_{x}_{y}",
 				centerX,
@@ -144,7 +158,7 @@ namespace Game.UnityBridge.Terrain
 				centerZ,
 				cellSize,
 				cubeHeight,
-				TileVisualMaterials.GetGroundMaterial());
+				material);
 		}
 
 		private void PlaceWaterLevelCube(
@@ -168,7 +182,7 @@ namespace Game.UnityBridge.Terrain
 				TileVisualMaterials.GetWaterMaterial());
 		}
 
-		private void CreateTileCube(
+		private GameObject CreateTileCube(
 			string name,
 			float centerX,
 			float centerY,
@@ -190,6 +204,8 @@ namespace Game.UnityBridge.Terrain
 			var collider = cube.GetComponent<Collider>();
 			if (collider != null)
 				UnityEngine.Object.Destroy(collider);
+
+			return cube;
 		}
 
 		private void ClearExistingTiles()
