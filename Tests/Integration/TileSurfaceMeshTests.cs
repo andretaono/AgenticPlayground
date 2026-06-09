@@ -43,6 +43,11 @@ public sealed class TileSurfaceMeshTests : ITestSuite
 			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunSoftWallCornerSmoothed());
 		});
 
+		registry.Add(Name, "clamps soft normals toward face plane", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunSoftNormalFaceDotClampingApplied());
+		});
+
 		registry.Add(Name, "disabled smoothing leaves mesh unchanged", () =>
 		{
 			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunSmoothingDisabledMatchesFlat());
@@ -86,6 +91,16 @@ public sealed class TileSurfaceMeshTests : ITestSuite
 		registry.Add(Name, "geometry strength moves shared wall ceiling corners", () =>
 		{
 			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunGeometryStrengthMovesSharedCorner());
+		});
+
+		registry.Add(Name, "matches ground and cave ground geometry at shared seams", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunGroundCaveGroundSharedGeometry());
+		});
+
+		registry.Add(Name, "ground geometry smoothing off allows seam position mismatch", () =>
+		{
+			TestAssert.True(new TileSurfaceMeshIntegrationRunner().RunGroundGeometrySmoothingOffBreaksSharedPositions());
 		});
 	}
 }

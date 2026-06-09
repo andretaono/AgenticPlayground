@@ -452,12 +452,12 @@ MonoBehaviour:
   _settings:
     MapWidth: 24
     MapHeight: 24
-    Seed: 23
+    Seed: 6543
     FillProbability: 0.57
     CellularAutomataIterations: 5
     MaxAttempts: 50
-    WaterPoolAttempts: 12
-    WaterPoolMaxSize: 6
+    WaterPoolAttempts: 8
+    WaterPoolMaxSize: 8
     EnableCeilingLayer: 1
     MinWallBlobSize: 25
     MinCaveAreaSize: 3
@@ -484,8 +484,10 @@ MonoBehaviour:
     SurfaceMesh:
       EnableNormalSmoothing: 0
       EnableStructuralNormalSmoothing: 0
+      SoftNormalMinFaceDot: 0.056
       EnableGeometrySmoothing: 1
       EnableStructuralGeometrySmoothing: 1
+      EnableGroundGeometrySmoothing: 1
       GeometrySmoothDivisions: 1
       GeometrySmoothStrength: 1
       UpHardNormalThreshold: 0.9

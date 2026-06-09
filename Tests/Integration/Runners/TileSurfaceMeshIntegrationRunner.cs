@@ -174,6 +174,107 @@ public sealed class TileSurfaceMeshIntegrationRunner
 		return HasNonAxisAlignedSoftNormal(wallMesh, upHardThreshold: 0.9f);
 	}
 
+	public bool RunSoftNormalFaceDotClampingApplied()
+	{
+		const float minDot = 0.75f;
+		var input = new TileSurfaceMeshResult(new[]
+		{
+			new TileSurfaceMeshGroup(
+				SurfaceMaterialId.Wall,
+				CaveRegionId: -1,
+				CreateSoftNormalFaceDotTestMesh())
+		});
+		var processor = new NormalSmoothingPostProcessor();
+
+		var unclamped = processor.Process(
+			input,
+			new TileSurfaceMeshSettings { SoftNormalMinFaceDot = 0f },
+			cellSize: 1f);
+		var clamped = processor.Process(
+			input,
+			new TileSurfaceMeshSettings { SoftNormalMinFaceDot = minDot },
+			cellSize: 1f);
+
+		return HasSoftCornerNormalBelowFaceDot(unclamped.Groups[0].Mesh, minDot, upHardThreshold: 0.9f)
+			&& AllSoftCornerNormalsMeetFaceDot(clamped.Groups[0].Mesh, minDot, upHardThreshold: 0.9f);
+	}
+
+	private static TerrainMeshData CreateSoftNormalFaceDotTestMesh()
+	{
+		var vertices = new List<Vector3>
+		{
+			new(0f, 0f, 0f),
+			new(1f, 0f, 0f),
+			new(0f, 1f, 0f),
+			new(0f, 1f, 0f),
+			new(0f, 0f, 1f)
+		};
+		var indices = new List<int> { 0, 1, 2, 0, 3, 4 };
+		var normals = new List<Vector3>(vertices.Count);
+		for (var i = 0; i < vertices.Count; i++)
+			normals.Add(new Vector3(0f, 0f, 1f));
+
+		return TerrainMeshData.Create(vertices, indices, normals);
+	}
+
+	private static bool HasSoftCornerNormalBelowFaceDot(
+		TerrainMeshData mesh,
+		float minDot,
+		float upHardThreshold)
+	{
+		for (var triIndex = 0; triIndex < mesh.Indices.Count; triIndex += 3)
+		{
+			var i0 = mesh.Indices[triIndex];
+			var i1 = mesh.Indices[triIndex + 1];
+			var i2 = mesh.Indices[triIndex + 2];
+			var faceNormal = ComputeTriangleNormal(
+				mesh.Vertices[i0],
+				mesh.Vertices[i1],
+				mesh.Vertices[i2]);
+
+			if (faceNormal.Y >= upHardThreshold)
+				continue;
+
+			if (Dot(mesh.Normals[i0], faceNormal) + 1e-4f < minDot)
+				return true;
+			if (Dot(mesh.Normals[i1], faceNormal) + 1e-4f < minDot)
+				return true;
+			if (Dot(mesh.Normals[i2], faceNormal) + 1e-4f < minDot)
+				return true;
+		}
+
+		return false;
+	}
+
+	private static bool AllSoftCornerNormalsMeetFaceDot(
+		TerrainMeshData mesh,
+		float minDot,
+		float upHardThreshold)
+	{
+		for (var triIndex = 0; triIndex < mesh.Indices.Count; triIndex += 3)
+		{
+			var i0 = mesh.Indices[triIndex];
+			var i1 = mesh.Indices[triIndex + 1];
+			var i2 = mesh.Indices[triIndex + 2];
+			var faceNormal = ComputeTriangleNormal(
+				mesh.Vertices[i0],
+				mesh.Vertices[i1],
+				mesh.Vertices[i2]);
+
+			if (faceNormal.Y >= upHardThreshold)
+				continue;
+
+			if (Dot(mesh.Normals[i0], faceNormal) + 1e-4f < minDot)
+				return false;
+			if (Dot(mesh.Normals[i1], faceNormal) + 1e-4f < minDot)
+				return false;
+			if (Dot(mesh.Normals[i2], faceNormal) + 1e-4f < minDot)
+				return false;
+		}
+
+		return true;
+	}
+
 	public bool RunSmoothingDisabledMatchesFlat()
 	{
 		var groundLayer = new TileId[1, 1] { { TileIds.Ground } };
@@ -198,7 +299,8 @@ public sealed class TileSurfaceMeshIntegrationRunner
 		var map = CreateWallWithCeilingStackMap();
 		var surface = Compose(map, new TileSurfaceMeshSettings
 		{
-			EnableStructuralNormalSmoothing = true
+			EnableStructuralNormalSmoothing = true,
+			SoftNormalMinFaceDot = 0f
 		});
 
 		return SharedSoftNormalsMatch(
@@ -533,6 +635,273 @@ public sealed class TileSurfaceMeshIntegrationRunner
 			RecordCorner(map, mesh.Vertices[i1], scale);
 			RecordCorner(map, mesh.Vertices[i2], scale);
 		}
+
+		return map;
+	}
+
+	public bool RunGroundCaveGroundSharedGeometry()
+	{
+		var map = CreateGroundCaveBoundaryMap();
+		var settings = new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = true,
+			GeometrySmoothDivisions = 1,
+			GeometrySmoothStrength = 0.5f,
+			EnableGroundGeometrySmoothing = true
+		};
+		var baseline = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = false,
+			GeometrySmoothDivisions = settings.GeometrySmoothDivisions,
+			GeometrySmoothStrength = settings.GeometrySmoothStrength,
+			EnableGroundGeometrySmoothing = settings.EnableGroundGeometrySmoothing
+		});
+		var surface = Compose(map, settings);
+
+		return SharedBaselinePositionsMatch(
+			baseline,
+			surface,
+			SurfaceMaterialId.Ground,
+			SurfaceMaterialId.CaveGround);
+	}
+
+	public bool RunGroundGeometrySmoothingOffBreaksSharedPositions()
+	{
+		var map = CreateGroundCaveBoundaryMap();
+		var settings = new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = true,
+			GeometrySmoothDivisions = 1,
+			GeometrySmoothStrength = 0.5f,
+			EnableGroundGeometrySmoothing = false
+		};
+		var baseline = Compose(map, new TileSurfaceMeshSettings
+		{
+			EnableNormalSmoothing = false,
+			EnableGeometrySmoothing = false,
+			GeometrySmoothDivisions = settings.GeometrySmoothDivisions,
+			GeometrySmoothStrength = settings.GeometrySmoothStrength,
+			EnableGroundGeometrySmoothing = settings.EnableGroundGeometrySmoothing
+		});
+		var surface = Compose(map, settings);
+
+		return SharedBaselinePositionsDiffer(
+			baseline,
+			surface,
+			SurfaceMaterialId.Ground,
+			SurfaceMaterialId.CaveGround);
+	}
+
+	private static GeneratedWorldMap CreateGroundCaveBoundaryMap()
+	{
+		var groundLayer = new TileId[2, 2]
+		{
+			{ TileIds.Ground, TileIds.Ground },
+			{ TileIds.Ground, TileIds.Ground }
+		};
+		var caveRegionIndex = new int[2, 2]
+		{
+			{ -1, 0 },
+			{ -1, -1 }
+		};
+
+		return new GeneratedWorldMap(
+			groundLayer,
+			new WorldPosition(0, 0),
+			new WorldPosition(1, 1),
+			seedUsed: 23,
+			caveRegionIndex: caveRegionIndex);
+	}
+
+	private static bool SharedBaselinePositionsMatch(
+		TileSurfaceMeshResult baseline,
+		TileSurfaceMeshResult smoothed,
+		SurfaceMaterialId materialA,
+		SurfaceMaterialId materialB,
+		float epsilon = 1e-4f)
+	{
+		var scale = 1f / epsilon;
+		var baselineA = BuildVertexPositionMap(
+			baseline.Groups.First(group => group.Material == materialA).Mesh,
+			scale);
+		var baselineB = BuildVertexPositionMap(
+			baseline.Groups.First(group => group.Material == materialB).Mesh,
+			scale);
+
+		var meshA = smoothed.Groups.First(group => group.Material == materialA).Mesh;
+		var meshB = smoothed.Groups.First(group => group.Material == materialB).Mesh;
+
+		var matchedCount = 0;
+		foreach (var kvp in baselineA)
+		{
+			if (!baselineB.TryGetValue(kvp.Key, out _))
+				continue;
+
+			if (!TryGetClosestVertexWithin(meshA, kvp.Value, 0.5f, out var positionA) ||
+			    !TryGetClosestVertexWithin(meshB, kvp.Value, 0.5f, out var positionB))
+			{
+				continue;
+			}
+
+			matchedCount++;
+			if (!ApproxEqual(positionA, positionB, epsilon))
+				return false;
+		}
+
+		return matchedCount > 0;
+	}
+
+	private static bool SharedBaselinePositionsDiffer(
+		TileSurfaceMeshResult baseline,
+		TileSurfaceMeshResult smoothed,
+		SurfaceMaterialId materialA,
+		SurfaceMaterialId materialB,
+		float epsilon = 1e-4f)
+	{
+		var scale = 1f / epsilon;
+		var baselineA = BuildVertexPositionMap(
+			baseline.Groups.First(group => group.Material == materialA).Mesh,
+			scale);
+		var baselineB = BuildVertexPositionMap(
+			baseline.Groups.First(group => group.Material == materialB).Mesh,
+			scale);
+
+		var meshA = smoothed.Groups.First(group => group.Material == materialA).Mesh;
+		var meshB = smoothed.Groups.First(group => group.Material == materialB).Mesh;
+
+		foreach (var kvp in baselineA)
+		{
+			if (!baselineB.TryGetValue(kvp.Key, out _))
+				continue;
+
+			if (!TryGetClosestVertexWithin(meshA, kvp.Value, 0.5f, out var positionA) ||
+			    !TryGetClosestVertexWithin(meshB, kvp.Value, 0.5f, out var positionB))
+			{
+				continue;
+			}
+
+			if (!ApproxEqual(positionA, positionB, epsilon))
+				return true;
+		}
+
+		return false;
+	}
+
+	private static bool TryGetClosestVertexWithin(
+		TerrainMeshData mesh,
+		Vector3 target,
+		float maxDistance,
+		out Vector3 position)
+	{
+		var maxDistanceSquared = maxDistance * maxDistance;
+		var bestDistanceSquared = maxDistanceSquared;
+		var found = false;
+		position = default;
+
+		foreach (var vertex in mesh.Vertices)
+		{
+			var dx = vertex.X - target.X;
+			var dy = vertex.Y - target.Y;
+			var dz = vertex.Z - target.Z;
+			var distanceSquared = dx * dx + dy * dy + dz * dz;
+			if (distanceSquared > bestDistanceSquared)
+				continue;
+
+			bestDistanceSquared = distanceSquared;
+			position = vertex;
+			found = true;
+		}
+
+		return found;
+	}
+
+	private static HashSet<(long, long, long)> GetSharedBaselineKeys(
+		TileSurfaceMeshResult baseline,
+		SurfaceMaterialId materialA,
+		SurfaceMaterialId materialB,
+		float scale)
+	{
+		var positionsA = BuildVertexPositionMap(
+			baseline.Groups.First(group => group.Material == materialA).Mesh,
+			scale);
+		var positionsB = BuildVertexPositionMap(
+			baseline.Groups.First(group => group.Material == materialB).Mesh,
+			scale);
+
+		var sharedKeys = new HashSet<(long, long, long)>();
+		foreach (var key in positionsA.Keys)
+		{
+			if (positionsB.ContainsKey(key))
+				sharedKeys.Add(key);
+		}
+
+		return sharedKeys;
+	}
+
+	private static bool SharedVertexPositionsMatch(
+		TileSurfaceMeshResult surface,
+		SurfaceMaterialId materialA,
+		SurfaceMaterialId materialB,
+		float epsilon = 1e-4f)
+	{
+		var scale = 1f / epsilon;
+		var positionsA = BuildVertexPositionMap(
+			surface.Groups.First(group => group.Material == materialA).Mesh,
+			scale);
+		var positionsB = BuildVertexPositionMap(
+			surface.Groups.First(group => group.Material == materialB).Mesh,
+			scale);
+
+		var sharedCount = 0;
+		foreach (var kvp in positionsA)
+		{
+			if (!positionsB.TryGetValue(kvp.Key, out var positionB))
+				continue;
+
+			sharedCount++;
+			if (!ApproxEqual(kvp.Value, positionB, epsilon))
+				return false;
+		}
+
+		return sharedCount > 0;
+	}
+
+	private static bool SharedVertexPositionsDiffer(
+		TileSurfaceMeshResult surface,
+		SurfaceMaterialId materialA,
+		SurfaceMaterialId materialB,
+		float epsilon = 1e-4f)
+	{
+		var scale = 1f / epsilon;
+		var positionsA = BuildVertexPositionMap(
+			surface.Groups.First(group => group.Material == materialA).Mesh,
+			scale);
+		var positionsB = BuildVertexPositionMap(
+			surface.Groups.First(group => group.Material == materialB).Mesh,
+			scale);
+
+		foreach (var kvp in positionsA)
+		{
+			if (!positionsB.TryGetValue(kvp.Key, out var positionB))
+				continue;
+
+			if (!ApproxEqual(kvp.Value, positionB, epsilon))
+				return true;
+		}
+
+		return false;
+	}
+
+	private static Dictionary<(long, long, long), Vector3> BuildVertexPositionMap(
+		TerrainMeshData mesh,
+		float scale)
+	{
+		var map = new Dictionary<(long, long, long), Vector3>();
+		foreach (var vertex in mesh.Vertices)
+			RecordCorner(map, vertex, scale);
 
 		return map;
 	}

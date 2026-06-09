@@ -10,6 +10,12 @@ public sealed class TileSurfaceMeshSettings
 	/// <summary>Triangles with face normal Y above this value keep flat hard shading.</summary>
 	public float UpHardNormalThreshold { get; init; } = 0.9f;
 
+	/// <summary>
+	/// Minimum dot(smoothedNormal, faceNormal) after soft averaging (0 disables).
+	/// Pulls corner normals back toward their face plane to reduce overly dark lighting.
+	/// </summary>
+	public float SoftNormalMinFaceDot { get; init; } = 0.6f;
+
 	public float WeldEpsilon { get; init; } = 1e-4f;
 
 	public bool EnableGeometrySmoothing { get; init; } = false;
@@ -19,6 +25,9 @@ public sealed class TileSurfaceMeshSettings
 
 	/// <summary>Blend toward neighbor-average position (0–1). Upward vertices move in XZ only.</summary>
 	public float GeometrySmoothStrength { get; init; } = 0.35f;
+
+	/// <summary>Relax outdoor ground and cave ground together at shared positions.</summary>
+	public bool EnableGroundGeometrySmoothing { get; init; } = true;
 
 	/// <summary>Relax wall and ceiling geometry together at shared positions.</summary>
 	public bool EnableStructuralGeometrySmoothing { get; init; } = true;

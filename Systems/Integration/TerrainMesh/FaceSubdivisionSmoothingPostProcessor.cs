@@ -21,47 +21,31 @@ public sealed class FaceSubdivisionSmoothingPostProcessor : ITileSurfaceMeshPost
 			return mesh;
 
 		_ = cellSize;
+		var groundGroups = new List<TileSurfaceMeshGroup>();
 		var structuralGroups = new List<TileSurfaceMeshGroup>();
-		var otherGroups = new List<TileSurfaceMeshGroup>();
+		var independentGroups = new List<TileSurfaceMeshGroup>();
 		foreach (var group in mesh.Groups)
 		{
-			if (IsStructuralMaterial(group.Material))
+			if (IsGroundMaterial(group.Material))
+				groundGroups.Add(group);
+			else if (IsStructuralMaterial(group.Material))
 				structuralGroups.Add(group);
 			else
-				otherGroups.Add(group);
+				independentGroups.Add(group);
 		}
 
 		var resultGroups = new List<TileSurfaceMeshGroup>(mesh.Groups.Count);
-		foreach (var group in otherGroups)
-		{
-			resultGroups.Add(group with
-			{
-				Mesh = ProcessSingleMesh(group.Mesh, settings)
-			});
-		}
-
-		if (structuralGroups.Count == 0)
-			return new TileSurfaceMeshResult(resultGroups);
-
-		if (settings.EnableStructuralGeometrySmoothing)
-		{
-			var subdivided = structuralGroups
-				.Select(group => (group, SubdivideMesh(group.Mesh, settings)))
-				.ToList();
-			RelaxStructuralUnion(subdivided, settings);
-			foreach (var (group, processedMesh) in subdivided)
-				resultGroups.Add(group with { Mesh = processedMesh });
-		}
-		else
-		{
-			foreach (var group in structuralGroups)
-			{
-				resultGroups.Add(group with
-				{
-					Mesh = ProcessSingleMesh(group.Mesh, settings)
-				});
-			}
-		}
+		AppendProcessedGroups(independentGroups, resultGroups, settings, union: false);
+		AppendProcessedGroups(
+			groundGroups,
+			resultGroups,
+			settings,
+			union: settings.EnableGroundGeometrySmoothing);
+		AppendProcessedGroups(
+			structuralGroups,
+			resultGroups,
+			settings,
+			union: settings.EnableStructuralGeometrySmoothing);
 
 		return new TileSurfaceMeshResult(resultGroups);
 	}
@@ -75,6 +59,39 @@ public sealed class FaceSubdivisionSmoothingPostProcessor : ITileSurfaceMeshPost
 		material is SurfaceMaterialId.Wall
 			or SurfaceMaterialId.CeilingStack
 			or SurfaceMaterialId.CeilingCap;
+
+	private static bool IsGroundMaterial(SurfaceMaterialId material) =>
+		material is SurfaceMaterialId.Ground or SurfaceMaterialId.CaveGround;
+
+	private static void AppendProcessedGroups(
+		List<TileSurfaceMeshGroup> groups,
+		List<TileSurfaceMeshGroup> resultGroups,
+		TileSurfaceMeshSettings settings,
+		bool union)
+	{
+		if (groups.Count == 0)
+			return;
+
+		if (!union || groups.Count == 1)
+		{
+			foreach (var group in groups)
+			{
+				resultGroups.Add(group with
+				{
+					Mesh = ProcessSingleMesh(group.Mesh, settings)
+				});
+			}
+
+			return;
+		}
+
+		var subdivided = groups
+			.Select(group => (group, SubdivideMesh(group.Mesh, settings)))
+			.ToList();
+		RelaxWeldedUnion(subdivided, settings);
+		foreach (var (group, processedMesh) in subdivided)
+			resultGroups.Add(group with { Mesh = processedMesh });
+	}
 
 	private static TerrainMeshData ProcessSingleMesh(
 		TerrainMeshData source,
@@ -100,7 +117,7 @@ public sealed class FaceSubdivisionSmoothingPostProcessor : ITileSurfaceMeshPost
 		return TerrainMeshData.Create(vertices, indices, normals);
 	}
 
-	private static void RelaxStructuralUnion(
+	private static void RelaxWeldedUnion(
 		List<(TileSurfaceMeshGroup Group, TerrainMeshData Mesh)> subdivided,
 		TileSurfaceMeshSettings settings)
 	{

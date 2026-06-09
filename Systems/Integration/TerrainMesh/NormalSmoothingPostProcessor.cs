@@ -31,7 +31,7 @@ public sealed class NormalSmoothingPostProcessor : ITileSurfaceMeshPostProcessor
 
 		var resultGroups = new List<TileSurfaceMeshGroup>(mesh.Groups.Count);
 		foreach (var group in otherGroups)
-			resultGroups.Add(group with { Mesh = SmoothMesh(group.Mesh, settings) });
+			resultGroups.Add(group with { Mesh = SmoothMesh(group.Mesh, settings, expandSoftCorners: true) });
 
 		if (structuralGroups.Count == 0)
 			return new TileSurfaceMeshResult(resultGroups);
@@ -39,7 +39,7 @@ public sealed class NormalSmoothingPostProcessor : ITileSurfaceMeshPostProcessor
 		if (settings.EnableStructuralNormalSmoothing)
 		{
 			var merged = MergeMeshes(structuralGroups.Select(group => group.Mesh));
-			var smoothMerged = SmoothMesh(merged, settings);
+			var smoothMerged = SmoothMesh(merged, settings, expandSoftCorners: false);
 			var softNormalMap = BuildSoftNormalPositionMap(smoothMerged, settings);
 			foreach (var group in structuralGroups)
 			{
@@ -52,7 +52,7 @@ public sealed class NormalSmoothingPostProcessor : ITileSurfaceMeshPostProcessor
 		else
 		{
 			foreach (var group in structuralGroups)
-				resultGroups.Add(group with { Mesh = SmoothMesh(group.Mesh, settings) });
+				resultGroups.Add(group with { Mesh = SmoothMesh(group.Mesh, settings, expandSoftCorners: true) });
 		}
 
 		return new TileSurfaceMeshResult(resultGroups);
@@ -162,9 +162,9 @@ public sealed class NormalSmoothingPostProcessor : ITileSurfaceMeshPostProcessor
 				continue;
 			}
 
-			var n0 = ResolveSoftNormal(p0, faceNormal, softNormalMap, scale);
-			var n1 = ResolveSoftNormal(p1, faceNormal, softNormalMap, scale);
-			var n2 = ResolveSoftNormal(p2, faceNormal, softNormalMap, scale);
+			var n0 = ResolveSoftNormal(p0, faceNormal, softNormalMap, scale, settings);
+			var n1 = ResolveSoftNormal(p1, faceNormal, softNormalMap, scale, settings);
+			var n2 = ResolveSoftNormal(p2, faceNormal, softNormalMap, scale, settings);
 			var startSoft = vertices.Count;
 			vertices.Add(p0);
 			vertices.Add(p1);
@@ -184,14 +184,20 @@ public sealed class NormalSmoothingPostProcessor : ITileSurfaceMeshPostProcessor
 		Vector3 position,
 		Vector3 faceNormal,
 		IReadOnlyDictionary<(long, long, long), Vector3> softNormalMap,
-		float scale)
+		float scale,
+		TileSurfaceMeshSettings settings)
 	{
-		return softNormalMap.TryGetValue(QuantizeKey(position, scale), out var sharedNormal)
-			? sharedNormal
+		var sharedNormal = softNormalMap.TryGetValue(QuantizeKey(position, scale), out var smoothed)
+			? smoothed
 			: faceNormal;
+
+		return ClampSoftNormalTowardFace(sharedNormal, faceNormal, settings.SoftNormalMinFaceDot);
 	}
 
-	private static TerrainMeshData SmoothMesh(TerrainMeshData source, TileSurfaceMeshSettings settings)
+	private static TerrainMeshData SmoothMesh(
+		TerrainMeshData source,
+		TileSurfaceMeshSettings settings,
+		bool expandSoftCorners)
 	{
 		var threshold = settings.UpHardNormalThreshold;
 		var epsilon = settings.WeldEpsilon;
@@ -203,9 +209,8 @@ public sealed class NormalSmoothingPostProcessor : ITileSurfaceMeshPostProcessor
 
 		var softVertices = new List<Vector3>();
 		var softNormalSums = new List<Vector3>();
-		var softNormals = new List<Vector3>();
 		var softWeldMap = new Dictionary<(long, long, long), int>();
-		var softTriangles = new List<(int I0, int I1, int I2)>();
+		var softTriangles = new List<(int I0, int I1, int I2, Vector3 FaceNormal)>();
 
 		for (var triIndex = 0; triIndex < source.Indices.Count; triIndex += 3)
 		{
@@ -235,29 +240,57 @@ public sealed class NormalSmoothingPostProcessor : ITileSurfaceMeshPostProcessor
 			var weldedI0 = AccumulateSoftVertex(p0, faceNormal, softVertices, softNormalSums, softWeldMap, scale);
 			var weldedI1 = AccumulateSoftVertex(p1, faceNormal, softVertices, softNormalSums, softWeldMap, scale);
 			var weldedI2 = AccumulateSoftVertex(p2, faceNormal, softVertices, softNormalSums, softWeldMap, scale);
-			softTriangles.Add((weldedI0, weldedI1, weldedI2));
+			softTriangles.Add((weldedI0, weldedI1, weldedI2, faceNormal));
 		}
 
-		for (var i = 0; i < softNormalSums.Count; i++)
-			softNormals.Add(Normalize(softNormalSums[i]));
-
 		var vertices = new List<Vector3>(hardVertices.Count + softVertices.Count);
-		var normals = new List<Vector3>(hardNormals.Count + softNormals.Count);
+		var normals = new List<Vector3>(hardNormals.Count + softVertices.Count);
 		var indices = new List<int>(hardIndices.Count + softTriangles.Count * 3);
 
 		vertices.AddRange(hardVertices);
 		normals.AddRange(hardNormals);
 		indices.AddRange(hardIndices);
 
-		var softIndexOffset = hardVertices.Count;
-		vertices.AddRange(softVertices);
-		normals.AddRange(softNormals);
-
-		foreach (var (i0, i1, i2) in softTriangles)
+		if (expandSoftCorners)
 		{
-			indices.Add(softIndexOffset + i0);
-			indices.Add(softIndexOffset + i1);
-			indices.Add(softIndexOffset + i2);
+			foreach (var (i0, i1, i2, faceNormal) in softTriangles)
+			{
+				var start = vertices.Count;
+				vertices.Add(softVertices[i0]);
+				vertices.Add(softVertices[i1]);
+				vertices.Add(softVertices[i2]);
+				normals.Add(ClampSoftNormalTowardFace(
+					Normalize(softNormalSums[i0]),
+					faceNormal,
+					settings.SoftNormalMinFaceDot));
+				normals.Add(ClampSoftNormalTowardFace(
+					Normalize(softNormalSums[i1]),
+					faceNormal,
+					settings.SoftNormalMinFaceDot));
+				normals.Add(ClampSoftNormalTowardFace(
+					Normalize(softNormalSums[i2]),
+					faceNormal,
+					settings.SoftNormalMinFaceDot));
+				indices.Add(start);
+				indices.Add(start + 1);
+				indices.Add(start + 2);
+			}
+		}
+		else
+		{
+			var softIndexOffset = hardVertices.Count;
+			for (var i = 0; i < softNormalSums.Count; i++)
+			{
+				vertices.Add(softVertices[i]);
+				normals.Add(Normalize(softNormalSums[i]));
+			}
+
+			foreach (var (i0, i1, i2, _) in softTriangles)
+			{
+				indices.Add(softIndexOffset + i0);
+				indices.Add(softIndexOffset + i1);
+				indices.Add(softIndexOffset + i2);
+			}
 		}
 
 		return TerrainMeshData.Create(vertices, indices, normals);
@@ -285,6 +318,24 @@ public sealed class NormalSmoothingPostProcessor : ITileSurfaceMeshPostProcessor
 		return index;
 	}
 
+	private static Vector3 ClampSoftNormalTowardFace(
+		Vector3 smoothedNormal,
+		Vector3 faceNormal,
+		float minDot)
+	{
+		smoothedNormal = Normalize(smoothedNormal);
+		if (minDot <= 0f)
+			return smoothedNormal;
+
+		var dot = Dot(smoothedNormal, faceNormal);
+		if (dot + 1e-5f >= minDot)
+			return smoothedNormal;
+
+		var t = (minDot - dot) / (1f - dot + 1e-6f);
+		t = Math.Clamp(t, 0f, 1f);
+		return Normalize(Lerp(smoothedNormal, faceNormal, t));
+	}
+
 	private static (long, long, long) QuantizeKey(Vector3 position, float scale) =>
 		((long)MathF.Round(position.X * scale),
 			(long)MathF.Round(position.Y * scale),
@@ -306,6 +357,14 @@ public sealed class NormalSmoothingPostProcessor : ITileSurfaceMeshPostProcessor
 			a.Y * b.Z - a.Z * b.Y,
 			a.Z * b.X - a.X * b.Z,
 			a.X * b.Y - a.Y * b.X);
+
+	private static float Dot(Vector3 a, Vector3 b) => a.X * b.X + a.Y * b.Y + a.Z * b.Z;
+
+	private static Vector3 Lerp(Vector3 a, Vector3 b, float t) =>
+		new(
+			a.X + (b.X - a.X) * t,
+			a.Y + (b.Y - a.Y) * t,
+			a.Z + (b.Z - a.Z) * t);
 
 	private static Vector3 Normalize(Vector3 v)
 	{
