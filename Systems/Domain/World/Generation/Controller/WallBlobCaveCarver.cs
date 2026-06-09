@@ -5,7 +5,9 @@ namespace Game.Systems.Domain.World.Generation.Controller;
 
 internal static class WallBlobCaveCarver
 {
-	private const int ShuffleSalt = 0xCAF0;
+	private const int SpreadFirstPickSalt = 0xCAF2;
+	private const int SpreadTieSalt = 0xCAF3;
+	private const int InteriorSeedSalt = 0xCAF4;
 	private const int EntranceCountSalt = 0xE001;
 	private const int EntranceWidthSalt = 0xE002;
 	private const int EntrancePickSalt = 0xE003;
@@ -31,29 +33,40 @@ internal static class WallBlobCaveCarver
 		var height = groundLayer.GetLength(1);
 
 		var eligible = FindEligibleBlobs(groundLayer, config, width, height);
-		Shuffle(eligible, seed);
+		var chamberCandidates = CollectChamberCandidates(eligible, groundLayer, config, width, height);
+		var orderedCandidates = OrderCandidatesForEvenSpread(chamberCandidates, seed);
 
 		var nextRegionId = 0;
 		var successfulCarves = 0;
 		var attemptedCarves = 0;
 		var carvedCaves = new List<CarvedCaveInfo>();
+		var chambersCarvedFromBlob = new Dictionary<WallBlob, int>();
 
-		foreach (var blob in eligible)
+		foreach (var candidate in orderedCandidates)
 		{
 			if (successfulCarves >= config.MaxCaveCount)
 				break;
 
+			chambersCarvedFromBlob.TryGetValue(candidate.Blob, out var chambersInBlob);
+			if (chambersInBlob >= config.MaxCavesPerBlob)
+				continue;
+
+			if (!candidate.InteriorComponent.Any(cell => groundLayer[cell.X, cell.Y] == TileIds.Wall))
+				continue;
+
 			attemptedCarves++;
 
-			if (TryCarveBlob(
+			if (TryCarveChamber(
 				    groundLayer,
 				    caveRegionIndex,
-				    blob,
+				    candidate.Blob,
+				    candidate.InteriorComponent,
 				    start,
 				    goal,
 				    seed,
 				    config,
 				    nextRegionId,
+				    chambersInBlob,
 				    width,
 				    height,
 				    out var carvedCave))
@@ -61,10 +74,114 @@ internal static class WallBlobCaveCarver
 				carvedCaves.Add(carvedCave);
 				nextRegionId++;
 				successfulCarves++;
+				chambersCarvedFromBlob[candidate.Blob] = chambersInBlob + 1;
 			}
 		}
 
 		return new CaveCarveDiagnostic(attemptedCarves, successfulCarves, carvedCaves);
+	}
+
+	private sealed class ChamberCandidate
+	{
+		public ChamberCandidate(WallBlob blob, HashSet<WorldPosition> interiorComponent, WorldPosition centroid)
+		{
+			Blob = blob;
+			InteriorComponent = interiorComponent;
+			Centroid = centroid;
+		}
+
+		public WallBlob Blob { get; }
+		public HashSet<WorldPosition> InteriorComponent { get; }
+		public WorldPosition Centroid { get; }
+	}
+
+	private static List<ChamberCandidate> CollectChamberCandidates(
+		IReadOnlyList<WallBlob> eligible,
+		TileId[,] groundLayer,
+		WorldGenerationConfig config,
+		int width,
+		int height)
+	{
+		var candidates = new List<ChamberCandidate>();
+
+		foreach (var blob in eligible)
+		{
+			var fullInterior = ComputeInterior(blob.Cells, groundLayer, width, height);
+			var interiorComponents = PartitionInteriorComponents(fullInterior)
+				.Where(component => component.Count >= config.MinCaveAreaSize);
+
+			foreach (var component in interiorComponents)
+			{
+				candidates.Add(new ChamberCandidate(blob, component, ComputeCentroid(component)));
+			}
+		}
+
+		return candidates;
+	}
+
+	private static WorldPosition ComputeCentroid(HashSet<WorldPosition> cells)
+	{
+		var sumX = 0;
+		var sumY = 0;
+
+		foreach (var cell in cells)
+		{
+			sumX += cell.X;
+			sumY += cell.Y;
+		}
+
+		return new WorldPosition(sumX / cells.Count, sumY / cells.Count);
+	}
+
+	private static List<ChamberCandidate> OrderCandidatesForEvenSpread(
+		IReadOnlyList<ChamberCandidate> candidates,
+		int seed)
+	{
+		if (candidates.Count <= 1)
+			return candidates.ToList();
+
+		var ordered = new List<ChamberCandidate>(candidates.Count);
+		var remaining = candidates.ToList();
+		var selectedCentroids = new List<WorldPosition>();
+
+		for (var pickIndex = 0; remaining.Count > 0; pickIndex++)
+		{
+			ChamberCandidate pick;
+
+			if (selectedCentroids.Count == 0)
+			{
+				var index = RandomIntInclusive(seed, pickIndex, 0, SpreadFirstPickSalt, 0, remaining.Count - 1);
+				pick = remaining[index];
+			}
+			else
+			{
+				pick = remaining
+					.OrderByDescending(candidate => MinDistanceToAny(candidate.Centroid, selectedCentroids))
+					.ThenByDescending(candidate =>
+						DeterministicCellRandom.Roll(seed, candidate.Centroid.X, candidate.Centroid.Y, SpreadTieSalt))
+					.First();
+			}
+
+			ordered.Add(pick);
+			remaining.Remove(pick);
+			selectedCentroids.Add(pick.Centroid);
+		}
+
+		return ordered;
+	}
+
+	private static int MinDistanceToAny(WorldPosition position, IReadOnlyList<WorldPosition> others)
+	{
+		var nearest = int.MaxValue;
+
+		foreach (var other in others)
+		{
+			var distance = Math.Abs(position.X - other.X) + Math.Abs(position.Y - other.Y);
+			if (distance < nearest)
+				nearest = distance;
+		}
+
+		return nearest;
 	}
 
 	private sealed class WallBlob
@@ -186,6 +303,14 @@ internal static class WallBlobCaveCarver
 		return anchor;
 	}
 
+	private static WorldPosition FindAnchor(HashSet<WorldPosition> cells, WorldPosition fallback)
+	{
+		if (cells.Count == 0)
+			return fallback;
+
+		return FindAnchor(cells);
+	}
+
 	private static HashSet<WorldPosition> ComputeInterior(
 		HashSet<WorldPosition> blob,
 		TileId[,] groundLayer,
@@ -220,18 +345,61 @@ internal static class WallBlobCaveCarver
 		return true;
 	}
 
+	private static List<HashSet<WorldPosition>> PartitionInteriorComponents(HashSet<WorldPosition> interior)
+	{
+		var remaining = new HashSet<WorldPosition>(interior);
+		var components = new List<HashSet<WorldPosition>>();
+
+		while (remaining.Count > 0)
+		{
+			var seedCell = remaining
+				.OrderBy(cell => cell.X + cell.Y)
+				.ThenBy(cell => cell.X)
+				.ThenBy(cell => cell.Y)
+				.First();
+
+			var component = new HashSet<WorldPosition>();
+			var queue = new Queue<WorldPosition>();
+			queue.Enqueue(seedCell);
+			remaining.Remove(seedCell);
+			component.Add(seedCell);
+
+			while (queue.Count > 0)
+			{
+				var current = queue.Dequeue();
+
+				foreach (var neighbor in FloorTraversal.GetNeighbors(current))
+				{
+					if (!remaining.Remove(neighbor))
+						continue;
+
+					component.Add(neighbor);
+					queue.Enqueue(neighbor);
+				}
+			}
+
+			components.Add(component);
+		}
+
+		return components;
+	}
+
 	private static HashSet<WorldPosition> SelectCarvableInterior(
 		HashSet<WorldPosition> interior,
-		int maxCaveAreaSize)
+		int maxCaveAreaSize,
+		int seed,
+		WorldPosition anchor)
 	{
 		if (interior.Count <= maxCaveAreaSize)
 			return interior;
 
-		var seedCell = interior
+		var orderedCells = interior
 			.OrderBy(cell => cell.X + cell.Y)
 			.ThenBy(cell => cell.X)
 			.ThenBy(cell => cell.Y)
-			.First();
+			.ToList();
+		var seedIndex = RandomIntInclusive(seed, anchor.X, anchor.Y, InteriorSeedSalt, 0, orderedCells.Count - 1);
+		var seedCell = orderedCells[seedIndex];
 
 		var selected = new HashSet<WorldPosition>();
 		var queue = new Queue<WorldPosition>();
@@ -258,32 +426,28 @@ internal static class WallBlobCaveCarver
 		return selected;
 	}
 
-	private static void Shuffle(List<WallBlob> blobs, int seed)
-	{
-		for (var i = blobs.Count - 1; i > 0; i--)
-		{
-			var roll = DeterministicCellRandom.Roll(seed, i, 0, ShuffleSalt);
-			var j = (int)(roll * (i + 1));
-			(blobs[i], blobs[j]) = (blobs[j], blobs[i]);
-		}
-	}
-
-	private static bool TryCarveBlob(
+	private static bool TryCarveChamber(
 		TileId[,] groundLayer,
 		int[,] caveRegionIndex,
 		WallBlob blob,
+		HashSet<WorldPosition> interiorComponent,
 		WorldPosition start,
 		WorldPosition goal,
 		int seed,
 		WorldGenerationConfig config,
 		int regionId,
+		int chamberIndex,
 		int width,
 		int height,
 		out CarvedCaveInfo carvedCave)
 	{
 		carvedCave = null!;
-		var fullInterior = ComputeInterior(blob.Cells, groundLayer, width, height);
-		var interior = SelectCarvableInterior(fullInterior, config.MaxCaveAreaSize);
+		var chamberAnchor = FindAnchor(interiorComponent, blob.Anchor);
+		var interior = SelectCarvableInterior(
+			interiorComponent,
+			config.MaxCaveAreaSize,
+			seed,
+			chamberAnchor);
 		var snapshot = SnapshotCells(groundLayer, caveRegionIndex, blob.Cells);
 
 		foreach (var cell in interior)
@@ -298,9 +462,9 @@ internal static class WallBlobCaveCarver
 		var accessibleExterior = MarkAccessibleGround(groundLayer, start, width, height);
 		var entranceCount = RandomIntInclusive(
 			seed,
-			blob.Anchor.X,
-			blob.Anchor.Y,
-			EntranceCountSalt,
+			chamberAnchor.X,
+			chamberAnchor.Y,
+			EntranceCountSalt + chamberIndex,
 			config.MinCaveEntrances,
 			config.MaxCaveEntrances);
 
@@ -326,9 +490,9 @@ internal static class WallBlobCaveCarver
 
 			var widthRoll = RandomIntInclusive(
 				seed,
-				blob.Anchor.X,
-				blob.Anchor.Y,
-				EntranceWidthSalt + entranceIndex,
+				chamberAnchor.X,
+				chamberAnchor.Y,
+				EntranceWidthSalt + (chamberIndex * 10) + entranceIndex,
 				config.MinEntranceWidth,
 				config.MaxEntranceWidth);
 
@@ -337,8 +501,8 @@ internal static class WallBlobCaveCarver
 				    usedEntrances,
 				    widthRoll,
 				    seed,
-				    blob.Anchor,
-				    entranceIndex,
+				    chamberAnchor,
+				    (chamberIndex * 10) + entranceIndex,
 				    groundLayer,
 				    width,
 				    height,

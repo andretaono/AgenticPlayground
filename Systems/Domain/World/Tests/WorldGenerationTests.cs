@@ -29,6 +29,9 @@ public sealed class WorldGenerationTests : ITestSuite
 		registry.Add(Name, "carved cave connects to exterior", CarvedCaveConnectsToExterior);
 		registry.Add(Name, "too small wall blob rejected", TooSmallWallBlobRejected);
 		registry.Add(Name, "max cave count limits carved caves", MaxCaveCountLimitsCarvedCaves);
+		registry.Add(Name, "multiple chambers carve in one blob", MultipleChambersCarveInOneBlob);
+		registry.Add(Name, "max caves per blob limits chambers", MaxCavesPerBlobLimitsChambers);
+		registry.Add(Name, "even spread prefers distant chamber pair", EvenSpreadPrefersDistantChamberPair);
 		registry.Add(Name, "carved cave floor gets ceiling", CarvedCaveFloorGetsCeiling);
 		registry.Add(Name, "cave carving preserves ground path", CaveCarvingPreservesGroundPath);
 		registry.Add(Name, "disconnected interior pocket not carved", DisconnectedInteriorPocketNotCarved);
@@ -356,6 +359,7 @@ public sealed class WorldGenerationTests : ITestSuite
 		MinEntranceWidth = 1,
 		MaxEntranceWidth = 1,
 		MaxCaveCount = 4,
+		MaxCavesPerBlob = 1,
 		StartCeilingClearanceRadius = 0,
 		ExtraWallStackChance = 0f
 	};
@@ -518,12 +522,85 @@ public sealed class WorldGenerationTests : ITestSuite
 			MinEntranceWidth = 1,
 			MaxEntranceWidth = 1,
 			MaxCaveCount = 2,
+			MaxCavesPerBlob = 1,
 			StartCeilingClearanceRadius = 0,
 			ExtraWallStackChance = 0f
 		};
 		var caveRegionIndex = ApplyCarver(groundLayer, config, seed: 1234);
 
 		TestAssert.Equal(2, CountDistinctCaveRegions(caveRegionIndex));
+	}
+
+	private static void MultipleChambersCarveInOneBlob()
+	{
+		var groundLayer = CreateMapWithTwoInteriorChambersInOneBlob();
+		var config = new WorldGenerationConfig
+		{
+			MinWallBlobSize = 24,
+			MinCaveAreaSize = 3,
+			MinCaveEntrances = 1,
+			MaxCaveEntrances = 1,
+			MinEntranceWidth = 1,
+			MaxEntranceWidth = 1,
+			MaxCaveCount = 4,
+			MaxCavesPerBlob = 2,
+			StartCeilingClearanceRadius = 0,
+			ExtraWallStackChance = 0f
+		};
+		var caveRegionIndex = ApplyCarver(groundLayer, config, seed: 4242);
+
+		TestAssert.Equal(2, CountDistinctCaveRegions(caveRegionIndex));
+		TestAssert.True(caveRegionIndex[11, 9] >= 0);
+		TestAssert.True(caveRegionIndex[22, 9] >= 0);
+		TestAssert.NotEqual(caveRegionIndex[11, 9], caveRegionIndex[22, 9]);
+	}
+
+	private static void MaxCavesPerBlobLimitsChambers()
+	{
+		var groundLayer = CreateMapWithTwoInteriorChambersInOneBlob();
+		var config = new WorldGenerationConfig
+		{
+			MinWallBlobSize = 24,
+			MinCaveAreaSize = 3,
+			MinCaveEntrances = 1,
+			MaxCaveEntrances = 1,
+			MinEntranceWidth = 1,
+			MaxEntranceWidth = 1,
+			MaxCaveCount = 4,
+			MaxCavesPerBlob = 1,
+			StartCeilingClearanceRadius = 0,
+			ExtraWallStackChance = 0f
+		};
+		var caveRegionIndex = ApplyCarver(groundLayer, config, seed: 4242);
+
+		TestAssert.Equal(1, CountDistinctCaveRegions(caveRegionIndex));
+	}
+
+	private static void EvenSpreadPrefersDistantChamberPair()
+	{
+		var groundLayer = CreateMapWithTwoInteriorChambersInOneBlob();
+		var config = new WorldGenerationConfig
+		{
+			MinWallBlobSize = 24,
+			MinCaveAreaSize = 3,
+			MinCaveEntrances = 1,
+			MaxCaveEntrances = 1,
+			MinEntranceWidth = 1,
+			MaxEntranceWidth = 1,
+			MaxCaveCount = 2,
+			MaxCavesPerBlob = 2,
+			StartCeilingClearanceRadius = 0,
+			ExtraWallStackChance = 0f
+		};
+		var caveRegionIndex = ApplyCarver(groundLayer, config, seed: 9001);
+
+		TestAssert.Equal(2, CountDistinctCaveRegions(caveRegionIndex));
+		TestAssert.True(caveRegionIndex[11, 9] >= 0);
+		TestAssert.True(caveRegionIndex[22, 9] >= 0);
+
+		var leftCarved = caveRegionIndex[11, 9] >= 0;
+		var rightCarved = caveRegionIndex[22, 9] >= 0;
+		TestAssert.True(leftCarved && rightCarved);
 	}
 
 	private static void CarvedCaveFloorGetsCeiling()
@@ -707,6 +784,19 @@ public sealed class WorldGenerationTests : ITestSuite
 		PaintGroundRect(tiles, 16, 7, 17, 9);
 		PaintWallRect(tiles, 28, 5, 34, 11);
 		PaintGroundRect(tiles, 26, 7, 27, 9);
+		return tiles;
+	}
+
+	private static TileId[,] CreateMapWithTwoInteriorChambersInOneBlob()
+	{
+		var tiles = CreateBorderedMap(40, 24);
+		PaintWallRect(tiles, 8, 5, 16, 13);
+		PaintWallRect(tiles, 18, 5, 26, 13);
+		PaintWallRect(tiles, 16, 8, 18, 10);
+		tiles[17, 8] = TileIds.Ground;
+		tiles[17, 10] = TileIds.Ground;
+		PaintGroundRect(tiles, 6, 7, 7, 11);
+		PaintGroundRect(tiles, 28, 7, 29, 11);
 		return tiles;
 	}
 

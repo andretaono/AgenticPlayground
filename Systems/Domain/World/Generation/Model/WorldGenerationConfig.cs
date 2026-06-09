@@ -21,6 +21,7 @@ public sealed class WorldGenerationConfig
 	public int MinEntranceDepth { get; init; } = 1;
 	public int MaxEntranceDepth { get; init; } = 8;
 	public int MaxCaveCount { get; init; } = 4;
+	public int MaxCavesPerBlob { get; init; } = 1;
 	public float ExtraWallStackChance { get; init; } = 0.15f;
 	public float ExtraWallStackClusterChance { get; init; } = 0.75f;
 	public int ExtraWallStackGrowPasses { get; init; } = 4;

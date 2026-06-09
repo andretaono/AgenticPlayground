@@ -154,6 +154,7 @@ namespace Game.UnityBridge.Bootstrap
 				MinEntranceDepth = settings.MinEntranceDepth,
 				MaxEntranceDepth = settings.MaxEntranceDepth,
 				MaxCaveCount = settings.MaxCaveCount,
+				MaxCavesPerBlob = settings.MaxCavesPerBlob,
 				ExtraWallStackChance = settings.ExtraWallStackChance,
 				ExtraWallStackClusterChance = settings.ExtraWallStackClusterChance,
 				ExtraWallStackGrowPasses = settings.ExtraWallStackGrowPasses,

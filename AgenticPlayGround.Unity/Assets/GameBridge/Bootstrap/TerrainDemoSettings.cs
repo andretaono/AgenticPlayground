@@ -26,6 +26,7 @@ namespace Game.UnityBridge.Bootstrap
 		public int MinEntranceDepth = 1;
 		public int MaxEntranceDepth = 8;
 		public int MaxCaveCount = 4;
+		public int MaxCavesPerBlob = 3;
 		[Range(0f, 1f)] public float ExtraWallStackChance = 0.15f;
 		[Range(0f, 1f)] public float ExtraWallStackClusterChance = 0.75f;
 		public int ExtraWallStackGrowPasses = 4;

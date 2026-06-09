@@ -450,9 +450,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _settings:
-    MapWidth: 64
-    MapHeight: 48
-    Seed: 42
+    MapWidth: 32
+    MapHeight: 32
+    Seed: 1000
     FillProbability: 0.6
     CellularAutomataIterations: 5
     MaxAttempts: 50
@@ -469,7 +469,8 @@ MonoBehaviour:
     MinEntranceDepth: 1
     MaxEntranceDepth: 8
     MaxCaveCount: 4
-    ExtraWallStackChance: 0
+    MaxCavesPerBlob: 3
+    ExtraWallStackChance: 0.15
     ExtraWallStackClusterChance: 0.75
     ExtraWallStackGrowPasses: 4
     StartCeilingClearanceRadius: 4
