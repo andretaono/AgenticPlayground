@@ -2,4 +2,6 @@ using Game.Systems.Domain.TerrainMesh.Model;
 
 namespace Game.Systems.Integration.TerrainMesh;
 
-public sealed record TerrainBuildResult(Heightmap Heightmap);
+public sealed record TerrainBuildResult(
+	Heightmap Heightmap,
+	TileSurfaceMeshResult? SurfaceMesh = null);

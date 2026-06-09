@@ -82,6 +82,7 @@
     <Compile Include="Assets\GameBridge\Bootstrap\TerrainDemoContext.cs" />
     <Compile Include="Assets\GameBridge\Debug\WorldLayerDebugColors.cs" />
     <Compile Include="Assets\GameBridge\Runtime\WorldLayerDebugHost.cs" />
+    <Compile Include="Assets\GameBridge\Terrain\UnityMeshUpload.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\csc.rsp" />

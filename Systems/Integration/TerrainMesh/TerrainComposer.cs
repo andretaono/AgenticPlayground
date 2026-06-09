@@ -1,4 +1,5 @@
 using Game.Systems.Domain.TerrainMesh.Model;
+using Game.Systems.Domain.World.Generation.Model;
 using Game.Systems.Domain.World.Ports;
 using Game.Systems.Integration.Adapters;
 
@@ -38,5 +39,12 @@ public sealed class TerrainComposer
 		var heightmap = Heightmap.FromSamples(samples, mapping.WorldUnitsPerTile);
 
 		return new TerrainBuildResult(heightmap);
+	}
+
+	public TerrainBuildResult ComposeFromMap(GeneratedWorldMap map, WorldTerrainMapping mapping)
+	{
+		var heightmapResult = Compose(map.ToDataSource(), mapping);
+		var surfaceMesh = new TileSurfaceComposer(_tileRules).Compose(map, mapping);
+		return heightmapResult with { SurfaceMesh = surfaceMesh };
 	}
 }

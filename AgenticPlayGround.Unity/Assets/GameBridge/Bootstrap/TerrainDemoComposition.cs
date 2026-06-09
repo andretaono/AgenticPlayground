@@ -237,17 +237,16 @@ namespace Game.UnityBridge.Bootstrap
 			TileHeightModifierSettings modifierSettings)
 		{
 			var composer = new TerrainComposer(new DefaultTileRulesProvider());
+			var mapping = new WorldTerrainMapping(
+				Seed: map.SeedUsed,
+				WorldUnitsPerTile: settings.WorldUnitsPerTile,
+				TerrainConfig: new TerrainMeshConfig
+				{
+					HeightScale = settings.HeightScale
+				},
+				ModifierSettings: modifierSettings);
 
-			return composer.Compose(
-				map.ToDataSource(),
-				new WorldTerrainMapping(
-					Seed: map.SeedUsed,
-					WorldUnitsPerTile: settings.WorldUnitsPerTile,
-					TerrainConfig: new TerrainMeshConfig
-					{
-						HeightScale = settings.HeightScale
-					},
-					ModifierSettings: modifierSettings));
+			return composer.ComposeFromMap(map, mapping);
 		}
 
 		private static int CountTiles(TileId[,] tiles, TileId tileId)

@@ -48,6 +48,7 @@ public static class UnitTestRunner
 		yield return new ItemAssemblyScenarioTests();
 		yield return new WorldCognitionScenarioTests();
 		yield return new WorldTerrainMeshTests();
+		yield return new TileSurfaceMeshTests();
 		yield return new PolarBearTests();
 		yield return new PolarBearSpawnTests();
 		yield return new PolarBearNavigationTests();

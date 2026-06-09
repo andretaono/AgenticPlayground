@@ -1,6 +1,5 @@
 using System;
 using Game.Systems.Domain.World.Generation.Model;
-using Game.Systems.Domain.World.Model;
 using Game.Systems.Integration.Adapters;
 using Game.Systems.Integration.Presentation.Ports;
 using Game.Systems.Integration.TerrainMesh;
@@ -41,172 +40,61 @@ namespace Game.UnityBridge.Terrain
 
 			ClearExistingTiles();
 
-			var cellSize = result.Heightmap.CellSize;
-			var cubeHeight = cellSize * _heightScale;
-
-			for (var y = 0; y < map.Height; y++)
-			for (var x = 0; x < map.Width; x++)
+			var surfaceMesh = result.SurfaceMesh;
+			if (surfaceMesh is null)
 			{
-				var centerX = (x + 0.5f) * cellSize;
-				var centerZ = (y + 0.5f) * cellSize;
-				PlaceWaterLevelCube(x, y, centerX, centerZ, cellSize, cubeHeight, settings);
+				surfaceMesh = new TileSurfaceComposer(_tileRules).Compose(
+					map,
+					new WorldTerrainMapping(
+						Seed: map.SeedUsed,
+						WorldUnitsPerTile: result.Heightmap.CellSize,
+						TerrainConfig: new Game.Systems.Domain.TerrainMesh.Model.TerrainMeshConfig
+						{
+							HeightScale = _heightScale
+						},
+						ModifierSettings: settings));
 			}
 
-			for (var y = 0; y < map.Height; y++)
-			for (var x = 0; x < map.Width; x++)
-			{
-				var tile = map.GroundLayer[x, y];
-				var rules = _tileRules.GetRules(tile);
-
-				if (rules.HasFlag(TileRules.Swimable))
-					continue;
-
-				var centerX = (x + 0.5f) * cellSize;
-				var centerZ = (y + 0.5f) * cellSize;
-
-				if (rules.HasFlag(TileRules.BlocksMovement))
-				{
-					PlaceGroundCube(map, x, y, centerX, centerZ, cellSize, cubeHeight, settings);
-					var wallCenterY = settings.WallHeight * _heightScale * 0.5f;
-					CreateTileCube(
-						$"Wall_{x}_{y}",
-						centerX,
-						wallCenterY,
-						centerZ,
-						cellSize,
-						cubeHeight,
-						TileVisualMaterials.GetWallMaterial());
-				}
-				else
-				{
-					PlaceGroundCube(map, x, y, centerX, centerZ, cellSize, cubeHeight, settings);
-				}
-			}
-
-			var groundTopY = settings.GroundHeight * _heightScale;
-			var ceilingCenterY = groundTopY + cubeHeight * 1.5f;
-
-			for (var y = 0; y < map.Height; y++)
-			for (var x = 0; x < map.Width; x++)
-			{
-				if (map.CeilingLayer[x, y] != CeilingLayerTileIds.Solid)
-					continue;
-
-				if (map.GroundLayer[x, y] != TileIds.Wall)
-					continue;
-
-				var centerX = (x + 0.5f) * cellSize;
-				var centerZ = (y + 0.5f) * cellSize;
-				CreateTileCube(
-					$"CeilingStack_{x}_{y}",
-					centerX,
-					ceilingCenterY,
-					centerZ,
-					cellSize,
-					cubeHeight,
-					TileVisualMaterials.GetCeilingMaterial());
-			}
-
-			for (var y = 0; y < map.Height; y++)
-			for (var x = 0; x < map.Width; x++)
-			{
-				if (map.CeilingLayer[x, y] != CeilingLayerTileIds.Solid)
-					continue;
-
-				if (map.GroundLayer[x, y] == TileIds.Wall)
-					continue;
-
-				var centerX = (x + 0.5f) * cellSize;
-				var centerZ = (y + 0.5f) * cellSize;
-				var ceilingCap = CreateTileCube(
-					$"CeilingCap_{x}_{y}",
-					centerX,
-					ceilingCenterY,
-					centerZ,
-					cellSize,
-					cubeHeight,
-					TileVisualMaterials.GetCeilingMaterial());
-
-				var caveRegionId = map.CaveRegionIndex[x, y];
-				if (caveRegionId >= 0 &&
-				    ceilingCap.TryGetComponent<Renderer>(out var ceilingRenderer))
-				{
-					CaveCeilingVisibility.Register(caveRegionId, ceilingRenderer);
-				}
-			}
+			SyncSurfaceMeshes(surfaceMesh);
 		}
 
-		private void PlaceGroundCube(
-			GeneratedWorldMap map,
-			int x,
-			int y,
-			float centerX,
-			float centerZ,
-			float cellSize,
-			float cubeHeight,
-			TileHeightModifierSettings settings)
+		private void SyncSurfaceMeshes(TileSurfaceMeshResult surfaceMesh)
 		{
-			var groundTopY = settings.GroundHeight * _heightScale;
-			var groundCenterY = groundTopY - cubeHeight * 0.5f;
-			var material = map.CaveRegionIndex[x, y] >= 0
-				? TileVisualMaterials.GetCaveGroundMaterial()
-				: TileVisualMaterials.GetGroundMaterial();
-			CreateTileCube(
-				$"Ground_{x}_{y}",
-				centerX,
-				groundCenterY,
-				centerZ,
-				cellSize,
-				cubeHeight,
-				material);
+			foreach (var group in surfaceMesh.Groups)
+			{
+				var meshObject = new GameObject(BuildMeshObjectName(group));
+				meshObject.transform.SetParent(_terrainRoot, worldPositionStays: false);
+
+				var meshFilter = meshObject.AddComponent<MeshFilter>();
+				meshFilter.sharedMesh = UnityMeshUpload.CreateMesh(group.Mesh, meshObject.name);
+
+				var meshRenderer = meshObject.AddComponent<MeshRenderer>();
+				meshRenderer.sharedMaterial = ResolveMaterial(group.Material);
+
+				if (group.Material == SurfaceMaterialId.CeilingCap && group.CaveRegionId >= 0)
+					CaveCeilingVisibility.Register(group.CaveRegionId, meshRenderer);
+			}
 		}
 
-		private void PlaceWaterLevelCube(
-			int x,
-			int y,
-			float centerX,
-			float centerZ,
-			float cellSize,
-			float cubeHeight,
-			TileHeightModifierSettings settings)
+		private static string BuildMeshObjectName(TileSurfaceMeshGroup group)
 		{
-			var waterTopY = settings.WaterHeight * _heightScale;
-			var waterCenterY = waterTopY - cubeHeight * 0.5f;
-			CreateTileCube(
-				$"WaterLevel_{x}_{y}",
-				centerX,
-				waterCenterY,
-				centerZ,
-				cellSize,
-				cubeHeight,
-				TileVisualMaterials.GetWaterMaterial());
+			if (group.Material == SurfaceMaterialId.CeilingCap && group.CaveRegionId >= 0)
+				return $"CeilingCap_Region_{group.CaveRegionId}";
+
+			return group.Material.ToString();
 		}
 
-		private GameObject CreateTileCube(
-			string name,
-			float centerX,
-			float centerY,
-			float centerZ,
-			float cellSize,
-			float cubeHeight,
-			Material material)
-		{
-			var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
-			cube.name = name;
-			cube.transform.SetParent(_terrainRoot, worldPositionStays: false);
-			cube.transform.localPosition = new Vector3(centerX, centerY, centerZ);
-			cube.transform.localScale = new Vector3(cellSize, cubeHeight, cellSize);
-
-			var renderer = cube.GetComponent<Renderer>();
-			if (renderer != null)
-				renderer.sharedMaterial = material;
-
-			var collider = cube.GetComponent<Collider>();
-			if (collider != null)
-				UnityEngine.Object.Destroy(collider);
-
-			return cube;
-		}
+		private static Material ResolveMaterial(SurfaceMaterialId material) =>
+			material switch
+			{
+				SurfaceMaterialId.Water => TileVisualMaterials.GetWaterMaterial(),
+				SurfaceMaterialId.Ground => TileVisualMaterials.GetGroundMaterial(),
+				SurfaceMaterialId.CaveGround => TileVisualMaterials.GetCaveGroundMaterial(),
+				SurfaceMaterialId.Wall => TileVisualMaterials.GetWallMaterial(),
+				SurfaceMaterialId.CeilingStack => TileVisualMaterials.GetCeilingMaterial(),
+				SurfaceMaterialId.CeilingCap => TileVisualMaterials.GetCeilingMaterial(),
+				_ => TileVisualMaterials.GetGroundMaterial()
+			};
 
 		private void ClearExistingTiles()
 		{
