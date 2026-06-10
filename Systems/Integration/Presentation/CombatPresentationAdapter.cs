@@ -60,7 +60,6 @@ public sealed class CombatPresentationAdapter : ITickable
 		{
 			_presenter.ShowAttackArc(
 				swing.AttackerId,
-				swing.Forward,
 				swing.Range,
 				swing.ArcDegrees,
 				durationSeconds: 0.2f);

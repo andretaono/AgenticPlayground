@@ -134,12 +134,6 @@ namespace Game.UnityBridge.Bootstrap
 				playerConfig.MaxHealth,
 				entityId => GetPosition(entityId));
 
-			var vitalityCleanup = new VitalityCleanupServices(
-				actorRegistry,
-				movement,
-				commandSystem,
-				combat.Registry,
-				worldPresenter);
 			var facingProvider = new PlayerFacingProvider(facing, player.EntityId);
 
 			var polarBearSetup = new PolarBearTerrainDemoSetup().TryBuild(
@@ -154,6 +148,14 @@ namespace Game.UnityBridge.Bootstrap
 				combat,
 				resources,
 				combatServices);
+
+			var vitalityCleanup = new VitalityCleanupServices(
+				actorRegistry,
+				movement,
+				commandSystem,
+				combat.Registry,
+				worldPresenter,
+				polarBearSetup?.BehaviourSystem.Behaviour);
 
 			var runtimeBuilder = new GameRuntimeBuilder(math)
 				.WithExistingMovement(movement)

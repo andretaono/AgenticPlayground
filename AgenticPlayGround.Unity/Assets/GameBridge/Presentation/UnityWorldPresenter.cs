@@ -74,7 +74,6 @@ namespace Game.UnityBridge.Presentation
 
 		public void ShowAttackArc(
 			EntityId entityId,
-			GameVector2 forward,
 			float range,
 			float arcDegrees,
 			float durationSeconds)
@@ -83,7 +82,6 @@ namespace Game.UnityBridge.Presentation
 				return;
 
 			visual.ArcVisualizer.Show(
-				forward,
 				range * _worldUnitsPerTile,
 				arcDegrees,
 				durationSeconds);

@@ -9,4 +9,5 @@ public interface IBehaviourController
 	bool RemoveBehaviour(AgentId agentId, IBehaviour behaviour);
 	void SetBehaviourPriority(AgentId agentId, IBehaviour behaviour, int priority);
 	void ClearBehaviours(AgentId agentId);
+	void UnregisterAgent(AgentId agentId);
 }

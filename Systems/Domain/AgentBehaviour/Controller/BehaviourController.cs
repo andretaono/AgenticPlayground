@@ -50,4 +50,6 @@ internal sealed class BehaviourController : IBehaviourController
 	}
 
 	public void ClearBehaviours(AgentId agentId) => _store.GetOrCreateBehaviours(agentId).Clear();
+
+	public void UnregisterAgent(AgentId agentId) => _store.RemoveAgent(agentId);
 }

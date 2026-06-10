@@ -1,4 +1,3 @@
-using GameVector2 = Game.Systems.Foundation.GameMath.Core.Model.Vector2;
 using UnityEngine;
 
 namespace Game.UnityBridge.Presentation
@@ -39,18 +38,17 @@ namespace Game.UnityBridge.Presentation
 				_lineRenderer.positionCount = 0;
 		}
 
-		public void Show(GameVector2 forward, float rangeWorld, float arcDegrees, float durationSeconds)
+		public void Show(float rangeWorld, float arcDegrees, float durationSeconds)
 		{
 			const int segments = 16;
 			var halfArc = arcDegrees * 0.5f * Mathf.Deg2Rad;
-			var baseAngle = Mathf.Atan2(forward.X, forward.Y);
 			var positions = new Vector3[segments + 2];
 			positions[0] = Vector3.zero;
 
 			for (var i = 0; i <= segments; i++)
 			{
 				var t = i / (float)segments;
-				var angle = baseAngle - halfArc + (2f * halfArc * t);
+				var angle = -halfArc + (2f * halfArc * t);
 				positions[i + 1] = new Vector3(Mathf.Sin(angle) * rangeWorld, 0.05f, Mathf.Cos(angle) * rangeWorld);
 			}
 

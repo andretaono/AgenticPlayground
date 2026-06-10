@@ -1,3 +1,6 @@
+using Game.Systems.Domain.AgentBehaviour.Ports;
+using Game.Systems.Domain.AgentCommand;
+using Game.Systems.Domain.AgentMovement;
 using Game.Systems.Domain.EntityResource;
 using Game.Systems.Domain.EntityResource.Ports;
 using Game.Systems.Foundation.Primitives;
@@ -33,6 +36,8 @@ public sealed class VitalityMonitorAdapter : ITickable
 	{
 		_ = deltaTime;
 
+		List<ActorHandle>? pendingDeaths = null;
+
 		foreach (var actor in _actorRegistry.Actors)
 		{
 			if (_sessionState.IsDead(actor.EntityId))
@@ -42,8 +47,14 @@ public sealed class VitalityMonitorAdapter : ITickable
 			if (health is null || !health.IsDepleted)
 				continue;
 
-			HandleDeath(actor);
+			(pendingDeaths ??= new List<ActorHandle>()).Add(actor);
 		}
+
+		if (pendingDeaths is null)
+			return;
+
+		foreach (var actor in pendingDeaths)
+			HandleDeath(actor);
 	}
 
 	private void HandleDeath(ActorHandle actor)
@@ -64,23 +75,26 @@ public sealed class VitalityCleanupServices
 {
 	public VitalityCleanupServices(
 		IActorRegistry actorRegistry,
-		Game.Systems.Domain.AgentMovement.AgentMovementSystem movement,
-		Game.Systems.Domain.AgentCommand.AgentCommandSystem commandSystem,
+		AgentMovementSystem movement,
+		AgentCommandSystem commandSystem,
 		Game.Systems.Domain.AgentCombat.Ports.ICombatEntityRegistry combatRegistry,
-		IWorldPresenter? presenter = null)
+		IWorldPresenter? presenter = null,
+		IBehaviourController? behaviourController = null)
 	{
 		ActorRegistry = actorRegistry;
 		Movement = movement;
 		CommandSystem = commandSystem;
 		CombatRegistry = combatRegistry;
 		Presenter = presenter;
+		BehaviourController = behaviourController;
 	}
 
 	public IActorRegistry ActorRegistry { get; }
-	public Game.Systems.Domain.AgentMovement.AgentMovementSystem Movement { get; }
-	public Game.Systems.Domain.AgentCommand.AgentCommandSystem CommandSystem { get; }
+	public AgentMovementSystem Movement { get; }
+	public AgentCommandSystem CommandSystem { get; }
 	public Game.Systems.Domain.AgentCombat.Ports.ICombatEntityRegistry CombatRegistry { get; }
 	public IWorldPresenter? Presenter { get; }
+	public IBehaviourController? BehaviourController { get; }
 
 	public void RemoveDeadActor(ActorHandle actor)
 	{
@@ -89,6 +103,7 @@ public sealed class VitalityCleanupServices
 
 		Movement.Registry.RemoveAgent(actor.EntityId);
 		CommandSystem.UnregisterAgent(actor.AgentId);
+		BehaviourController?.UnregisterAgent(actor.AgentId);
 		ActorRegistry.RemoveActor(actor);
 		Presenter?.RemoveActor(actor.EntityId);
 	}

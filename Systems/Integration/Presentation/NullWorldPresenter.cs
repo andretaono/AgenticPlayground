@@ -25,10 +25,9 @@ public sealed class NullWorldPresenter : IWorldPresenter
 		_ = yawDegrees;
 	}
 
-	public void ShowAttackArc(EntityId entityId, Vector2 forward, float range, float arcDegrees, float durationSeconds)
+	public void ShowAttackArc(EntityId entityId, float range, float arcDegrees, float durationSeconds)
 	{
 		_ = entityId;
-		_ = forward;
 		_ = range;
 		_ = arcDegrees;
 		_ = durationSeconds;

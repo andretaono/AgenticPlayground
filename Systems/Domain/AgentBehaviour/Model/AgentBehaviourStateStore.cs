@@ -50,4 +50,11 @@ internal sealed class AgentBehaviourStateStore
 		_activeBehaviours.Clear();
 		_emittedIntents.Clear();
 	}
+
+	public void RemoveAgent(AgentId agentId)
+	{
+		_behaviours.Remove(agentId);
+		_activeBehaviours.Remove(agentId);
+		_emittedIntents.Remove(agentId);
+	}
 }
