@@ -36,6 +36,7 @@ public sealed class GameRuntimeBuilder
 	private IInputSource? _inputSource;
 	private AgentId? _inputAgentId;
 	private EntityId? _inputEntityId;
+	private EntityId? _playerEntityId;
 	private IWorldPresenter? _presenter;
 	private IActorRegistry? _actorRegistry;
 	private CombatRuntimeServices? _combatServices;
@@ -156,6 +157,12 @@ public sealed class GameRuntimeBuilder
 		return this;
 	}
 
+	public GameRuntimeBuilder WithPlayerEntity(EntityId playerEntityId)
+	{
+		_playerEntityId = playerEntityId;
+		return this;
+	}
+
 	public GameRuntimeBuilder WithPlayerAttackAbility(ArcAttackAbilityDefinition attackAbility)
 	{
 		_playerAttackAbility = attackAbility ?? throw new ArgumentNullException(nameof(attackAbility));
@@ -273,7 +280,7 @@ public sealed class GameRuntimeBuilder
 				new VitalityMonitorAdapter(
 					_resources,
 					_sessionState,
-					_inputEntityId ?? default,
+					_playerEntityId ?? _inputEntityId ?? default,
 					_actorRegistry,
 					_vitalityCleanup),
 				StandardTickOrder.Vitality));
@@ -301,8 +308,7 @@ public sealed class GameRuntimeBuilder
 						_actorRegistry,
 						_resources,
 						_combatServices,
-						_sessionState,
-						_worldUnitsPerTile),
+						_sessionState),
 					StandardTickOrder.CombatPresentation));
 			}
 		}

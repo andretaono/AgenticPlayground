@@ -34,4 +34,10 @@ public sealed class NullWorldPresenter : IWorldPresenter
 	}
 
 	public void RemoveActor(EntityId entityId) => _ = entityId;
+
+	public void ConfigureActorVisual(EntityId entityId, ActorVisualDescriptor descriptor)
+	{
+		_ = entityId;
+		_ = descriptor;
+	}
 }

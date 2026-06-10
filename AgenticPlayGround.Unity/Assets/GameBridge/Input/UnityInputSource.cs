@@ -6,18 +6,25 @@ namespace Game.UnityBridge.Input
 {
 	public sealed class UnityInputSource : IInputSource
 	{
-		private readonly AgentId _boundAgentId;
 		private readonly PlayerFacingController _facing;
+		private AgentId? _boundAgentId;
 
-		public UnityInputSource(AgentId boundAgentId, PlayerFacingController facing)
+		public UnityInputSource(PlayerFacingController facing)
 		{
-			_boundAgentId = boundAgentId;
 			_facing = facing ?? throw new System.ArgumentNullException(nameof(facing));
 		}
 
+		public UnityInputSource(AgentId boundAgentId, PlayerFacingController facing)
+			: this(facing)
+		{
+			_boundAgentId = boundAgentId;
+		}
+
+		public void Bind(AgentId agentId) => _boundAgentId = agentId;
+
 		public GameVector2 PollMovementInput(AgentId agentId)
 		{
-			if (!agentId.Equals(_boundAgentId))
+			if (_boundAgentId is { } bound && !agentId.Equals(bound))
 				return GameVector2.Zero;
 
 			var forwardBack = UnityEngine.Input.GetAxisRaw("Vertical");
@@ -33,7 +40,7 @@ namespace Game.UnityBridge.Input
 
 		public bool PollAttackInput(AgentId agentId)
 		{
-			if (!agentId.Equals(_boundAgentId))
+			if (_boundAgentId is { } bound && !agentId.Equals(bound))
 				return false;
 
 			return UnityEngine.Input.GetKeyDown(UnityEngine.KeyCode.Space) ||

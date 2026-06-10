@@ -5,9 +5,9 @@ namespace Game.UnityBridge.Runtime
 {
 	public sealed class CameraFollowHost : MonoBehaviour
 	{
-		private TerrainDemoContext _context;
+		private GameSessionContext _context;
 
-		public void Initialize(TerrainDemoContext context) => _context = context;
+		public void Initialize(GameSessionContext context) => _context = context;
 
 		private void LateUpdate()
 		{

@@ -1,3 +1,4 @@
+using Game.Systems.Integration.Presentation;
 using UnityEngine;
 using UnityQuaternion = UnityEngine.Quaternion;
 using UnityVector3 = UnityEngine.Vector3;
@@ -13,25 +14,22 @@ namespace Game.UnityBridge.Presentation
 		private float _pitchVelocity;
 		private float _lookYawVelocity;
 
-		public SettingsConfig Settings { get; set; } = SettingsConfig.Default;
+		public TopDownCameraConfig Config { get; set; } = TopDownCameraConfig.Default;
 
 		public void SnapTo(Transform player, Camera camera, float facingYawDegrees = 0f)
 		{
 			_cameraYawDegrees = facingYawDegrees;
 			_cameraYawVelocity = 0f;
 			_positionVelocity = UnityVector3.zero;
-			_pitchDegrees = Settings.PitchDegrees;
+			_pitchDegrees = Config.PitchDegrees;
 			_pitchVelocity = 0f;
 			_lookYawVelocity = 0f;
 
 			if (player == null || camera == null)
 				return;
 
-			player.rotation = UnityQuaternion.Euler(0f, facingYawDegrees, 0f);
-
-			var settings = Settings;
-			var lookTarget = ComputeLookTarget(player.position, facingYawDegrees, settings);
-			var desiredPosition = ComputeCameraPosition(lookTarget, facingYawDegrees, settings);
+			var lookTarget = ComputeLookTarget(player.position, facingYawDegrees);
+			var desiredPosition = ComputeCameraPosition(lookTarget, facingYawDegrees);
 			var desiredRotation = UnityQuaternion.LookRotation(lookTarget - desiredPosition, UnityVector3.up);
 
 			camera.transform.position = desiredPosition;
@@ -44,23 +42,20 @@ namespace Game.UnityBridge.Presentation
 			if (player == null || camera == null)
 				return;
 
-			var settings = Settings;
-			player.rotation = UnityQuaternion.Euler(0f, facingYawDegrees, 0f);
-
 			_cameraYawDegrees = UnityEngine.Mathf.SmoothDampAngle(
 				_cameraYawDegrees,
 				facingYawDegrees,
 				ref _cameraYawVelocity,
-				settings.YawSmoothTime);
+				Config.YawSmoothTime);
 
-			var lookTarget = ComputeLookTarget(player.position, _cameraYawDegrees, settings);
-			var desiredPosition = ComputeCameraPosition(lookTarget, _cameraYawDegrees, settings);
+			var lookTarget = ComputeLookTarget(player.position, _cameraYawDegrees);
+			var desiredPosition = ComputeCameraPosition(lookTarget, _cameraYawDegrees);
 
 			camera.transform.position = UnityVector3.SmoothDamp(
 				camera.transform.position,
 				desiredPosition,
 				ref _positionVelocity,
-				settings.PositionSmoothTime);
+				Config.PositionSmoothTime);
 
 			var toTarget = lookTarget - camera.transform.position;
 			if (toTarget.sqrMagnitude <= 1e-6f)
@@ -74,29 +69,29 @@ namespace Game.UnityBridge.Presentation
 				_pitchDegrees,
 				desiredPitch,
 				ref _pitchVelocity,
-				settings.RotationSmoothTime);
+				Config.RotationSmoothTime);
 
 			var smoothedLookYaw = UnityEngine.Mathf.SmoothDampAngle(
 				camera.transform.eulerAngles.y,
 				desiredLookYaw,
 				ref _lookYawVelocity,
-				settings.RotationSmoothTime);
+				Config.RotationSmoothTime);
 
 			camera.transform.rotation = UnityQuaternion.Euler(_pitchDegrees, smoothedLookYaw, 0f);
 		}
 
-		private static UnityVector3 ComputeLookTarget(UnityVector3 playerPosition, float yawDegrees, SettingsConfig settings)
+		private UnityVector3 ComputeLookTarget(UnityVector3 playerPosition, float yawDegrees)
 		{
 			var forward = YawToForward(yawDegrees);
 			return playerPosition
-				+ UnityVector3.up * settings.LookHeight
-				+ forward * settings.LookAhead;
+			       + UnityVector3.up * Config.LookHeight
+			       + forward * Config.LookAhead;
 		}
 
-		private static UnityVector3 ComputeCameraPosition(UnityVector3 lookTarget, float yawDegrees, SettingsConfig settings)
+		private UnityVector3 ComputeCameraPosition(UnityVector3 lookTarget, float yawDegrees)
 		{
-			var orbitRotation = UnityQuaternion.Euler(settings.PitchDegrees, yawDegrees, 0f);
-			return lookTarget + orbitRotation * (UnityVector3.back * settings.OrbitDistance);
+			var orbitRotation = UnityQuaternion.Euler(Config.PitchDegrees, yawDegrees, 0f);
+			return lookTarget + orbitRotation * (UnityVector3.back * Config.OrbitDistance);
 		}
 
 		private static UnityVector3 YawToForward(float yawDegrees)
@@ -107,18 +102,5 @@ namespace Game.UnityBridge.Presentation
 
 		private static float NormalizePitch(float pitchDegrees) =>
 			pitchDegrees > 180f ? pitchDegrees - 360f : pitchDegrees;
-
-		public sealed class SettingsConfig
-		{
-			public float OrbitDistance = 16f;
-			public float PitchDegrees = 52f;
-			public float LookHeight = 0.75f;
-			public float LookAhead = 0.25f;
-			public float YawSmoothTime = 0.15f;
-			public float PositionSmoothTime = 0.1f;
-			public float RotationSmoothTime = 0.08f;
-
-			public static SettingsConfig Default { get; } = new();
-		}
 	}
 }

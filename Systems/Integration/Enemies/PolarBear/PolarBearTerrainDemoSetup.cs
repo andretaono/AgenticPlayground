@@ -15,6 +15,7 @@ using Game.Systems.Integration.Actors;
 using Game.Systems.Integration.Adapters;
 using Game.Systems.Integration.Behaviours;
 using Game.Systems.Integration.Combat;
+using Game.Systems.Integration.Enemies;
 using Game.Systems.Integration.Enemies.Common.Context;
 using Game.Systems.Integration.Enemies.Common.Perception;
 using Game.Systems.Integration.Navigation;
@@ -26,8 +27,8 @@ public sealed class PolarBearTerrainDemoSetup
 {
 	public PolarBearTerrainDemoSetupResult? TryBuild(
 		GeneratedWorldMap map,
-		int minCount,
-		int maxCount,
+		EnemySpawnConfig spawnConfig,
+		PolarBearConfig bearConfig,
 		ActorHandle player,
 		ActorRegistry actorRegistry,
 		IGameMath math,
@@ -54,18 +55,22 @@ public sealed class PolarBearTerrainDemoSetup
 		if (combatServices is null)
 			throw new ArgumentNullException(nameof(combatServices));
 
+		if (spawnConfig is null)
+			throw new ArgumentNullException(nameof(spawnConfig));
+		if (bearConfig is null)
+			throw new ArgumentNullException(nameof(bearConfig));
+
 		var spawnTiles = PolarBearSpawnPlacer.Place(
 			map.GroundLayer,
 			map.Start,
 			map.Goal,
 			map.SeedUsed,
-			minCount,
-			maxCount);
+			spawnConfig.MinPolarBearCount,
+			spawnConfig.MaxPolarBearCount);
 
 		if (spawnTiles.Count == 0)
 			return null;
 
-		var bearConfig = new PolarBearConfig();
 		var cognitionConfig = new WorldCognitionConfig
 		{
 			GridWidth = bearConfig.CognitionGridWidth,
@@ -75,12 +80,7 @@ public sealed class PolarBearTerrainDemoSetup
 		};
 
 		var cognition = new WorldCognitionSystem(cognitionConfig);
-
-		Vector2 GetPosition(EntityId entityId)
-		{
-			var pos = movement.Input.GetPosition(entityId);
-			return new Vector2(pos.X, pos.Y);
-		}
+		var getPosition = MovementPositionQuery.Create(movement);
 
 		var bears = new List<ActorHandle>(spawnTiles.Count);
 		var bearAgentIds = new List<AgentId>(spawnTiles.Count);
@@ -98,7 +98,7 @@ public sealed class PolarBearTerrainDemoSetup
 				bear.AgentId,
 				bear.EntityId,
 				player.EntityId,
-				GetPosition,
+				getPosition,
 				cognition.Cognition,
 				perception,
 				bearConfig.ToPerceptionConfig(),
@@ -129,13 +129,13 @@ public sealed class PolarBearTerrainDemoSetup
 				resources,
 				combatServices,
 				pathNavigator,
-				GetPosition);
+				getPosition);
 		}
 
 		var playerPresence = new PlayerPresenceAdapter(
 			cognition.Cognition,
 			player.EntityId,
-			GetPosition,
+			getPosition,
 			sprinting: true);
 
 		return new PolarBearTerrainDemoSetupResult(

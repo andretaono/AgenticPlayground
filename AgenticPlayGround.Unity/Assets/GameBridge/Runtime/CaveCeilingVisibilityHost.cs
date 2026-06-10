@@ -6,10 +6,10 @@ namespace Game.UnityBridge.Runtime
 {
 	public sealed class CaveCeilingVisibilityHost : MonoBehaviour
 	{
-		private TerrainDemoContext _context;
+		private GameSessionContext _context;
 		private CaveCeilingVisibility _visibility;
 
-		public void Initialize(TerrainDemoContext context, CaveCeilingVisibility visibility)
+		public void Initialize(GameSessionContext context, CaveCeilingVisibility visibility)
 		{
 			_context = context;
 			_visibility = visibility;

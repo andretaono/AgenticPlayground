@@ -54,6 +54,7 @@ public static class UnitTestRunner
 		yield return new PolarBearNavigationTests();
 		yield return new TileOccupancyTests();
 		yield return new AgentCombatTests();
+		yield return new VitalityMonitorTests();
 	}
 
 	private static void PrintReport(TestRunResult result, string? filter)

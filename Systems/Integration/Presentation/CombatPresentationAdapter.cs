@@ -15,22 +15,19 @@ public sealed class CombatPresentationAdapter : ITickable
 	private readonly EntityResourceSystem _resources;
 	private readonly CombatRuntimeServices _combatServices;
 	private readonly GameSessionState _sessionState;
-	private readonly float _worldUnitsPerTile;
 
 	public CombatPresentationAdapter(
 		IWorldPresenter presenter,
 		IActorRegistry actorRegistry,
 		EntityResourceSystem resources,
 		CombatRuntimeServices combatServices,
-		GameSessionState sessionState,
-		float worldUnitsPerTile = 1f)
+		GameSessionState sessionState)
 	{
 		_presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
 		_actorRegistry = actorRegistry ?? throw new ArgumentNullException(nameof(actorRegistry));
 		_resources = resources ?? throw new ArgumentNullException(nameof(resources));
 		_combatServices = combatServices ?? throw new ArgumentNullException(nameof(combatServices));
 		_sessionState = sessionState ?? throw new ArgumentNullException(nameof(sessionState));
-		_worldUnitsPerTile = worldUnitsPerTile;
 	}
 
 	public void Tick(float deltaTime)

@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c0010000000000000000000000000001, type: 3}
+  m_Name: DefaultWorldConfig
+  m_EditorClassIdentifier: 
+  generation:
+    Width: 64
+    Height: 48
+    Seed: 42
+    FillProbability: 0.48
+    CellularAutomataIterations: 5
+    MaxAttempts: 50
+    WaterPoolAttempts: 12
+    WaterPoolMaxSize: 5
+    EnableCeilingLayer: 1
+    MinWallBlobSize: 25
+    MinCaveAreaSize: 3
+    MaxCaveAreaSize: 49
+    MinCaveEntrances: 1
+    MaxCaveEntrances: 2
+    MinEntranceWidth: 1
+    MaxEntranceWidth: 3
+    MinEntranceDepth: 1
+    MaxEntranceDepth: 8
+    MaxCaveCount: 4
+    MaxCavesPerBlob: 3
+    ExtraWallStackChance: 0.15
+    ExtraWallStackClusterChance: 0.75
+    ExtraWallStackGrowPasses: 4
+    StartCeilingClearanceRadius: 4

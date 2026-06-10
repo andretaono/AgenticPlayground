@@ -6,7 +6,7 @@ public static class StandardTickOrder
 	public const int WorldCognition = 35;
 	public const int AgentBehaviour = 40;
 	public const int Input = 50;
-	public const int BehaviourIntentSubmission = 50;
+	public const int BehaviourIntentSubmission = 55;
 	public const int CommandExecution = 75;
 	public const int AgentOrientation = 79;
 	public const int AgentCombat = 80;

@@ -5,14 +5,9 @@ namespace Game.UnityBridge.Runtime
 {
 	public sealed class GameLoopHost : MonoBehaviour
 	{
-		private TerrainDemoContext _context;
-		private float _turnSpeedDegrees;
+		private GameSessionContext _context;
 
-		public void Initialize(TerrainDemoContext context, float turnSpeedDegrees)
-		{
-			_context = context;
-			_turnSpeedDegrees = turnSpeedDegrees;
-		}
+		public void Initialize(GameSessionContext context) => _context = context;
 
 		private void Update()
 		{
@@ -22,7 +17,7 @@ namespace Game.UnityBridge.Runtime
 			_context.Facing.ApplyTurnInput(
 				UnityEngine.Input.GetAxisRaw("Horizontal"),
 				UnityEngine.Time.deltaTime,
-				_turnSpeedDegrees);
+				_context.Config.Player.TurnSpeedDegrees);
 			_context.Runtime.Tick(UnityEngine.Time.deltaTime);
 		}
 	}

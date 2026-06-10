@@ -11,6 +11,8 @@ namespace Game.Systems.Integration.Enemies.PolarBear;
 /// </summary>
 public sealed class PolarBearConfig
 {
+	public static PolarBearConfig Default { get; } = new();
+
 	public float DirectSightRange { get; init; } = 96f;
 	public float LongRangeScentRadius { get; init; } = 480f;
 	public float ScentDetectionThreshold { get; init; } = 0.5f;

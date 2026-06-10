@@ -6,11 +6,11 @@ namespace Game.UnityBridge.Runtime
 {
 	public sealed class GameOverHost : MonoBehaviour
 	{
-		private TerrainDemoContext _context;
+		private GameSessionContext _context;
 		private Canvas _canvas;
 		private bool _shown;
 
-		public void Initialize(TerrainDemoContext context)
+		public void Initialize(GameSessionContext context)
 		{
 			_context = context;
 			BuildOverlay();

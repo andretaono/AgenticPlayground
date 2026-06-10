@@ -20,7 +20,6 @@ namespace Game.UnityBridge.Presentation
 		private readonly float _characterRadius;
 		private readonly Dictionary<EntityId, ActorVisual> _actors = new();
 		private readonly HashSet<EntityId> _polarBears = new();
-		private readonly Dictionary<EntityId, float> _actorVisualRadii = new();
 
 		public UnityWorldPresenter(
 			Transform actorsRoot,
@@ -96,6 +95,15 @@ namespace Game.UnityBridge.Presentation
 			_actors.Remove(entityId);
 		}
 
+		private readonly Dictionary<EntityId, ActorVisualDescriptor> _visualDescriptors = new();
+
+		public void ConfigureActorVisual(EntityId entityId, ActorVisualDescriptor descriptor)
+		{
+			_visualDescriptors[entityId] = descriptor ?? throw new System.ArgumentNullException(nameof(descriptor));
+			if (descriptor.IsPolarBear)
+				_polarBears.Add(entityId);
+		}
+
 		public bool TryGetTransform(EntityId entityId, out Transform transform)
 		{
 			if (_actors.TryGetValue(entityId, out var visual))
@@ -106,12 +114,6 @@ namespace Game.UnityBridge.Presentation
 
 			transform = null!;
 			return false;
-		}
-
-		public void ConfigurePolarBearVisual(EntityId entityId, float bodyRadius)
-		{
-			_polarBears.Add(entityId);
-			_actorVisualRadii[entityId] = bodyRadius;
 		}
 
 		private ActorVisual GetOrCreateVisual(EntityId entityId)
@@ -134,21 +136,23 @@ namespace Game.UnityBridge.Presentation
 				: $"Actor_{entityId.Value}";
 			actorObject.transform.SetParent(_actorsRoot, worldPositionStays: false);
 
-			var isPolarBear = _polarBears.Contains(entityId);
-			var visualRadius = ResolveVisualRadius(entityId);
+			var descriptor = ResolveDescriptor(entityId);
+			var isPolarBear = descriptor.IsPolarBear;
+			var visualRadius = descriptor.BodyRadius;
 			var visualRadiusWorld = visualRadius * _worldUnitsPerTile;
 			var horizontalScale = visualRadiusWorld / unityCapsuleMeshRadius;
 			actorObject.transform.localScale = new UnityVector3(
 				horizontalScale,
-				_characterHalfHeight * (isPolarBear ? 1.2f : 1f),
+				_characterHalfHeight * descriptor.VerticalScale,
 				horizontalScale);
 
 			var renderer = actorObject.GetComponent<Renderer>();
 			if (renderer != null)
 			{
-				renderer.material.color = isPolarBear
-					? new Color(0.92f, 0.94f, 0.97f)
-					: new Color(0.9f, 0.25f, 0.2f);
+				renderer.material.color = new Color(
+					descriptor.ColorR,
+					descriptor.ColorG,
+					descriptor.ColorB);
 			}
 
 			var collider = actorObject.GetComponent<Collider>();
@@ -161,8 +165,10 @@ namespace Game.UnityBridge.Presentation
 			return new ActorVisual(actorObject.transform, healthBar, arcVisualizer);
 		}
 
-		private float ResolveVisualRadius(EntityId entityId) =>
-			_actorVisualRadii.TryGetValue(entityId, out var radius) ? radius : _characterRadius;
+		private ActorVisualDescriptor ResolveDescriptor(EntityId entityId) =>
+			_visualDescriptors.TryGetValue(entityId, out var descriptor)
+				? descriptor
+				: new ActorVisualDescriptor { BodyRadius = _characterRadius };
 
 		private sealed class ActorVisual
 		{

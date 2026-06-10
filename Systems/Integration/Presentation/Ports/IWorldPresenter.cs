@@ -10,4 +10,5 @@ public interface IWorldPresenter
 	void SyncActorFacing(EntityId entityId, float yawDegrees);
 	void ShowAttackArc(EntityId entityId, float range, float arcDegrees, float durationSeconds);
 	void RemoveActor(EntityId entityId);
+	void ConfigureActorVisual(EntityId entityId, ActorVisualDescriptor descriptor);
 }

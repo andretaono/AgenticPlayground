@@ -30,7 +30,7 @@ namespace Game.UnityBridge.Terrain
 			GeneratedWorldMap map,
 			TerrainBuildResult result,
 			TileHeightModifierSettings settings,
-			TileSurfaceMeshSettings? surfaceSettings = null)
+			TileSurfaceMeshSettings surfaceSettings = null)
 		{
 			if (map is null)
 				throw new ArgumentNullException(nameof(map));

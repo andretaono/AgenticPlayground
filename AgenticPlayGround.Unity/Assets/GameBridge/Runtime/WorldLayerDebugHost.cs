@@ -6,34 +6,27 @@ namespace Game.UnityBridge.Runtime
 {
 	public sealed class WorldLayerDebugHost : MonoBehaviour
 	{
-		private TerrainDemoContext _context;
-		private TerrainDemoSettings _settings;
+		private GameSessionContext _context;
 		private WorldLayerDebugOverlay _overlay;
 		private WorldLayerDebugMode _mode = WorldLayerDebugMode.Off;
 		private GUIStyle _boxStyle;
 		private GUIStyle _labelStyle;
 
-		public void Initialize(
-			TerrainDemoContext context,
-			TerrainDemoSettings settings,
-			Transform overlayParent)
+		public void Initialize(GameSessionContext context, Transform overlayParent)
 		{
 			_context = context;
-			_settings = settings;
+			var terrain = context.Config.Terrain;
 
-			if (settings.EnableLayerDebug)
-			{
-				_overlay = new WorldLayerDebugOverlay(
-					overlayParent,
-					context.Map,
-					settings.WorldUnitsPerTile,
-					settings.GroundHeight + 0.05f);
-			}
+			_overlay = new WorldLayerDebugOverlay(
+				overlayParent,
+				context.Map,
+				terrain.WorldUnitsPerTile,
+				terrain.Heights.GroundHeight + 0.05f);
 		}
 
 		private void Update()
 		{
-			if (_context == null || _settings == null || !_settings.EnableLayerDebug)
+			if (_context == null || !_context.Debug.EnableLayerDebug)
 				return;
 
 			HandleInput();
@@ -41,9 +34,9 @@ namespace Game.UnityBridge.Runtime
 
 		private void HandleInput()
 		{
-			if (UnityEngine.Input.GetKeyDown(_settings.DebugGroundKey))
+			if (UnityEngine.Input.GetKeyDown(_context.Debug.DebugGroundKey))
 				SetMode(WorldLayerDebugMode.Ground);
-			else if (UnityEngine.Input.GetKeyDown(_settings.DebugOffKey))
+			else if (UnityEngine.Input.GetKeyDown(_context.Debug.DebugOffKey))
 				SetMode(WorldLayerDebugMode.Off);
 		}
 
@@ -55,7 +48,7 @@ namespace Game.UnityBridge.Runtime
 
 		private void OnGUI()
 		{
-			if (_context == null || _settings == null || !_settings.EnableLayerDebug)
+			if (_context == null || !_context.Debug.EnableLayerDebug)
 				return;
 
 			EnsureStyles();
